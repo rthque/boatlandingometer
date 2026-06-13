@@ -154,11 +154,21 @@ function Index() {
   }, [width, plotHeight]);
 
   const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
+  const [targetHeight, setTargetHeight] = useState<number>(4.29);
+  const [draggingLine, setDraggingLine] = useState(false);
 
   const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * width;
+    const y = ((e.clientY - rect.top) / rect.height) * totalHeight;
+
+    if (draggingLine) {
+      const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
+      setTargetHeight(Math.max(Y_MIN, Math.min(Y_MAX, h)));
+      return;
+    }
+
     if (x < PAD_L || x > PAD_L + plotWidth) {
       setHover(null);
       return;
@@ -167,6 +177,24 @@ function Index() {
     const h = tideHeight(t);
     setHover({ x: xOfT(t), t, h });
   };
+
+  // Compute times where the tide curve crosses targetHeight
+  const crossings = useMemo(() => {
+    const steps = 2880; // 30s resolution
+    const xs: number[] = [];
+    let prev = tideHeight(0) - targetHeight;
+    for (let i = 1; i <= steps; i++) {
+      const t = (i / steps) * 24;
+      const curr = tideHeight(t) - targetHeight;
+      if (prev === 0 || (prev < 0) !== (curr < 0)) {
+        const tPrev = ((i - 1) / steps) * 24;
+        const u = prev === curr ? 0 : prev / (prev - curr);
+        xs.push(tPrev + u * (24 / steps));
+      }
+      prev = curr;
+    }
+    return xs;
+  }, [targetHeight]);
 
   const yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
