@@ -163,11 +163,16 @@ function Index() {
   const [targetHeight, setTargetHeight] = useState<number>(4.29);
   const [draggingLine, setDraggingLine] = useState(false);
 
-  const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const svg = e.currentTarget;
+  const updateFromPointer = (e: React.PointerEvent<SVGElement>) => {
+    const svg = (e.currentTarget.ownerSVGElement ?? e.currentTarget) as SVGSVGElement;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * width;
     const y = ((e.clientY - rect.top) / rect.height) * totalHeight;
+    return { x, y };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const { x, y } = updateFromPointer(e);
 
     if (draggingLine) {
       const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
@@ -175,6 +180,7 @@ function Index() {
       return;
     }
 
+    if (e.pointerType === "touch") return; // no hover on touch
     if (x < PAD_L || x > PAD_L + plotWidth) {
       setHover(null);
       return;
@@ -252,10 +258,12 @@ function Index() {
           <svg
             width={width}
             height={totalHeight}
-            onMouseMove={handleMove}
-            onMouseLeave={() => { setHover(null); setDraggingLine(false); }}
-            onMouseUp={() => setDraggingLine(false)}
-            style={{ display: "block", cursor: "crosshair" }}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={() => { setHover(null); }}
+            onPointerUp={() => setDraggingLine(false)}
+            onPointerCancel={() => setDraggingLine(false)}
+            style={{ display: "block", cursor: "crosshair", touchAction: draggingLine ? "none" : "auto" }}
+            
           >
             {/* Background image — clipped to plot area */}
             <defs>
@@ -388,19 +396,30 @@ function Index() {
               const labelH = 18;
               return (
                 <g>
-                  {/* Hit area for dragging (thicker, invisible) */}
-                  <line
-                    x1={PAD_L}
-                    x2={PAD_L + plotWidth}
-                    y1={yLine}
-                    y2={yLine}
-                    stroke="transparent"
-                    strokeWidth={14}
-                    style={{ cursor: "ns-resize" }}
-                    onMouseDown={(e) => {
+                  {/* Wide invisible hit area for touch/mouse dragging */}
+                  <rect
+                    x={PAD_L}
+                    y={yLine - 22}
+                    width={plotWidth}
+                    height={44}
+                    fill="transparent"
+                    style={{ cursor: "ns-resize", touchAction: "none" }}
+                    onPointerDown={(e) => {
                       e.preventDefault();
+                      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
                       setDraggingLine(true);
                     }}
+                    onPointerMove={(e) => {
+                      if (!draggingLine) return;
+                      const { y } = updateFromPointer(e);
+                      const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
+                      setTargetHeight(Math.max(Y_MIN, Math.min(Y_MAX, h)));
+                    }}
+                    onPointerUp={(e) => {
+                      (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+                      setDraggingLine(false);
+                    }}
+                    onPointerCancel={() => setDraggingLine(false)}
                   />
                   {/* Visible line */}
                   <line
@@ -409,9 +428,35 @@ function Index() {
                     y1={yLine}
                     y2={yLine}
                     stroke="oklch(0.45 0.04 250)"
-                    strokeWidth={1.2}
+                    strokeWidth={draggingLine ? 2 : 1.4}
                     pointerEvents="none"
                   />
+                  {/* Touch grip handle on the left */}
+                  <g pointerEvents="none">
+                    <rect
+                      x={PAD_L - 2}
+                      y={yLine - 16}
+                      width={30}
+                      height={32}
+                      rx={8}
+                      fill="oklch(0.6 0.22 25)"
+                      stroke="white"
+                      strokeWidth={1.5}
+                    />
+                    {[-5, 0, 5].map((dy) => (
+                      <line
+                        key={dy}
+                        x1={PAD_L + 7}
+                        x2={PAD_L + 19}
+                        y1={yLine + dy}
+                        y2={yLine + dy}
+                        stroke="white"
+                        strokeWidth={1.5}
+                        strokeLinecap="round"
+                      />
+                    ))}
+                  </g>
+
                   {/* Crossing time labels (yellow chips) */}
                   {crossings.map((tc, i) => {
                     const cx = xOfT(tc);
