@@ -247,7 +247,8 @@ function Index() {
             width={width}
             height={totalHeight}
             onMouseMove={handleMove}
-            onMouseLeave={() => setHover(null)}
+            onMouseLeave={() => { setHover(null); setDraggingLine(false); }}
+            onMouseUp={() => setDraggingLine(false)}
             style={{ display: "block", cursor: "crosshair" }}
           >
             {/* Background image — clipped to plot area */}
