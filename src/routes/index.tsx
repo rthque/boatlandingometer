@@ -58,7 +58,13 @@ const CALIB: { h: number; frac: number }[] = [
 ];
 
 function heightToFrac(h: number): number {
-  if (h >= CALIB[0].h) return CALIB[0].frac;
+  // Extrapolate above the top calibration point using the slope of the top segment
+  if (h >= CALIB[0].h) {
+    const a = CALIB[0];
+    const b = CALIB[1];
+    const slope = (b.frac - a.frac) / (b.h - a.h); // negative
+    return a.frac + slope * (h - a.h);
+  }
   if (h <= CALIB[CALIB.length - 1].h) return CALIB[CALIB.length - 1].frac;
   for (let i = 0; i < CALIB.length - 1; i++) {
     const a = CALIB[i];
@@ -82,7 +88,7 @@ function fmtTime(t: number): string {
 function Index() {
   // Chart geometry — y-axis spans 0..23m so it matches the image scale.
   const Y_MIN = 0;
-  const Y_MAX = 23;
+  const Y_MAX = 26;
   const IMG_RATIO = 1789 / 1920;
 
   // The chart's plotted area pixel height is derived from container width.
@@ -108,8 +114,8 @@ function Index() {
     return () => ro.disconnect();
   }, []);
 
-  // Pick a plot height that looks good (tall enough to feel like the structure)
-  const plotHeight = Math.min(900, Math.max(520, Math.round(width * 0.85)));
+  // Tall aspect ratio — optimized for mobile (portrait), capped on desktop
+  const plotHeight = Math.min(1100, Math.max(560, Math.round(width * 1.5)));
   const totalHeight = plotHeight + PAD_T + PAD_B;
   const plotWidth = width - PAD_L - PAD_R;
 
@@ -196,12 +202,12 @@ function Index() {
     return xs;
   }, [targetHeight]);
 
-  const yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+  const yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26];
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-xl px-2 py-3 sm:px-4 sm:py-6">
         {/* Header bar like maree.info */}
         <div className="rounded-t-md border border-border bg-[oklch(0.95_0.08_95)] px-4 py-2 text-sm font-semibold text-foreground">
           <span>Samedi 13 Juin 2026</span>
