@@ -154,11 +154,21 @@ function Index() {
   }, [width, plotHeight]);
 
   const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
+  const [targetHeight, setTargetHeight] = useState<number>(4.29);
+  const [draggingLine, setDraggingLine] = useState(false);
 
   const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * width;
+    const y = ((e.clientY - rect.top) / rect.height) * totalHeight;
+
+    if (draggingLine) {
+      const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
+      setTargetHeight(Math.max(Y_MIN, Math.min(Y_MAX, h)));
+      return;
+    }
+
     if (x < PAD_L || x > PAD_L + plotWidth) {
       setHover(null);
       return;
@@ -167,6 +177,24 @@ function Index() {
     const h = tideHeight(t);
     setHover({ x: xOfT(t), t, h });
   };
+
+  // Compute times where the tide curve crosses targetHeight
+  const crossings = useMemo(() => {
+    const steps = 2880; // 30s resolution
+    const xs: number[] = [];
+    let prev = tideHeight(0) - targetHeight;
+    for (let i = 1; i <= steps; i++) {
+      const t = (i / steps) * 24;
+      const curr = tideHeight(t) - targetHeight;
+      if (prev === 0 || (prev < 0) !== (curr < 0)) {
+        const tPrev = ((i - 1) / steps) * 24;
+        const u = prev === curr ? 0 : prev / (prev - curr);
+        xs.push(tPrev + u * (24 / steps));
+      }
+      prev = curr;
+    }
+    return xs;
+  }, [targetHeight]);
 
   const yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
@@ -219,7 +247,8 @@ function Index() {
             width={width}
             height={totalHeight}
             onMouseMove={handleMove}
-            onMouseLeave={() => setHover(null)}
+            onMouseLeave={() => { setHover(null); setDraggingLine(false); }}
+            onMouseUp={() => setDraggingLine(false)}
             style={{ display: "block", cursor: "crosshair" }}
           >
             {/* Background image — clipped to plot area */}
@@ -345,6 +374,95 @@ function Index() {
                 />
               </g>
             ))}
+
+            {/* Draggable height line with crossing-time labels */}
+            {(() => {
+              const yLine = yOfH(targetHeight);
+              const labelW = 52;
+              const labelH = 18;
+              return (
+                <g>
+                  {/* Hit area for dragging (thicker, invisible) */}
+                  <line
+                    x1={PAD_L}
+                    x2={PAD_L + plotWidth}
+                    y1={yLine}
+                    y2={yLine}
+                    stroke="transparent"
+                    strokeWidth={14}
+                    style={{ cursor: "ns-resize" }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setDraggingLine(true);
+                    }}
+                  />
+                  {/* Visible line */}
+                  <line
+                    x1={PAD_L}
+                    x2={PAD_L + plotWidth}
+                    y1={yLine}
+                    y2={yLine}
+                    stroke="oklch(0.45 0.04 250)"
+                    strokeWidth={1.2}
+                    pointerEvents="none"
+                  />
+                  {/* Crossing time labels (yellow chips) */}
+                  {crossings.map((tc, i) => {
+                    const cx = xOfT(tc);
+                    const slope =
+                      tideHeight(Math.min(24, tc + 0.05)) - tideHeight(Math.max(0, tc - 0.05));
+                    const above = slope > 0; // rising tide -> chip above the line
+                    const cy = above ? yLine - labelH / 2 - 2 : yLine + labelH / 2 + 2;
+                    return (
+                      <g key={i} pointerEvents="none">
+                        <rect
+                          x={cx - labelW / 2}
+                          y={cy - labelH / 2}
+                          width={labelW}
+                          height={labelH}
+                          rx={3}
+                          fill="oklch(0.96 0.1 95)"
+                          stroke="oklch(0.55 0.05 90)"
+                          strokeWidth={0.75}
+                        />
+                        <text
+                          x={cx}
+                          y={cy + 4}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight={600}
+                          fill="oklch(0.25 0.04 60)"
+                        >
+                          {fmtTime(tc)}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {/* Red height chip on the right */}
+                  <g pointerEvents="none">
+                    <rect
+                      x={PAD_L + plotWidth - 48}
+                      y={yLine - 9}
+                      width={48}
+                      height={18}
+                      rx={2}
+                      fill="oklch(0.6 0.22 25)"
+                    />
+                    <text
+                      x={PAD_L + plotWidth - 24}
+                      y={yLine + 4}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fontWeight={700}
+                      fill="white"
+                    >
+                      {targetHeight.toFixed(2).replace(".", ",")}m
+                    </text>
+                  </g>
+                </g>
+              );
+            })()}
+
 
             {/* Hover crosshair */}
             {hover && (
