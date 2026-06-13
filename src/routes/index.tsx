@@ -163,11 +163,16 @@ function Index() {
   const [targetHeight, setTargetHeight] = useState<number>(4.29);
   const [draggingLine, setDraggingLine] = useState(false);
 
-  const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const svg = e.currentTarget;
+  const updateFromPointer = (e: React.PointerEvent<SVGElement>) => {
+    const svg = (e.currentTarget.ownerSVGElement ?? e.currentTarget) as SVGSVGElement;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * width;
     const y = ((e.clientY - rect.top) / rect.height) * totalHeight;
+    return { x, y };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const { x, y } = updateFromPointer(e);
 
     if (draggingLine) {
       const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
@@ -175,6 +180,7 @@ function Index() {
       return;
     }
 
+    if (e.pointerType === "touch") return; // no hover on touch
     if (x < PAD_L || x > PAD_L + plotWidth) {
       setHover(null);
       return;
@@ -252,9 +258,11 @@ function Index() {
           <svg
             width={width}
             height={totalHeight}
-            onMouseMove={handleMove}
-            onMouseLeave={() => { setHover(null); setDraggingLine(false); }}
-            onMouseUp={() => setDraggingLine(false)}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={() => { setHover(null); }}
+            onPointerUp={() => setDraggingLine(false)}
+            onPointerCancel={() => setDraggingLine(false)}
+            style={{ display: "block", cursor: "crosshair", touchAction: draggingLine ? "none" : "auto" }}
             style={{ display: "block", cursor: "crosshair" }}
           >
             {/* Background image — clipped to plot area */}
