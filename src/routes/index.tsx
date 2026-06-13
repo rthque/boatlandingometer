@@ -263,7 +263,7 @@ function Index() {
             onPointerUp={() => setDraggingLine(false)}
             onPointerCancel={() => setDraggingLine(false)}
             style={{ display: "block", cursor: "crosshair", touchAction: draggingLine ? "none" : "auto" }}
-            style={{ display: "block", cursor: "crosshair" }}
+            
           >
             {/* Background image — clipped to plot area */}
             <defs>
