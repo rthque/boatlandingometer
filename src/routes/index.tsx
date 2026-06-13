@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import chartDatumAsset from "@/assets/chart-datum.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -97,16 +97,14 @@ function Index() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Measure container
-  useMemo(() => {
-    if (typeof window === "undefined") return;
+  useEffect(() => {
+    if (typeof window === "undefined" || !containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
       for (const e of entries) {
         setWidth(Math.max(360, Math.floor(e.contentRect.width)));
       }
     });
-    queueMicrotask(() => {
-      if (containerRef.current) ro.observe(containerRef.current);
-    });
+    ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, []);
 
