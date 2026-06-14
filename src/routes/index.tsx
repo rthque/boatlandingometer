@@ -221,11 +221,8 @@ function Index() {
           className="relative rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
-          <div className="px-4 pt-3 text-center text-sm font-medium text-muted-foreground">
-            Horaires des marées à Dieppe — superposés à la structure (chart datum)
-          </div>
-
           <svg
+
             width={width}
             height={totalHeight}
             onPointerMove={handlePointerMove}
@@ -430,10 +427,10 @@ function Index() {
                   {/* Crossing time labels (yellow chips) */}
                   {crossings.map((tc, i) => {
                     const cx = xOfT(tc);
-                    const slope =
-                      tideHeight(Math.min(24, tc + 0.05)) - tideHeight(Math.max(0, tc - 0.05));
-                    const above = slope > 0; // rising tide -> chip above the line
-                    const cy = above ? yLine - labelH / 2 - 2 : yLine + labelH / 2 + 2;
+                    // Always render crossing time chips above the line so they
+                    // don't collide with the low-tide duration chip below.
+                    const cy = yLine - labelH / 2 - 4;
+
                     return (
                       <g key={i} pointerEvents="none">
                         <rect
@@ -601,9 +598,7 @@ function Index() {
             )}
           </svg>
 
-          <div className="px-4 pb-3 text-right text-xs text-muted-foreground">
-            Données : Dieppe · superposition à l'échelle sur la structure (0 m = chart datum)
-          </div>
+
         </div>
       </div>
     </div>
