@@ -214,38 +214,8 @@ function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-xl px-2 py-3 sm:px-4 sm:py-6">
-        {/* Header bar like maree.info */}
-        <div className="rounded-t-md border border-border bg-[oklch(0.95_0.08_95)] px-4 py-2 text-sm font-semibold text-foreground">
-          <span>Samedi 13 Juin 2026</span>
-          <span className="ml-3 font-normal text-muted-foreground">UTC+2 · Semaine 24</span>
-          <span className="ml-6 font-normal text-muted-foreground">Lever du soleil: 05h48 · Coucher du soleil: 22h03</span>
-        </div>
-
-        {/* Tide extremes table */}
-        <div className="border border-t-0 border-border bg-card px-4 py-3">
-          <table className="w-full text-sm">
-            <thead className="text-muted-foreground">
-              <tr className="border-b border-border">
-                <th className="py-1 text-left font-medium"></th>
-                <th className="py-1 text-left font-medium">Coeff.</th>
-                <th className="py-1 text-left font-medium">Heure</th>
-                <th className="py-1 text-left font-medium">Hauteur</th>
-              </tr>
-            </thead>
-            <tbody>
-              {EXTREMES.map((e, i) => (
-                <tr key={i} className="border-b border-border/50 last:border-0">
-                  <td className="py-1 font-semibold">{e.type}</td>
-                  <td className="py-1">{e.coeff ?? ""}</td>
-                  <td className="py-1 tabular-nums">{fmtTime(e.t)}</td>
-                  <td className="py-1 tabular-nums">{e.h.toFixed(2)} m</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         {/* Chart */}
+
         <div
           ref={containerRef}
           className="relative border border-t-0 border-border bg-card"
