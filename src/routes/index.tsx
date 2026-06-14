@@ -218,7 +218,7 @@ function Index() {
 
         <div
           ref={containerRef}
-          className="relative border border-t-0 border-border bg-card"
+          className="relative rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
           <div className="px-4 pt-3 text-center text-sm font-medium text-muted-foreground">
