@@ -99,7 +99,7 @@ function Index() {
   const PAD_T = 16;
   const PAD_B = 36;
 
-  const [width, setWidth] = useState(900);
+  const [size, setSize] = useState({ width: 900, height: 700 });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Measure container
@@ -107,11 +107,26 @@ function Index() {
     if (typeof window === "undefined" || !containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
       for (const e of entries) {
-        setWidth(Math.max(360, Math.floor(e.contentRect.width)));
+        setSize({
+          width: Math.max(360, Math.floor(e.contentRect.width)),
+          height: Math.max(400, Math.floor(e.contentRect.height)),
+        });
       }
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
+  }, []);
+
+  // Prevent page scroll — tool is fixed in viewport
+  useEffect(() => {
+    const origOverflow = document.body.style.overflow;
+    const origTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = origOverflow;
+      document.body.style.touchAction = origTouchAction;
+    };
   }, []);
 
   // Tall aspect ratio — optimized for mobile (portrait), capped on desktop
