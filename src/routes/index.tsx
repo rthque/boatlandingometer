@@ -214,41 +214,11 @@ function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-xl px-2 py-3 sm:px-4 sm:py-6">
-        {/* Header bar like maree.info */}
-        <div className="rounded-t-md border border-border bg-[oklch(0.95_0.08_95)] px-4 py-2 text-sm font-semibold text-foreground">
-          <span>Samedi 13 Juin 2026</span>
-          <span className="ml-3 font-normal text-muted-foreground">UTC+2 · Semaine 24</span>
-          <span className="ml-6 font-normal text-muted-foreground">Lever du soleil: 05h48 · Coucher du soleil: 22h03</span>
-        </div>
-
-        {/* Tide extremes table */}
-        <div className="border border-t-0 border-border bg-card px-4 py-3">
-          <table className="w-full text-sm">
-            <thead className="text-muted-foreground">
-              <tr className="border-b border-border">
-                <th className="py-1 text-left font-medium"></th>
-                <th className="py-1 text-left font-medium">Coeff.</th>
-                <th className="py-1 text-left font-medium">Heure</th>
-                <th className="py-1 text-left font-medium">Hauteur</th>
-              </tr>
-            </thead>
-            <tbody>
-              {EXTREMES.map((e, i) => (
-                <tr key={i} className="border-b border-border/50 last:border-0">
-                  <td className="py-1 font-semibold">{e.type}</td>
-                  <td className="py-1">{e.coeff ?? ""}</td>
-                  <td className="py-1 tabular-nums">{fmtTime(e.t)}</td>
-                  <td className="py-1 tabular-nums">{e.h.toFixed(2)} m</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         {/* Chart */}
+
         <div
           ref={containerRef}
-          className="relative border border-t-0 border-border bg-card"
+          className="relative rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
           <div className="px-4 pt-3 text-center text-sm font-medium text-muted-foreground">
@@ -489,6 +459,66 @@ function Index() {
                       </g>
                     );
                   })}
+
+                  {/* Low-tide interval labels (duration under target height) */}
+                  {(() => {
+                    const segs: { t1: number; t2: number }[] = [];
+                    const bounds = [0, ...crossings, 24];
+                    for (let i = 0; i < bounds.length - 1; i++) {
+                      const a = bounds[i];
+                      const b = bounds[i + 1];
+                      const mid = (a + b) / 2;
+                      if (tideHeight(mid) < targetHeight) segs.push({ t1: a, t2: b });
+                    }
+                    const fmtDur = (h: number) => {
+                      const total = Math.round(h * 60);
+                      const hh = Math.floor(total / 60);
+                      const mm = total % 60;
+                      return hh > 0 ? `${hh}h${String(mm).padStart(2, "0")}` : `${mm} min`;
+                    };
+                    return segs.map((s, i) => {
+                      const x1 = xOfT(s.t1);
+                      const x2 = xOfT(s.t2);
+                      const cx = (x1 + x2) / 2;
+                      const w = x2 - x1;
+                      if (w < 36) return null;
+                      const dur = fmtDur(s.t2 - s.t1);
+                      const chipW = Math.min(82, Math.max(56, dur.length * 8 + 16));
+                      const chipH = 16;
+                      return (
+                        <g key={`seg${i}`} pointerEvents="none">
+                          <line
+                            x1={x1 + 2}
+                            x2={x2 - 2}
+                            y1={yLine}
+                            y2={yLine}
+                            stroke="oklch(0.55 0.18 25)"
+                            strokeWidth={3}
+                            strokeLinecap="round"
+                          />
+                          <rect
+                            x={cx - chipW / 2}
+                            y={yLine + 6}
+                            width={chipW}
+                            height={chipH}
+                            rx={3}
+                            fill="oklch(0.55 0.18 25)"
+                          />
+                          <text
+                            x={cx}
+                            y={yLine + 6 + chipH / 2 + 4}
+                            textAnchor="middle"
+                            fontSize="11"
+                            fontWeight={700}
+                            fill="white"
+                          >
+                            {dur}
+                          </text>
+                        </g>
+                      );
+                    });
+                  })()}
+
                   {/* Red height chip on the right */}
                   <g pointerEvents="none">
                     <rect
