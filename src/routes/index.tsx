@@ -221,11 +221,8 @@ function Index() {
           className="relative rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
-          <div className="px-4 pt-3 text-center text-sm font-medium text-muted-foreground">
-            Horaires des marées à Dieppe — superposés à la structure (chart datum)
-          </div>
-
           <svg
+
             width={width}
             height={totalHeight}
             onPointerMove={handlePointerMove}
