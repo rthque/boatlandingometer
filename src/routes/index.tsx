@@ -427,10 +427,10 @@ function Index() {
                   {/* Crossing time labels (yellow chips) */}
                   {crossings.map((tc, i) => {
                     const cx = xOfT(tc);
-                    const slope =
-                      tideHeight(Math.min(24, tc + 0.05)) - tideHeight(Math.max(0, tc - 0.05));
-                    const above = slope > 0; // rising tide -> chip above the line
-                    const cy = above ? yLine - labelH / 2 - 2 : yLine + labelH / 2 + 2;
+                    // Always render crossing time chips above the line so they
+                    // don't collide with the low-tide duration chip below.
+                    const cy = yLine - labelH / 2 - 4;
+
                     return (
                       <g key={i} pointerEvents="none">
                         <rect
