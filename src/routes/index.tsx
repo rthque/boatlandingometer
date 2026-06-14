@@ -598,9 +598,7 @@ function Index() {
             )}
           </svg>
 
-          <div className="px-4 pb-3 text-right text-xs text-muted-foreground">
-            Données : Dieppe · superposition à l'échelle sur la structure (0 m = chart datum)
-          </div>
+
         </div>
       </div>
     </div>
