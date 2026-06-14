@@ -459,6 +459,66 @@ function Index() {
                       </g>
                     );
                   })}
+
+                  {/* Low-tide interval labels (duration under target height) */}
+                  {(() => {
+                    const segs: { t1: number; t2: number }[] = [];
+                    const bounds = [0, ...crossings, 24];
+                    for (let i = 0; i < bounds.length - 1; i++) {
+                      const a = bounds[i];
+                      const b = bounds[i + 1];
+                      const mid = (a + b) / 2;
+                      if (tideHeight(mid) < targetHeight) segs.push({ t1: a, t2: b });
+                    }
+                    const fmtDur = (h: number) => {
+                      const total = Math.round(h * 60);
+                      const hh = Math.floor(total / 60);
+                      const mm = total % 60;
+                      return hh > 0 ? `${hh}h${String(mm).padStart(2, "0")}` : `${mm} min`;
+                    };
+                    return segs.map((s, i) => {
+                      const x1 = xOfT(s.t1);
+                      const x2 = xOfT(s.t2);
+                      const cx = (x1 + x2) / 2;
+                      const w = x2 - x1;
+                      if (w < 36) return null;
+                      const dur = fmtDur(s.t2 - s.t1);
+                      const chipW = Math.min(82, Math.max(56, dur.length * 8 + 16));
+                      const chipH = 16;
+                      return (
+                        <g key={`seg${i}`} pointerEvents="none">
+                          <line
+                            x1={x1 + 2}
+                            x2={x2 - 2}
+                            y1={yLine}
+                            y2={yLine}
+                            stroke="oklch(0.55 0.18 25)"
+                            strokeWidth={3}
+                            strokeLinecap="round"
+                          />
+                          <rect
+                            x={cx - chipW / 2}
+                            y={yLine + 6}
+                            width={chipW}
+                            height={chipH}
+                            rx={3}
+                            fill="oklch(0.55 0.18 25)"
+                          />
+                          <text
+                            x={cx}
+                            y={yLine + 6 + chipH / 2 + 4}
+                            textAnchor="middle"
+                            fontSize="11"
+                            fontWeight={700}
+                            fill="white"
+                          >
+                            {dur}
+                          </text>
+                        </g>
+                      );
+                    });
+                  })()}
+
                   {/* Red height chip on the right */}
                   <g pointerEvents="none">
                     <rect
