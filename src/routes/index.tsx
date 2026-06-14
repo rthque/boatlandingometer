@@ -129,9 +129,9 @@ function Index() {
     };
   }, []);
 
-  // Tall aspect ratio — optimized for mobile (portrait), capped on desktop
-  const plotHeight = Math.min(1100, Math.max(560, Math.round(width * 1.5)));
-  const totalHeight = plotHeight + PAD_T + PAD_B;
+  const width = size.width;
+  const totalHeight = size.height;
+  const plotHeight = Math.max(300, totalHeight - PAD_T - PAD_B);
   const plotWidth = width - PAD_L - PAD_R;
 
   const xOfT = (t: number) => PAD_L + (t / 24) * plotWidth;
@@ -187,15 +187,8 @@ function Index() {
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    const { x, y } = updateFromPointer(e);
-
-    if (draggingLine) {
-      const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
-      setTargetHeight(Math.max(Y_MIN, Math.min(Y_MAX, h)));
-      return;
-    }
-
     if (e.pointerType === "touch") return; // no hover on touch
+    const { x } = updateFromPointer(e);
     if (x < PAD_L || x > PAD_L + plotWidth) {
       setHover(null);
       return;
@@ -227,25 +220,19 @@ function Index() {
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-xl px-2 py-3 sm:px-4 sm:py-6">
-        {/* Chart */}
-
+    <div className="h-[100dvh] overflow-hidden bg-background text-foreground">
+      <div className="mx-auto max-w-xl px-2 h-full flex flex-col">
         <div
           ref={containerRef}
-          className="relative rounded-md border border-border bg-card"
+          className="relative flex-1 rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
           <svg
-
             width={width}
             height={totalHeight}
             onPointerMove={handlePointerMove}
             onPointerLeave={() => { setHover(null); }}
-            onPointerUp={() => setDraggingLine(false)}
-            onPointerCancel={() => setDraggingLine(false)}
-            style={{ display: "block", cursor: "crosshair", touchAction: draggingLine ? "none" : "auto" }}
-            
+            style={{ display: "block", cursor: "crosshair", touchAction: "auto" }}
           >
             {/* Background image — clipped to plot area */}
             <defs>
@@ -388,20 +375,27 @@ function Index() {
                     style={{ cursor: "ns-resize", touchAction: "none" }}
                     onPointerDown={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
                       setDraggingLine(true);
                     }}
                     onPointerMove={(e) => {
                       if (!draggingLine) return;
+                      e.preventDefault();
+                      e.stopPropagation();
                       const { y } = updateFromPointer(e);
                       const h = Y_MAX - ((y - PAD_T) / plotHeight) * (Y_MAX - Y_MIN);
                       setTargetHeight(Math.max(Y_MIN, Math.min(Y_MAX, h)));
                     }}
                     onPointerUp={(e) => {
+                      e.stopPropagation();
                       (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
                       setDraggingLine(false);
                     }}
-                    onPointerCancel={() => setDraggingLine(false)}
+                    onPointerCancel={(e) => {
+                      e.stopPropagation();
+                      setDraggingLine(false);
+                    }}
                   />
                   {/* Visible line */}
                   <line
