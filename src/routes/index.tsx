@@ -87,13 +87,11 @@ function Index() {
   const Y_MAX = 10.5;
   const IMG_RATIO = 1186 / 1512;
 
-  // The chart's plotted area pixel height is derived from container width.
-  // We render the image so its full height equals: plotHeight / (frac(0) - frac(23))
-  // That guarantees the image's 0m and 23m lines sit exactly on the chart's 0m and 23m gridlines.
-  const PAD_L = 56;
-  const PAD_R = 16;
-  const PAD_T = 16;
-  const PAD_B = 36;
+  // Compact padding for mobile — maximise usable area
+  const PAD_L = 42;
+  const PAD_R = 8;
+  const PAD_T = 8;
+  const PAD_B = 24;
 
   const [size, setSize] = useState({ width: 900, height: 700 });
   const containerRef = useRef<HTMLDivElement | null>(null);
