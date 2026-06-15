@@ -82,9 +82,9 @@ function fmtTime(t: number): string {
 }
 
 function Index() {
-  // Chart geometry — y-axis spans 0..23m so it matches the image scale.
+  // Chart geometry — y-axis spans 0..10.5m so 0m is at the bottom and 10m near the top.
   const Y_MIN = 0;
-  const Y_MAX = 26;
+  const Y_MAX = 10.5;
   const IMG_RATIO = 1186 / 1512;
 
   // The chart's plotted area pixel height is derived from container width.
