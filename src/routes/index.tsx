@@ -215,7 +215,7 @@ function Index() {
 
   return (
     <div className="h-[100dvh] overflow-hidden bg-background text-foreground">
-      <div className="mx-auto max-w-xl px-2 h-full flex flex-col">
+      <div className="w-full h-full flex flex-col">
         <div
           ref={containerRef}
           className="relative flex-1 rounded-md border border-border bg-card"
