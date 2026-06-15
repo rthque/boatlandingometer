@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import chartDatumAsset from "@/assets/chart-datum.png.asset.json";
+import chartDatumAsset from "@/assets/jacket-structure.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,16 +45,12 @@ function tideHeight(t: number): number {
 
 // Calibration from the chart-datum image (1789x1920).
 // Maps tide height (m) -> vertical fraction of the image (0 = top, 1 = bottom)
+// Calibration from jacket-structure.png (1186x1512):
+// 10m mark (red bands) at y=366 -> frac=0.2421
+// 0m mark (arrow tip) at y=1244 -> frac=0.8227
 const CALIB: { h: number; frac: number }[] = [
-  { h: 23, frac: 0.1008 },
-  { h: 18, frac: 0.2635 },
-  { h: 14.4, frac: 0.3867 },
-  { h: 11, frac: 0.5003 },
-  { h: 8, frac: 0.6047 },
-  { h: 7, frac: 0.6714 },
-  { h: 3.5, frac: 0.7589 },
-  { h: 1, frac: 0.8411 },
-  { h: 0, frac: 0.876 },
+  { h: 10, frac: 0.2421 },
+  { h: 0, frac: 0.8227 },
 ];
 
 function heightToFrac(h: number): number {
@@ -89,7 +85,7 @@ function Index() {
   // Chart geometry — y-axis spans 0..23m so it matches the image scale.
   const Y_MIN = 0;
   const Y_MAX = 26;
-  const IMG_RATIO = 1789 / 1920;
+  const IMG_RATIO = 1186 / 1512;
 
   // The chart's plotted area pixel height is derived from container width.
   // We render the image so its full height equals: plotHeight / (frac(0) - frac(23))
