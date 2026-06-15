@@ -82,18 +82,16 @@ function fmtTime(t: number): string {
 }
 
 function Index() {
-  // Chart geometry — y-axis spans 0..23m so it matches the image scale.
+  // Chart geometry — y-axis spans 0..10.5m so 0m is at the bottom and 10m near the top.
   const Y_MIN = 0;
-  const Y_MAX = 26;
+  const Y_MAX = 10.5;
   const IMG_RATIO = 1186 / 1512;
 
-  // The chart's plotted area pixel height is derived from container width.
-  // We render the image so its full height equals: plotHeight / (frac(0) - frac(23))
-  // That guarantees the image's 0m and 23m lines sit exactly on the chart's 0m and 23m gridlines.
-  const PAD_L = 56;
-  const PAD_R = 16;
-  const PAD_T = 16;
-  const PAD_B = 36;
+  // Compact padding for mobile — maximise usable area
+  const PAD_L = 42;
+  const PAD_R = 8;
+  const PAD_T = 8;
+  const PAD_B = 24;
 
   const [size, setSize] = useState({ width: 900, height: 700 });
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -212,12 +210,12 @@ function Index() {
     return xs;
   }, [targetHeight]);
 
-  const yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26];
+  const yTicks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
 
   return (
     <div className="h-[100dvh] overflow-hidden bg-background text-foreground">
-      <div className="mx-auto max-w-xl px-2 h-full flex flex-col">
+      <div className="w-full h-full flex flex-col">
         <div
           ref={containerRef}
           className="relative flex-1 rounded-md border border-border bg-card"
