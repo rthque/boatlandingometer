@@ -5,7 +5,7 @@ import { fmtTime, type ExtremePoint } from "@/lib/tide-math";
 // screens.
 export function ExtremesList({ extremes }: { extremes: ExtremePoint[] }) {
   return (
-    <div className="absolute bottom-10 left-2 z-20 flex flex-col gap-0.5 sm:bottom-auto sm:top-2">
+    <div className="absolute top-8 left-2 z-20 flex flex-col gap-0.5">
       {extremes.map((e, i) => (
         <div
           key={i}
