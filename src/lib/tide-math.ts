@@ -1,4 +1,4 @@
-import type { TideExtreme } from "@/lib/api/tides.functions";
+import type { TideExtreme } from "@/lib/tides";
 
 // A tide extreme expressed in the plot's local coordinates: `t` is hours since
 // local midnight of the selected day, `h` the water height (m).

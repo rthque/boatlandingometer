@@ -21,15 +21,6 @@ import { HoverTooltip } from "@/components/tide/HoverTooltip";
 import { SunTimes } from "@/components/tide/SunTimes";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Dieppe Tides — Boatlandingometer" },
-      {
-        name: "description",
-        content: "Dieppe tide times overlaid on the jacket structure (chart datum).",
-      },
-    ],
-  }),
   component: Index,
 });
 
@@ -46,7 +37,7 @@ function Index() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(selectedDate);
 
-  const { allExtremes, loading } = useTideExtremes(selectedDate);
+  const { allExtremes } = useTideExtremes(selectedDate);
   const coefByDay = useCoefByDay(datePickerOpen, calMonth);
   const coefDayButton = useMemo(() => makeCoefDayButton(coefByDay), [coefByDay]);
 
@@ -316,11 +307,6 @@ function Index() {
           className="relative flex-1 rounded-md border border-border bg-card"
           style={{ overflow: "hidden" }}
         >
-          {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60">
-              <span className="text-sm text-muted-foreground animate-pulse">Loading tides…</span>
-            </div>
-          )}
           <svg
             width={width}
             height={totalHeight}

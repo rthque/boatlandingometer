@@ -1,0 +1,6 @@
+# Force LF in the working tree, not just in the repo. Without this, a machine
+# with core.autocrlf=true checks files out as CRLF and Prettier (endOfLine: lf)
+# flags every single line, so `npm run lint` fails locally while passing in CI.
+* text=auto eol=lf
+
+*.png binary

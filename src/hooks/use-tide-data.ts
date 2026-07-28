@@ -1,29 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { getTideExtremes, getTideCoefficients } from "@/lib/api/tides.functions";
+import { getTideExtremes, getTideCoefficients } from "@/lib/tides";
 import { extremesToPoints, type ExtremePoint } from "@/lib/tide-math";
 
-// Fetch the selected day's tide extremes and project them into plot space.
-export function useTideExtremes(selectedDate: Date) {
-  const [allExtremes, setAllExtremes] = useState<ExtremePoint[]>([]);
-  const [loading, setLoading] = useState(true);
+// Predictions are computed in-process from the baked-in harmonic constituents
+// (see src/lib/tides.ts), so these hooks are synchronous — no fetch, no
+// loading state.
 
-  useEffect(() => {
-    setLoading(true);
+/** The selected day's tide extremes, projected into plot space. */
+export function useTideExtremes(selectedDate: Date): { allExtremes: ExtremePoint[] } {
+  const allExtremes = useMemo(() => {
     const dateStr = format(selectedDate, "yyyy-MM-dd");
-    getTideExtremes({ data: { date: dateStr } })
-      .then((result) => {
-        setAllExtremes(extremesToPoints(result.extremes, selectedDate));
-      })
-      .finally(() => setLoading(false));
+    return extremesToPoints(getTideExtremes(dateStr).extremes, selectedDate);
   }, [selectedDate]);
 
-  return { allExtremes, loading };
+  return { allExtremes };
 }
 
-// Fetch tide coefficients for the visible calendar month (padded so the
-// leading/trailing days of adjacent months are coloured too) when the picker
-// is open. Results bin per local day, keeping each day's max coefficient.
+// Tide coefficients for the visible calendar month (padded so the
+// leading/trailing days of adjacent months are coloured too), fetched when the
+// picker is open. Results bin per local day, keeping each day's max
+// coefficient. Months accumulate so paging back and forth doesn't re-flash.
 export function useCoefByDay(datePickerOpen: boolean, calMonth: Date) {
   const [coefByDay, setCoefByDay] = useState<Record<string, number>>({});
 
@@ -33,24 +30,15 @@ export function useCoefByDay(datePickerOpen: boolean, calMonth: Date) {
     const last = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0);
     const start = new Date(first.getTime() - 7 * 86400_000);
     const end = new Date(last.getTime() + 7 * 86400_000);
-    let cancelled = false;
-    getTideCoefficients({
-      data: {
-        start: format(start, "yyyy-MM-dd"),
-        end: format(end, "yyyy-MM-dd"),
-      },
-    }).then((result) => {
-      if (cancelled) return;
-      const map: Record<string, number> = {};
-      for (const h of result.highs) {
-        const key = format(new Date(h.time), "yyyy-MM-dd");
-        map[key] = Math.max(map[key] ?? 0, h.coef);
-      }
-      setCoefByDay((prev) => ({ ...prev, ...map }));
-    });
-    return () => {
-      cancelled = true;
-    };
+
+    const { highs } = getTideCoefficients(format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd"));
+
+    const map: Record<string, number> = {};
+    for (const h of highs) {
+      const key = format(new Date(h.time), "yyyy-MM-dd");
+      map[key] = Math.max(map[key] ?? 0, h.coef);
+    }
+    setCoefByDay((prev) => ({ ...prev, ...map }));
   }, [datePickerOpen, calMonth]);
 
   return coefByDay;
