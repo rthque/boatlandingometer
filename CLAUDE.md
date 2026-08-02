@@ -58,6 +58,29 @@ dev URL carries the same prefix. Building for a different host: set
 GitHub Pages has no SPA rewrite, so `vite.config.ts` copies `index.html` to
 `404.html` at build time. Keep that plugin if you add routes.
 
+## Icons
+
+Every icon in `public/` is generated from `assets/icon-source.png` (500×500
+RGBA) by `scripts/generate-icons.ps1`. **Don't hand-edit the outputs** — change
+the source artwork and re-run:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/generate-icons.ps1
+```
+
+That script is a Windows-only one-off (System.Drawing); it is deliberately not
+wired into the build or CI, and the generated files are committed.
+
+It produces `favicon.ico` (16/32/48 embedded PNGs), `favicon-16x16.png`,
+`favicon-32x32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` and
+`og-image.png` (1200×630). `apple-touch-icon.png` is flattened onto white on
+purpose — iOS composites home-screen icons on an opaque tile and renders
+transparency badly. The rest keep their alpha channel.
+
+`index.html` links them and `public/site.webmanifest` declares the 192/512 pair
+for Android home screens. `og:image` must stay an **absolute** URL; social
+crawlers don't resolve relative ones.
+
 ## Deployment
 
 Push to `main` → `.github/workflows/deploy.yml` runs lint + build and publishes
