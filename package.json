@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "stations": "node scripts/extract-stations.mjs"
+    "stations": "node scripts/extract-stations.mjs",
+    "schema": "node scripts/cutout-schema.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -80,6 +81,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",

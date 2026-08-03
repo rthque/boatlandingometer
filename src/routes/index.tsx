@@ -7,6 +7,8 @@ import { DIEPPE, VIEWS, type ViewId } from "@/lib/views";
 import { useTideExtremes, useCoefByDay } from "@/hooks/use-tide-data";
 import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
+import { useTheme } from "@/hooks/use-theme";
+import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
 import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
@@ -27,6 +29,10 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [view, setView] = useState<ViewId>("FOU");
   const viewConfig = VIEWS[view];
+  const [theme, , toggleTheme] = useTheme();
+  // The IRL photo carries its own sky and sea, so the drawn scene would fight
+  // it; the CAD views are the ones that need a world around them.
+  const showScene = view !== "IRL";
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -122,6 +128,16 @@ function Index() {
   const yOfH = (h: number) => imageTop + heightToFrac(h, viewConfig.calib) * imageDisplayHeight;
   const tOfX = (x: number) => ((x - PAD_L) / plotWidth) * 24;
 
+  // Chart datum on screen: where the sea meets the structure. Anything the
+  // schema draws below this is genuinely always underwater, whatever the tide
+  // is doing.
+  const waterY = yOfH(0);
+  // The sea recedes to a horizon at eye level — roughly the deck of the CTV you
+  // would be looking from. Expressing it as a height rather than a screen
+  // fraction keeps it consistent when a view zooms in.
+  const HORIZON_M = 4;
+  const horizonY = Math.max(PAD_T + 8, yOfH(HORIZON_M));
+
   // Convert a pointer event to plot-space pixels (accounts for the SVG being
   // rendered at a different CSS size than its coordinate system).
   const pointerToPlot = (e: React.PointerEvent<SVGElement>) => {
@@ -164,12 +180,18 @@ function Index() {
 
   const seaPath = useMemo(() => {
     const steps = 960;
-    let d = `M ${xOfT(0).toFixed(2)} ${yOfH(Y_MIN).toFixed(2)}`;
+    // Close the fill on chart datum, not on the bottom of the plot. This band
+    // is the tide — the water that comes and goes — and below datum the scene's
+    // permanent sea already has it covered. Running the fill to the bottom
+    // painted a second, lighter water on top of the deep water and washed the
+    // immersed legs out.
+    const base = yOfH(0).toFixed(2);
+    let d = `M ${xOfT(0).toFixed(2)} ${base}`;
     for (let i = 0; i <= steps; i++) {
       const t = (i / steps) * 24;
       d += ` L ${xOfT(t).toFixed(2)} ${yOfH(tideHeight(t)).toFixed(2)}`;
     }
-    d += ` L ${xOfT(24).toFixed(2)} ${yOfH(Y_MIN).toFixed(2)} Z`;
+    d += ` L ${xOfT(24).toFixed(2)} ${base} Z`;
     return d;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width, plotHeight, tideHeight, Y_MIN, Y_MAX]);
@@ -301,6 +323,8 @@ function Index() {
           animActive={animActive}
           startAnim={startAnim}
           stopAnim={stopAnim}
+          theme={theme}
+          toggleTheme={toggleTheme}
         />
         <div
           ref={containerRef}
@@ -325,10 +349,13 @@ function Index() {
                 <rect x={PAD_L} y={PAD_T} width={plotWidth} height={plotHeight} />
               </clipPath>
               <linearGradient id="seaGrad" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="oklch(0.75 0.13 230)" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="oklch(0.45 0.15 240)" stopOpacity="0.65" />
+                <stop offset="0%" style={{ stopColor: "var(--tide-fill-top)" }} />
+                <stop offset="100%" style={{ stopColor: "var(--tide-fill-deep)" }} />
               </linearGradient>
+              <SceneDefs geom={geom} horizonY={horizonY} waterY={waterY} />
             </defs>
+
+            {showScene && <SkyLayer geom={geom} horizonY={horizonY} waterY={waterY} />}
 
             <BackgroundLayer
               geom={geom}
@@ -339,7 +366,12 @@ function Index() {
               imageDisplayHeight={imageDisplayHeight}
               sunriseH={sunriseH}
               sunsetH={sunsetH}
+              waterY={waterY}
+              scene={showScene}
+              theme={theme}
             />
+
+            {showScene && <WaterVeil geom={geom} waterY={waterY} />}
 
             <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} />
 

@@ -11,14 +11,24 @@ export function ExtremesList({ extremes }: { extremes: ExtremePoint[] }) {
           key={i}
           className="flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium bg-background/90 backdrop-blur-sm border border-border"
         >
-          <span className={e.high ? "text-orange-600" : "text-emerald-600"}>
+          {/* Two steps for one problem: the 600 inks only reached 3.4:1 on the
+              white card (a pre-existing miss), and on the night card they and
+              the coefficient badge fell to ~4:1 and 2.3:1. Darker by day,
+              lighter by night. */}
+          <span
+            className={
+              e.high
+                ? "text-orange-700 dark:text-orange-400"
+                : "text-emerald-700 dark:text-emerald-400"
+            }
+          >
             {e.high ? "▲ HW" : "▼ LW"}
           </span>
           <span>{fmtTime(e.t)}</span>
           <span className="text-muted-foreground">{e.h.toFixed(2)}m</span>
           {e.high && e.coef !== null && (
             <span
-              className="ml-0.5 rounded bg-sky-600/15 px-1 font-semibold text-sky-700"
+              className="ml-0.5 rounded bg-sky-600/15 px-1 font-semibold text-sky-700 dark:bg-sky-400/20 dark:text-sky-200"
               title="Tidal coefficient"
             >
               {e.coef}

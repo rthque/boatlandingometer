@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+﻿@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
@@ -130,6 +130,62 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+/*
+ * Scene tokens - the sky/sea world the structure stands in.
+ *
+ * :root carries the day values, .dark the night ones; SeaScene.tsx reads them
+ * through var(). Plain custom properties on purpose: an earlier version
+ * registered them with @property and transitioned them so the toggle read as
+ * dusk falling, but the transition froze at its start value going night->day
+ * and left the sky stuck on night. A theme that switches reliably beats a
+ * theme that fades.
+ */
+:root {
+  /* Day: a bright working sky, hazier toward the horizon. */
+  --sky-top: oklch(0.72 0.11 240);
+  --sky-mid: oklch(0.84 0.075 235);
+  --sky-horizon: oklch(0.93 0.035 225);
+  --sea-top: oklch(0.6 0.09 233);
+  --sea-deep: oklch(0.4 0.085 245);
+  --horizon-glow: oklch(0.98 0.03 205 / 0.5);
+  --veil-shallow: oklch(0.66 0.1 230 / 0.28);
+  --veil-deep: oklch(0.4 0.1 243 / 0.7);
+  --surface-line: oklch(0.98 0.02 210 / 0.85);
+  --surface-shadow: oklch(0.35 0.07 245 / 0.5);
+  --star-color: oklch(0.97 0.012 230);
+  --star-opacity: 0;
+  --shimmer-color: oklch(0.98 0.02 215);
+  --shimmer-opacity: 0.7;
+  --axis-ink: oklch(0.22 0.02 250);
+  --axis-halo: oklch(1 0 0 / 0.85);
+  --night-band: oklch(0.18 0.04 265 / 0.14);
+  --tide-fill-top: oklch(0.75 0.13 230 / 0.45);
+  --tide-fill-deep: oklch(0.45 0.15 240 / 0.65);
+}
+
+.dark {
+  /* Night: deep indigo overhead, light gathering on the horizon. */
+  --sky-top: oklch(0.17 0.055 268);
+  --sky-mid: oklch(0.22 0.055 260);
+  --sky-horizon: oklch(0.33 0.05 248);
+  --sea-top: oklch(0.27 0.045 246);
+  --sea-deep: oklch(0.13 0.03 255);
+  --horizon-glow: oklch(0.72 0.06 220 / 0.3);
+  --veil-shallow: oklch(0.3 0.05 245 / 0.35);
+  --veil-deep: oklch(0.13 0.04 252 / 0.8);
+  --surface-line: oklch(0.8 0.05 215 / 0.75);
+  --surface-shadow: oklch(0.1 0.03 255 / 0.6);
+  --star-color: oklch(0.97 0.012 230);
+  --star-opacity: 1;
+  --shimmer-color: oklch(0.85 0.05 215);
+  --shimmer-opacity: 0.85;
+  --axis-ink: oklch(0.96 0.01 240);
+  --axis-halo: oklch(0.12 0.03 258 / 0.85);
+  --night-band: oklch(0.04 0.02 265 / 0.3);
+  --tide-fill-top: oklch(0.72 0.11 225 / 0.34);
+  --tide-fill-deep: oklch(0.42 0.12 240 / 0.55);
 }
 
 @layer base {

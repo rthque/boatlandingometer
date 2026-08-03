@@ -24,6 +24,7 @@ npm run preview   # serve the built dist/
 npm run lint      # eslint (6 pre-existing shadcn fast-refresh warnings are expected)
 npm run format    # prettier --write .
 npm run stations  # regenerate src/lib/stations.json
+npm run schema    # re-cut src/assets/{fou,bl}.png from assets/*-source.png
 ```
 
 `npm run lint` must report **0 errors**; CI fails otherwise.
@@ -58,6 +59,50 @@ dev URL carries the same prefix. Building for a different host: set
 GitHub Pages has no SPA rewrite, so `vite.config.ts` copies `index.html` to
 `404.html` at build time. Keep that plugin if you add routes.
 
+## Day / night theme and the scene
+
+The plot sits in a drawn world — sky above, sea below — rather than on a white
+background. Two things anchor it, and both are physical, not decorative:
+
+- **`waterY = yOfH(0)`** — chart datum, where the sea meets the structure.
+  Everything the schema draws below it is always underwater, so the immersed
+  legs are true rather than staged.
+- **`horizonY = yOfH(4)`** — the far edge of the sea, at roughly the eye level
+  of someone on a CTV deck. Without it the sea would be the thin sliver below
+  datum and the view would read as a diagram. Expressing it as a height (not a
+  screen fraction) keeps it right when a view zooms in.
+
+`SeaScene.tsx` draws `SkyLayer` (sky, stars, sea) behind the structure and
+`WaterVeil` (water in front of the immersed part, plus the surface line) after
+it. `SceneDefs` holds the gradients and the colour-grade filters.
+
+The scene is **off for the IRL view** — that photo brings its own sky and sea,
+and the drawn one fights it. It only gets a colour grade.
+
+### Grading the structure
+
+The night grade uses `feColorMatrix type="saturate"` plus a per-channel
+`feComponentTransfer`, deliberately **not** a hand-mixed colour matrix. Mixing
+channels rotates hues, which turned the red `23m` / `10m` / `0m` calibration
+marks printed on the render olive — and those marks are the point of the
+drawing. Desaturate and darken instead: red stays red, yellow goes khaki.
+
+### Tokens
+
+Scene colours live as plain CSS custom properties in `styles.css` (`:root` =
+day, `.dark` = night). They are **not** registered with `@property`: an earlier
+version did that to transition them so the toggle read as dusk falling, but the
+transition froze at its start value going night→day and left the sky stuck on
+night. Reliability beat the flourish.
+
+`useTheme` persists the choice under `blo-theme` and follows the OS until the
+user picks one. The inline script in `index.html` resolves the class before
+first paint — keep the two in sync if you change the storage key or the rule.
+
+Note the tide-curve fill closes on chart datum, not the bottom of the plot:
+below datum the scene's sea already has it covered, and filling to the bottom
+painted a second, lighter water over the deep water and washed the legs out.
+
 ## Icons
 
 Every icon in `public/` is generated from `assets/icon-source.png` (500×500
@@ -90,6 +135,10 @@ third-party account involved.
 ## Layout notes
 
 - `src/routes/index.tsx` is the whole UI (one route). It is large by design.
+- `src/assets/fou.png` and `bl.png` are **cut out** (transparent background) so
+  the sky shows through the lattice. They are generated from the white-matted
+  originals in `assets/*-source.png` by `npm run schema` — edit the sources, not
+  the outputs. `irl.png` is a real photo and is left alone.
 - `src/lib/views.ts` defines the FOU / BL / IRL background schemas and the WC59
   vessel overlay, with the pixel geometry that maps water height to screen
   position. Changing an image means re-deriving those numbers.

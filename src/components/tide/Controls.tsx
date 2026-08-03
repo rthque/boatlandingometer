@@ -4,9 +4,11 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  MoonStarIcon,
   PauseIcon,
   PlayIcon,
   SquareIcon,
+  SunIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
 import type { CoefDayButtonComponent } from "@/components/tide/CoefDayButton";
 import type { AnimState } from "@/hooks/use-time-lapse";
+import type { Theme } from "@/hooks/use-theme";
 
 type Props = {
   selectedDate: Date;
@@ -31,6 +34,8 @@ type Props = {
   animActive: boolean;
   startAnim: () => void;
   stopAnim: () => void;
+  theme: Theme;
+  toggleTheme: () => void;
 };
 
 // The top-right control cluster: day navigation + date picker, "jump to today",
@@ -51,10 +56,23 @@ export function Controls({
   animActive,
   startAnim,
   stopAnim,
+  theme,
+  toggleTheme,
 }: Props) {
+  const night = theme === "night";
   return (
     <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
       <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8 bg-background/90 backdrop-blur-sm"
+          aria-label={night ? "Switch to day view" : "Switch to night view"}
+          title={night ? "Day view" : "Night view"}
+          onClick={toggleTheme}
+        >
+          {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
+        </Button>
         <Button
           variant="outline"
           size="icon"

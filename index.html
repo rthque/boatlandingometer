@@ -32,6 +32,22 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Resolve the theme before first paint, otherwise a night-mode user gets
+         a white flash while the bundle loads. Kept in sync with
+         src/hooks/use-theme.ts (same storage key, same rule). -->
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem("blo-theme");
+          var night =
+            s === "night" ||
+            (s !== "day" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (night) document.documentElement.classList.add("dark");
+        } catch (e) {
+          /* storage blocked — default to day */
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

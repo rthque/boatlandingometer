@@ -7,9 +7,15 @@ type Props = {
 };
 
 // Metre gridlines/labels and hour ticks/labels, overlaid directly on the schema
-// (with a white halo for legibility) rather than in white margin bands.
+// rather than in margin bands. Labels carry a halo in the opposite value to the
+// ink so they stay legible over sky, structure or sea — both tokens flip with
+// the theme (see --axis-ink / --axis-halo in styles.css).
 export function AxisGrid({ geom, yTicks, xTicks }: Props) {
   const { PAD_L, plotWidth, width, totalHeight, xOfT, yOfH } = geom;
+  const labelStyle = {
+    fill: "var(--axis-ink)",
+    stroke: "var(--axis-halo)",
+  } as const;
   return (
     <>
       {/* Y gridlines + labels (meters) */}
@@ -20,7 +26,8 @@ export function AxisGrid({ geom, yTicks, xTicks }: Props) {
             x2={PAD_L + plotWidth}
             y1={yOfH(m)}
             y2={yOfH(m)}
-            stroke="oklch(0.3 0.02 250 / 0.4)"
+            style={{ stroke: "var(--axis-ink)" }}
+            strokeOpacity={0.35}
             strokeDasharray="2 3"
           />
           <text
@@ -29,8 +36,7 @@ export function AxisGrid({ geom, yTicks, xTicks }: Props) {
             textAnchor="start"
             fontSize="18"
             fontWeight={800}
-            fill="oklch(0.2 0.02 250)"
-            stroke="white"
+            style={labelStyle}
             strokeWidth={4}
             strokeLinejoin="round"
             paintOrder="stroke"
@@ -57,8 +63,7 @@ export function AxisGrid({ geom, yTicks, xTicks }: Props) {
                 textAnchor={isFirst ? "start" : isLast ? "end" : "middle"}
                 fontSize="18"
                 fontWeight={800}
-                fill="oklch(0.2 0.02 250)"
-                stroke="white"
+                style={labelStyle}
                 strokeWidth={4}
                 strokeLinejoin="round"
                 paintOrder="stroke"
