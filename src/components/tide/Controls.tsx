@@ -67,16 +67,6 @@ export function Controls({
           variant="outline"
           size="icon"
           className="size-8 bg-background/90 backdrop-blur-sm"
-          aria-label={night ? "Switch to day view" : "Switch to night view"}
-          title={night ? "Day view" : "Night view"}
-          onClick={toggleTheme}
-        >
-          {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-8 bg-background/90 backdrop-blur-sm"
           aria-label="Previous day"
           disabled={shiftDay(selectedDate, -1) === null}
           onClick={() => {
@@ -138,18 +128,34 @@ export function Controls({
           <ChevronRightIcon className="size-4" />
         </Button>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="bg-background/90 backdrop-blur-sm"
-        onClick={() => {
-          const today = new Date();
-          const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
-          setSelectedDate(clamped);
-        }}
-      >
-        Jump to today
-      </Button>
+      {/* The day/night toggle rides with "Jump to today" rather than in the date
+          row above: on a phone that row is right-anchored and the centred view
+          switcher is already close, so every extra pixel there pushes them into
+          each other. */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8 bg-background/90 backdrop-blur-sm"
+          aria-label={night ? "Switch to day view" : "Switch to night view"}
+          title={night ? "Day view" : "Night view"}
+          onClick={toggleTheme}
+        >
+          {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-background/90 backdrop-blur-sm"
+          onClick={() => {
+            const today = new Date();
+            const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
+            setSelectedDate(clamped);
+          }}
+        >
+          Jump to today
+        </Button>
+      </div>
       <Button
         variant="outline"
         size="sm"
