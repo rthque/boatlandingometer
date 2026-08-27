@@ -4,7 +4,7 @@ Tide graph for Dieppe drawn against the jacket structure and boat landing of an
 offshore wind turbine, so you can read at a glance whether a crew transfer is
 feasible at a given time.
 
-**Live:** https://rthque.github.io/boatlandingometer/
+**Live:** https://boatlandingometer.info/
 
 ## Running it
 
@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173/boatlandingometer/
+Then open http://localhost:5173/
 
 ## Building
 
@@ -40,3 +40,6 @@ station database stays in devDependencies.
 
 Pushing to `main` builds and publishes to GitHub Pages via
 `.github/workflows/deploy.yml`. No external service, no deploy credentials.
+
+The site is served from `boatlandingometer.info`. `public/CNAME` is what tells
+GitHub Pages so; the DNS records live at OVH.

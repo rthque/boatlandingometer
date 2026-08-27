@@ -20,11 +20,12 @@ function spaFallback(): Plugin {
   };
 }
 
-// Static single-page app. `base` must match the GitHub Pages path
-// (https://rthque.github.io/boatlandingometer/); override it with
-// VITE_BASE=/ when building for a different host.
+// Static single-page app. It is served from the apex of its own domain
+// (https://boatlandingometer.info/ — see public/CNAME), so `base` is the root.
+// Override with VITE_BASE=/sub/ to build for a host that serves the app from a
+// sub-path instead, the way github.io did before the domain existed.
 export default defineConfig({
-  base: process.env.VITE_BASE ?? "/boatlandingometer/",
+  base: process.env.VITE_BASE ?? "/",
   plugins: [
     // Must run before the React plugin — it generates src/routeTree.gen.ts
     // from the files in src/routes.
