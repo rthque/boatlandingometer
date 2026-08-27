@@ -165,21 +165,18 @@ so if the scene ever looks flat, lift its _lightness_ before reaching for
 chroma. The tide band keeps slightly more colour than the sea it floats on,
 because it is data rather than scenery.
 
-`useTheme` persists the choice under `blo-theme`. **Day is the default and
-nothing infers it** — the theme changes only when the toggle is used, and a
-stored `"night"` is the one thing that opens the app in night.
+`useTheme` persists the choice under `blo-theme` and follows the OS until the
+user picks one. The inline script in `index.html` resolves the class before
+first paint — keep the two in sync if you change the storage key or the rule.
 
-`prefers-color-scheme` is deliberately not consulted. It used to be, both in
-the hook and in the inline script, and the effect was worse than it sounds:
-most systems switch themselves to dark in the evening, so the app looked like
-it was picking its own theme by the hour. Don't reintroduce it as a default —
-if OS-following is ever wanted, it belongs behind a third explicit "auto"
-choice, not as the fallback.
-
-The inline script in `index.html` resolves the class before first paint, so
-someone who chose night doesn't get a white flash. It duplicates the rule
-above rather than importing it, because it has to run before the bundle
-loads — **keep the two in sync** if you change the storage key or the rule.
+Following `prefers-color-scheme` is **deliberate**: the app should open looking
+like the machine it runs on, and the toggle is there for anyone who disagrees.
+This has already been "fixed" once by mistake — most systems flip themselves to
+dark in the evening, so from the outside the app looks like it is choosing a
+theme by the hour, and that was read as a bug. It isn't. If it ever comes up
+again, the thing to check is whether `blo-theme` is already set in that
+browser: a stored choice wins over the OS, so the app can look stuck on a theme
+when it is only obeying an earlier click.
 
 Note the tide-curve fill closes on chart datum, not the bottom of the plot:
 below datum the scene's sea already has it covered, and filling to the bottom

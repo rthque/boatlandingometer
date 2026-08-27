@@ -4,21 +4,24 @@ export type Theme = "day" | "night";
 
 const STORAGE_KEY = "blo-theme";
 
+function storedTheme(): Theme | null {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v === "day" || v === "night" ? v : null;
+  } catch {
+    // Private mode / storage disabled — fall back to the system preference.
+    return null;
+  }
+}
+
 function apply(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "night");
 }
 
 /**
- * Day/night theme, persisted per browser.
- *
- * Day is the default and nothing infers it: the theme changes only when the
- * toggle is used. The OS `prefers-color-scheme` is deliberately ignored, here
- * and in the inline script — most systems flip themselves to dark in the
- * evening, which meant the app appeared to choose its own theme by the hour.
- *
- * The initial value is resolved by that inline script in index.html so the
- * first paint is already correct; this hook reads back what it decided rather
- * than guessing again.
+ * Day/night theme, persisted per browser. The initial value is resolved by the
+ * inline script in index.html so the first paint is already correct; this hook
+ * reads back what that script decided rather than guessing again.
  */
 export function useTheme(): [Theme, (t: Theme) => void, () => void] {
   const [theme, setThemeState] = useState<Theme>(() =>
@@ -30,6 +33,15 @@ export function useTheme(): [Theme, (t: Theme) => void, () => void] {
   useEffect(() => {
     apply(theme);
   }, [theme]);
+
+  // Follow the OS until the user expresses a preference of their own.
+  useEffect(() => {
+    if (storedTheme() !== null) return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => setThemeState(mq.matches ? "night" : "day");
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   const setTheme = useCallback((t: Theme) => {
     try {
