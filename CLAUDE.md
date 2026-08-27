@@ -25,6 +25,7 @@ npm run lint      # eslint (6 pre-existing shadcn fast-refresh warnings are expe
 npm run format    # prettier --write .
 npm run stations  # regenerate src/lib/stations.json
 npm run schema    # re-cut src/assets/{fou,bl}.png from assets/*-source.png
+npm run icons     # regenerate public/ icons from assets/icon-source.png
 ```
 
 `npm run lint` must report **0 errors**; CI fails otherwise.
@@ -105,20 +106,20 @@ painted a second, lighter water over the deep water and washed the legs out.
 
 ## Icons
 
-Every icon in `public/` is generated from `assets/icon-source.png` (500×500
-RGBA) by `scripts/generate-icons.ps1`. **Don't hand-edit the outputs** — change
-the source artwork and re-run:
+Every icon in `public/` is generated from `assets/icon-source.png` (500x500
+RGBA). **Don't hand-edit the outputs** — change the source artwork and re-run:
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/generate-icons.ps1
+npm run icons
 ```
 
-That script is a Windows-only one-off (System.Drawing); it is deliberately not
-wired into the build or CI, and the generated files are committed.
+A one-off: the generated files are committed and nothing in the build or CI
+calls it. It shares `scripts/lib/png.mjs` with `npm run schema`, so both use the
+same premultiplied area resampler.
 
 It produces `favicon.ico` (16/32/48 embedded PNGs), `favicon-16x16.png`,
 `favicon-32x32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` and
-`og-image.png` (1200×630). `apple-touch-icon.png` is flattened onto white on
+`og-image.png` (1200x630). `apple-touch-icon.png` is flattened onto white on
 purpose — iOS composites home-screen icons on an opaque tile and renders
 transparency badly. The rest keep their alpha channel.
 
@@ -131,6 +132,18 @@ crawlers don't resolve relative ones.
 Push to `main` → `.github/workflows/deploy.yml` runs lint + build and publishes
 `dist/` to GitHub Pages. Nothing else to do; there is no deploy token or
 third-party account involved.
+
+## Working on this repo from anywhere
+
+Everything needed lives in the repo: `npm ci && npm run dev` on a cold clone is
+the whole setup, and every generator (`stations`, `schema`, `icons`) is plain
+Node. Nothing depends on a particular machine or OS — an earlier icon script was
+PowerShell-only and was ported for exactly that reason. Keep it that way: if you
+add tooling, make it Node, or make the build not need it.
+
+There is no local state to carry around either. The deploy runs in GitHub
+Actions, so pushing to `main` is the whole release; a session in a browser can
+do everything a session on a laptop can.
 
 ## Layout notes
 

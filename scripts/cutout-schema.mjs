@@ -16,6 +16,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { PNG } from "pngjs";
+import { downscale } from "./lib/png.mjs";
 
 // A pixel counts as background when its darkest channel is at least this. The
 // renders' matte is exactly 255; the slack swallows the lightest edge pixels.
@@ -42,68 +43,6 @@ function keyToAlpha(png) {
     }
   }
   return { cleared, total: width * height };
-}
-
-// Area-average downscale in premultiplied alpha. Premultiplying matters: the
-// cleared pixels are still white underneath, and averaging them straight would
-// bleed white into every edge.
-function downscale(src, dstW, dstH) {
-  const dst = new PNG({ width: dstW, height: dstH });
-  const sx = src.width / dstW;
-  const sy = src.height / dstH;
-
-  for (let y = 0; y < dstH; y++) {
-    const y0 = y * sy;
-    const y1 = Math.min(src.height, (y + 1) * sy);
-    const iy0 = Math.floor(y0);
-    const iy1 = Math.max(iy0 + 1, Math.ceil(y1));
-
-    for (let x = 0; x < dstW; x++) {
-      const x0 = x * sx;
-      const x1 = Math.min(src.width, (x + 1) * sx);
-      const ix0 = Math.floor(x0);
-      const ix0c = ix0;
-      const ix1 = Math.max(ix0 + 1, Math.ceil(x1));
-
-      let ar = 0,
-        ag = 0,
-        ab = 0,
-        aa = 0,
-        wsum = 0;
-
-      for (let yy = iy0; yy < iy1; yy++) {
-        const wy = Math.min(yy + 1, y1) - Math.max(yy, y0);
-        if (wy <= 0) continue;
-        for (let xx = ix0c; xx < ix1; xx++) {
-          const wx = Math.min(xx + 1, x1) - Math.max(xx, x0);
-          if (wx <= 0) continue;
-          const w = wx * wy;
-          const i = (yy * src.width + xx) << 2;
-          const a = src.data[i + 3] / 255;
-          ar += src.data[i] * a * w;
-          ag += src.data[i + 1] * a * w;
-          ab += src.data[i + 2] * a * w;
-          aa += a * w;
-          wsum += w;
-        }
-      }
-
-      const o = (y * dstW + x) << 2;
-      if (aa > 0) {
-        // Un-premultiply back to straight alpha.
-        dst.data[o] = Math.round(ar / aa);
-        dst.data[o + 1] = Math.round(ag / aa);
-        dst.data[o + 2] = Math.round(ab / aa);
-        dst.data[o + 3] = Math.round((aa / wsum) * 255);
-      } else {
-        dst.data[o] = 0;
-        dst.data[o + 1] = 0;
-        dst.data[o + 2] = 0;
-        dst.data[o + 3] = 0;
-      }
-    }
-  }
-  return dst;
 }
 
 for (const { name, maxHeight } of JOBS) {

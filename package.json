@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "stations": "node scripts/extract-stations.mjs",
-    "schema": "node scripts/cutout-schema.mjs"
+    "schema": "node scripts/cutout-schema.mjs",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
