@@ -81,30 +81,41 @@ background. Two things anchor it, and both are physical, not decorative:
   datum and the view would read as a diagram. Expressing it as a height (not a
   screen fraction) keeps it right when a view zooms in.
 
-`SeaScene.tsx` draws `SkyLayer` (sky, stars, sea) behind the structure and
-`WaterVeil` (water in front of the immersed part, plus the surface line) after
-it. `SceneDefs` holds the gradients and the colour-grade filters.
+`SeaScene.tsx` draws `SkyLayer` behind the structure — the drawn sky, stars and
+sea by day, a photograph by night (see below) — and `WaterVeil` (water in front
+of the immersed part, plus the surface line) after it. `SceneDefs` holds the
+gradients and the colour-grade filters.
 
 The scene is **off for the IRL view** — that photo brings its own sky and sea,
 and the drawn one fights it. It only gets a colour grade.
 
 ### Night backdrop photo
 
-Saving a photo as `src/assets/night-sea.{jpg,png,webp}` replaces the drawn night
-sky and sea with it. Nothing else to wire up: `src/lib/views.ts` picks the file
-up through `import.meta.glob`, which yields an empty object when no such file
-exists, so the drawn scene stays the fallback and the build works either way.
+At night the sky and sea are a photograph — `src/assets/night-sea.webp`
+(1344x768, 59 KB) — not the drawn scene. `src/lib/views.ts` picks it up through
+`import.meta.glob`, which yields an empty object when nothing matches, so
+deleting the file falls back to the drawn sky rather than breaking the build.
+Any `night-sea.{jpg,jpeg,png,webp}` is picked up the same way.
 
 The photo is scaled to cover the plot **and** to land its own horizon on
-`horizonY` — matching the physical 4 m horizon is what keeps the structure
-standing in the world rather than pasted onto a backdrop. Its aspect ratio is
-read at runtime (`useImageRatio`), so swapping the photo needs no re-derived
-numbers; only `NIGHT_SEA_HORIZON_FRAC` in `views.ts` is measured by hand, and
-only if the new photo is framed differently.
+`horizonY`. Matching the physical 4 m horizon is the whole point — it is what
+keeps the structure standing in the world instead of pasted onto a backdrop, and
+it is why the BL view (which spans 0–10 m rather than 0–25 m) still puts the
+horizon in the right place instead of stretching the picture.
+
+Its aspect ratio is read at runtime (`useImageRatio`), so swapping the artwork
+needs no re-derived pixel geometry. The one hand-measured number is
+`NIGHT_SEA_HORIZON_FRAC`. Measure it, don't eyeball it: mean row luminance
+climbs steadily from the zenith, peaks where the haze gathers at the horizon,
+then falls away into the sea — on the current photo that peak is y=378 of 768,
+hence `0.492`.
 
 `WaterVeil` and the tide band still draw on top, so the immersed legs stay
-underwater. If a photo's water is much lighter or darker than the drawn sea, the
-`--veil-*` tokens in `.dark` are the ones to nudge.
+underwater. Both were re-tuned for this photo, whose water is much darker than
+the drawn sea it replaced: the veil was crushing the (already `submergedGrade`-
+darkened) legs to black, and the tide band read as a lit slab sitting _on_ the
+picture. If you swap in a lighter or darker photo, `--veil-*` and
+`--tide-fill-*` in `.dark` are the tokens to nudge.
 
 ### Grading the structure
 

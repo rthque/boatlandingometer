@@ -20,8 +20,12 @@ export const NIGHT_SEA_IMG: string | null = Object.values(nightSeaModules)[0]?.d
 // Where the horizon sits in that photo, as a fraction of its height. The scene
 // pins it to the same height-derived horizon the drawn sky uses, so the
 // structure keeps standing *in* the world instead of in front of a picture.
-// Re-measure this if you swap in a photo framed differently.
-export const NIGHT_SEA_HORIZON_FRAC = 0.5;
+//
+// Measured on the current night-sea.webp (1344x768) rather than eyeballed: mean
+// row luminance climbs steadily from the zenith, peaks at y=378 where the haze
+// gathers, then falls away sharply into the sea. Re-measure the same way if you
+// swap in a photo framed differently.
+export const NIGHT_SEA_HORIZON_FRAC = 0.492;
 
 export type ViewId = "BL" | "FOU" | "IRL";
 
