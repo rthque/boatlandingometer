@@ -41,5 +41,6 @@ station database stays in devDependencies.
 Pushing to `main` builds and publishes to GitHub Pages via
 `.github/workflows/deploy.yml`. No external service, no deploy credentials.
 
-The site is served from `boatlandingometer.info`. `public/CNAME` is what tells
-GitHub Pages so; the DNS records live at OVH.
+The site is served from `boatlandingometer.info`. The domain is set in the
+repository's Settings → Pages, not by a file in this repo — with GitHub Actions
+as the Pages source, a `CNAME` file in the build is ignored. DNS is at OVH.

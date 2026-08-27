@@ -65,18 +65,29 @@ The app is served from the apex of its own domain,
 the base rather than hardcoding it, so the two can't drift apart. Building for a
 host that serves the app from a sub-path: set `VITE_BASE=/sub/`.
 
-`public/CNAME` (one line, bare hostname, no scheme and no `www`) is what tells
-GitHub Pages to answer on that domain. It has to live in `public/` rather than
-the repo root: `dist/` is what gets published as the Pages artifact, and Vite
-copies `public/` to the root of the build. **Deleting it silently reverts the
-site to `rthque.github.io`**, which then 404s every asset, because those are
-requested from `/` and would need to come from `/boatlandingometer/`.
+**The domain is a repository setting, not a file in this repo.** It lives in
+Settings → Pages → Custom domain, and that setting alone is what makes Pages
+answer on it.
+
+`public/CNAME` does **not** do that job here, and it is worth knowing why: when
+the Pages source is GitHub Actions, a `CNAME` file inside the published artifact
+is ignored. Confirmed the hard way on the migration commit — `dist/CNAME` was
+present and correct, the deploy went green, and `actions/deploy-pages` still
+reported `Evaluated environment url: https://rthque.github.io/boatlandingometer/`
+because the setting had not been filled in. The file is kept only as insurance
+for a future branch-based source, where it _would_ be read; treat it as inert
+today and never as the thing holding the domain up.
+
+So the coupling to actually watch is between that **setting** and `base`. They
+have to agree: with `base: "/"`, removing the custom domain drops the site back
+to `rthque.github.io/boatlandingometer/`, where every asset is requested from `/`
+and 404s. Change one and you must change the other.
 
 The DNS lives at OVH: four `A` records on the apex to GitHub's
 185.199.10{8,9,10,11}.153, four `AAAA` to `2606:50c0:800{0,1,2,3}::153`, and
 `www` as a `CNAME` to `rthque.github.io.` so it redirects to the apex. The old
-`rthque.github.io/boatlandingometer/` URL now redirects to the domain too —
-that's GitHub Pages doing its job, not a regression.
+`rthque.github.io/boatlandingometer/` URL redirects to the domain too — that's
+GitHub Pages doing its job, not a regression.
 
 GitHub Pages has no SPA rewrite, so `vite.config.ts` copies `index.html` to
 `404.html` at build time. Keep that plugin if you add routes.

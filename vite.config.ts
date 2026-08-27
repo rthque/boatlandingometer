@@ -21,9 +21,15 @@ function spaFallback(): Plugin {
 }
 
 // Static single-page app. It is served from the apex of its own domain
-// (https://boatlandingometer.info/ — see public/CNAME), so `base` is the root.
-// Override with VITE_BASE=/sub/ to build for a host that serves the app from a
-// sub-path instead, the way github.io did before the domain existed.
+// (https://boatlandingometer.info/), so `base` is the root.
+//
+// This has to agree with the custom domain in the repo's Pages settings, which
+// is what actually puts the site on that domain — not public/CNAME, which the
+// Actions-based Pages source ignores. Drop the domain there and the site falls
+// back to a /boatlandingometer/ sub-path, where a root `base` 404s every asset.
+//
+// Override with VITE_BASE=/sub/ to build for a host that does serve the app
+// from a sub-path, the way github.io did before the domain existed.
 export default defineConfig({
   base: process.env.VITE_BASE ?? "/",
   plugins: [
