@@ -143,26 +143,39 @@
  * theme that fades.
  */
 :root {
-  /* Day: a bright working sky, hazier toward the horizon. */
-  --sky-top: oklch(0.72 0.11 240);
-  --sky-mid: oklch(0.84 0.075 235);
-  --sky-horizon: oklch(0.93 0.035 225);
-  --sea-top: oklch(0.6 0.09 233);
-  --sea-deep: oklch(0.4 0.085 245);
-  --horizon-glow: oklch(0.98 0.03 205 / 0.5);
-  --veil-shallow: oklch(0.66 0.1 230 / 0.28);
-  --veil-deep: oklch(0.4 0.1 243 / 0.7);
-  --surface-line: oklch(0.98 0.02 210 / 0.85);
-  --surface-shadow: oklch(0.35 0.07 245 / 0.5);
+  /*
+   * Day: a bright working sky, hazier toward the horizon.
+   *
+   * Deliberately low-chroma. The structure is the subject and it is a
+   * high-chroma yellow; blue is that yellow's complement, so a vivid sea and
+   * sky fight it for the eye instead of holding it. Keeping the water muted is
+   * what makes the foundation read as the thing you are looking at — the
+   * separation comes from the difference in saturation, not from the background
+   * shouting back. Lightness is lifted along with it so the deep water stops
+   * reading as a heavy dark mass at the bottom of the frame.
+   */
+  --sky-top: oklch(0.775 0.063 240);
+  --sky-mid: oklch(0.865 0.042 234);
+  --sky-horizon: oklch(0.94 0.022 224);
+  --sea-top: oklch(0.665 0.055 234);
+  --sea-deep: oklch(0.475 0.055 244);
+  --horizon-glow: oklch(0.98 0.016 208 / 0.42);
+  --veil-shallow: oklch(0.7 0.055 231 / 0.26);
+  --veil-deep: oklch(0.48 0.058 243 / 0.6);
+  --surface-line: oklch(0.98 0.014 212 / 0.8);
+  --surface-shadow: oklch(0.44 0.038 245 / 0.38);
   --star-color: oklch(0.97 0.012 230);
   --star-opacity: 0;
-  --shimmer-color: oklch(0.98 0.02 215);
-  --shimmer-opacity: 0.7;
+  --shimmer-color: oklch(0.98 0.014 215);
+  --shimmer-opacity: 0.55;
   --axis-ink: oklch(0.22 0.02 250);
   --axis-halo: oklch(1 0 0 / 0.85);
-  --night-band: oklch(0.18 0.04 265 / 0.14);
-  --tide-fill-top: oklch(0.75 0.13 230 / 0.45);
-  --tide-fill-deep: oklch(0.45 0.15 240 / 0.65);
+  --night-band: oklch(0.18 0.04 265 / 0.12);
+  /* The tide band is data, not scenery, so it keeps a little more colour than
+     the sea it floats on — but only enough to stay legible as the measured
+     thing. */
+  --tide-fill-top: oklch(0.8 0.068 229 / 0.32);
+  --tide-fill-deep: oklch(0.59 0.072 239 / 0.46);
 }
 
 .dark {

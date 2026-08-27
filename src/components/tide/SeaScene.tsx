@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 import type { PlotGeom } from "@/lib/geom";
+import type { Theme } from "@/hooks/use-theme";
+import { useImageRatio } from "@/hooks/use-image-ratio";
+import { NIGHT_SEA_HORIZON_FRAC, NIGHT_SEA_IMG } from "@/lib/views";
 
 // The world the structure stands in: sky above chart datum, sea below it.
 //
@@ -168,9 +171,45 @@ export function SceneDefs({ geom, horizonY, waterY }: Props) {
   );
 }
 
-/** Sky, stars and the sea body — drawn behind the structure. */
-export function SkyLayer({ geom, horizonY }: Props) {
+/**
+ * A photographed sky and sea, used instead of the drawn ones when
+ * src/assets/night-sea.* exists.
+ *
+ * The photo is scaled to cover the plot in both directions *and* to land its
+ * own horizon on the scene's — the horizon is a physical height (4 m, roughly
+ * the eye level of someone on a CTV deck), so matching it is what keeps the
+ * structure standing in the world rather than pasted on a backdrop.
+ */
+function NightSeaPhoto({ geom, horizonY, src, ratio }: Props & { src: string; ratio: number }) {
   const { PAD_L, PAD_T, plotWidth, plotHeight } = geom;
+  const bottom = PAD_T + plotHeight;
+  // Clamped so a mis-measured constant can never divide by zero below.
+  const f = Math.min(0.95, Math.max(0.05, NIGHT_SEA_HORIZON_FRAC));
+
+  // Big enough to cover the width, to reach the top of the plot with the sky
+  // above the horizon, and to reach the bottom with the sea below it.
+  const h = Math.max(plotWidth / ratio, (horizonY - PAD_T) / f, (bottom - horizonY) / (1 - f));
+  const w = h * ratio;
+
+  return (
+    <g clipPath="url(#plotClip)" pointerEvents="none">
+      <image
+        href={src}
+        x={PAD_L + plotWidth / 2 - w / 2}
+        y={horizonY - f * h}
+        width={w}
+        height={h}
+        // w/h is the photo's own ratio, so nothing is stretched.
+        preserveAspectRatio="none"
+      />
+    </g>
+  );
+}
+
+/** Sky, stars and the sea body — drawn behind the structure. */
+export function SkyLayer({ geom, horizonY, waterY, theme }: Props & { theme?: Theme }) {
+  const { PAD_L, PAD_T, plotWidth, plotHeight } = geom;
+  const photoRatio = useImageRatio(theme === "night" ? NIGHT_SEA_IMG : null);
   const skyH = Math.max(0, horizonY - PAD_T);
   const seaH = Math.max(0, PAD_T + plotHeight - horizonY);
 
@@ -208,6 +247,21 @@ export function SkyLayer({ geom, horizonY }: Props) {
     }
     return out;
   }, [PAD_L, plotWidth, horizonY, seaH]);
+
+  // A night photo, once it has decoded, stands in for the whole drawn sky and
+  // sea. Everything else in the scene — the veil over the immersed legs, the
+  // surface line, the tide band — still applies on top of it.
+  if (NIGHT_SEA_IMG && theme === "night" && photoRatio !== null) {
+    return (
+      <NightSeaPhoto
+        geom={geom}
+        horizonY={horizonY}
+        waterY={waterY}
+        src={NIGHT_SEA_IMG}
+        ratio={photoRatio}
+      />
+    );
+  }
 
   return (
     <g clipPath="url(#plotClip)" pointerEvents="none">

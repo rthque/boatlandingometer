@@ -88,6 +88,24 @@ it. `SceneDefs` holds the gradients and the colour-grade filters.
 The scene is **off for the IRL view** — that photo brings its own sky and sea,
 and the drawn one fights it. It only gets a colour grade.
 
+### Night backdrop photo
+
+Saving a photo as `src/assets/night-sea.{jpg,png,webp}` replaces the drawn night
+sky and sea with it. Nothing else to wire up: `src/lib/views.ts` picks the file
+up through `import.meta.glob`, which yields an empty object when no such file
+exists, so the drawn scene stays the fallback and the build works either way.
+
+The photo is scaled to cover the plot **and** to land its own horizon on
+`horizonY` — matching the physical 4 m horizon is what keeps the structure
+standing in the world rather than pasted onto a backdrop. Its aspect ratio is
+read at runtime (`useImageRatio`), so swapping the photo needs no re-derived
+numbers; only `NIGHT_SEA_HORIZON_FRAC` in `views.ts` is measured by hand, and
+only if the new photo is framed differently.
+
+`WaterVeil` and the tide band still draw on top, so the immersed legs stay
+underwater. If a photo's water is much lighter or darker than the drawn sea, the
+`--veil-*` tokens in `.dark` are the ones to nudge.
+
 ### Grading the structure
 
 The night grade uses `feColorMatrix type="saturate"` plus a per-channel
@@ -103,6 +121,14 @@ day, `.dark` = night). They are **not** registered with `@property`: an earlier
 version did that to transition them so the toggle read as dusk falling, but the
 transition froze at its start value going night→day and left the sky stuck on
 night. Reliability beat the flourish.
+
+The **day** sky and sea are deliberately low-chroma. The structure is the
+subject and it is a high-chroma yellow; blue is that yellow's complement, so a
+vivid sea and sky fight it for the eye instead of holding it. The separation
+comes from the difference in saturation, not from the background shouting back —
+so if the scene ever looks flat, lift its _lightness_ before reaching for
+chroma. The tide band keeps slightly more colour than the sea it floats on,
+because it is data rather than scenery.
 
 `useTheme` persists the choice under `blo-theme` and follows the OS until the
 user picks one. The inline script in `index.html` resolves the class before

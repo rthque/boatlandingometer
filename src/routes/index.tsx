@@ -355,7 +355,9 @@ function Index() {
               <SceneDefs geom={geom} horizonY={horizonY} waterY={waterY} />
             </defs>
 
-            {showScene && <SkyLayer geom={geom} horizonY={horizonY} waterY={waterY} />}
+            {showScene && (
+              <SkyLayer geom={geom} horizonY={horizonY} waterY={waterY} theme={theme} />
+            )}
 
             <BackgroundLayer
               geom={geom}

@@ -6,6 +6,23 @@ import wc59Img from "@/assets/wc59.png";
 // Tide station used for both the predictions and the sunrise/sunset times.
 export const DIEPPE = { latitude: 49.9253, longitude: 1.0758 };
 
+// Optional night backdrop: a photo saved as src/assets/night-sea.{jpg,png,webp}
+// replaces the drawn night sky and sea. With no such file this resolves to null
+// and the scene falls back to the drawn one, so the build works either way —
+// import.meta.glob yields an empty object when nothing matches rather than
+// failing to resolve an import.
+const nightSeaModules = import.meta.glob<{ default: string }>(
+  "../assets/night-sea.{jpg,jpeg,png,webp}",
+  { eager: true },
+);
+export const NIGHT_SEA_IMG: string | null = Object.values(nightSeaModules)[0]?.default ?? null;
+
+// Where the horizon sits in that photo, as a fraction of its height. The scene
+// pins it to the same height-derived horizon the drawn sky uses, so the
+// structure keeps standing *in* the world instead of in front of a picture.
+// Re-measure this if you swap in a photo framed differently.
+export const NIGHT_SEA_HORIZON_FRAC = 0.5;
+
 export type ViewId = "BL" | "FOU" | "IRL";
 
 export type ViewConfig = {
