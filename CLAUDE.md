@@ -49,6 +49,14 @@ against `@neaps/tide-database`'s `nearest()` before trusting the output.
 `src/lib/tides.ts` is pure synchronous computation. It is not a hook, has no
 loading state, and must stay free of network calls.
 
+`@neaps/tide-database` is pinned to an **exact** version because it is a
+generator input: a floating range meant `npm run stations` produced a diff on a
+fresh install, which is noise you would have to judge every time. When you do
+bump it, re-run `npm run stations` and compare predictions before and after
+rather than trusting the diff — upstream refines the datums, which shifts
+heights. The last bump moved them by at most 4 mm with the harmonic constituents
+untouched and timings identical.
+
 ## Base path
 
 The app is served from `https://rthque.github.io/boatlandingometer/`, so
