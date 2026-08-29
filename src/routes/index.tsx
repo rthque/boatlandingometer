@@ -388,7 +388,7 @@ function Index() {
               <Wc59Overlay
                 geom={geom}
                 targetHeight={targetHeight}
-                landingRightFrac={viewConfig.landingRightFrac}
+                bowBerthFrac={viewConfig.bowBerthFrac}
                 imageLeft={imageLeft}
                 imageDisplayWidth={imageDisplayWidth}
               />

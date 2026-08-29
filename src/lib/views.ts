@@ -33,9 +33,12 @@ export type ViewConfig = {
   img: string;
   ratio: number;
   calib: { h: number; frac: number }[];
-  // Right edge of the central boat-landing column, as a fraction of the image
-  // width — the WC59 CTV is parked just to the right of this.
-  landingRightFrac: number;
+  // The face of the boat landing the WC59's bow fender rests against, as a
+  // fraction of the image width. A CTV works by pushing its fender onto the
+  // landing and holding there, so in this side-on projection the vessel
+  // overlaps the landing rather than floating clear of it. Measured as the
+  // LEFT edge of the central landing column — see each view below.
+  bowBerthFrac: number;
 };
 
 export const VIEWS: Record<ViewId, ViewConfig> = {
@@ -46,7 +49,9 @@ export const VIEWS: Record<ViewId, ViewConfig> = {
     // horizontal "→" arrows pointing at the leg: "10m→" shaft at y≈115
     // (frac 0.079) and "0m→" shaft at y≈1360 (frac 0.934). (The red collar
     // band at frac 0.266 is a structural feature, NOT the 10m level.)
-    landingRightFrac: 0.61,
+    // Landing column's left edge, measured on the alpha channel at 3/5/7 m:
+    // frac 0.4947 / 0.4963 / 0.4963.
+    bowBerthFrac: 0.495,
     calib: [
       { h: 10, frac: 0.079 },
       { h: 0, frac: 0.934 },
@@ -57,7 +62,9 @@ export const VIEWS: Record<ViewId, ViewConfig> = {
     ratio: 3968 / 4257,
     // Measured from fou.png (3968×4257): the "10m→" arrow shaft points at the
     // leg at y≈2291 (frac 0.538) and the "0m→" arrow at y≈3733 (frac 0.877).
-    landingRightFrac: 0.55,
+    // Landing column's left edge, measured on the alpha channel at 3/5/7 m:
+    // frac 0.4785 / 0.4796 / 0.4796.
+    bowBerthFrac: 0.479,
     calib: [
       { h: 10, frac: 0.538 },
       { h: 0, frac: 0.877 },
@@ -72,7 +79,15 @@ export const VIEWS: Record<ViewId, ViewConfig> = {
     // perspective, so the mapping is piecewise-linear through these three
     // points — this puts the tether line at 3.5m (not the 3.92m a straight
     // 10m–1m line would give) while keeping 10m and 1m exact.
-    landingRightFrac: 0.62,
+    // The one berth that is NOT the column's left edge, and the one left
+    // untouched when the other two were measured. Two reasons. irl.png is a
+    // photograph, so there is no alpha silhouette to scan and an edge scan
+    // wandered between frac 0.43 and 0.55 depending on the row. And this is a
+    // close-up, so the landing is wide in frame: putting the bow on its left
+    // edge buries the ladder under the hull, and the ladder is what the view
+    // exists to show. At 0.62 the fender already meets the column on the near
+    // side with no gap, which reads the same to anyone looking at it.
+    bowBerthFrac: 0.62,
     calib: [
       { h: 10, frac: 0.448 },
       { h: 3.5, frac: 0.8128 },
@@ -86,12 +101,16 @@ export const VIEWS: Record<ViewId, ViewConfig> = {
 // the periwinkle below-waterline band) is at y≈1059, and the highest blue point
 // of the hull at the bow is at y≈671 — that 388 px vertical span is 3 m in
 // reality. The boat is scaled so this span = 3 m on the schema's height axis, its
-// waterline sits on the red line, and it is parked just right of the boat landing.
+// waterline sits on the red line, and its bow fender lands on bowBerthFrac.
 export const WC59 = {
   img: wc59Img,
   ratio: 2574 / 1254,
   waterlineFrac: 1059 / 1254, // top→waterline, fraction of image height
   refFrac: (1059 - 671) / 1254, // bow-top→waterline span, fraction of height
   refM: 3, // real height of that span (m)
-  bowWaterlineFracX: 142 / 2574, // leftmost blue point at waterline, frac of width
+  // Leftmost pixel of the black bow fender, so the fender itself can be put on
+  // the berth line rather than the image's edge. It is only ~0.4% of the width
+  // in — the fender all but touches the edge of the artwork — but anchoring on
+  // it is what makes bowBerthFrac mean exactly what it says.
+  bowFenderFracX: 10 / 2574,
 };

@@ -4,14 +4,14 @@ import { WC59 } from "@/lib/views";
 type Props = {
   geom: PlotGeom;
   targetHeight: number;
-  landingRightFrac: number;
+  bowBerthFrac: number;
   imageLeft: number;
   imageDisplayWidth: number;
 };
 
 // WC59 CTV — its waterline sits on the red line, scaled so the bow (top of the
-// blue hull) → waterline = 3 m on the schema's height axis; parked just right of
-// the boat landing, and it rises and falls with the tide.
+// blue hull) → waterline = 3 m on the schema's height axis; its bow fender
+// against the boat landing, and it rises and falls with the tide.
 //
 // It stays in that berth during the time-lapse too, riding straight up and down
 // the boat landing. It used to track the marker along the sinusoid, which read
@@ -21,7 +21,7 @@ type Props = {
 export function Wc59Overlay({
   geom,
   targetHeight,
-  landingRightFrac,
+  bowBerthFrac,
   imageLeft,
   imageDisplayWidth,
 }: Props) {
@@ -33,9 +33,11 @@ export function Wc59Overlay({
   const boatH = px3m / WC59.refFrac;
   const boatW = boatH * WC59.ratio;
   const boatTop = wlY - WC59.waterlineFrac * boatH;
-  // Berthed just right of the boat landing (bow at the column's right edge),
-  // whatever the tide is doing and whether or not the time-lapse is running.
-  const boatLeft = imageLeft + landingRightFrac * imageDisplayWidth;
+  // Berthed with the bow fender on the landing, whatever the tide is doing and
+  // whether or not the time-lapse is running. The fender sits a little way into
+  // the artwork, so that inset comes off the image's x to put the fender itself
+  // — not the edge of the PNG — on the berth line.
+  const boatLeft = imageLeft + bowBerthFrac * imageDisplayWidth - WC59.bowFenderFracX * boatW;
   return (
     <image
       href={WC59.img}
