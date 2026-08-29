@@ -391,8 +391,6 @@ function Index() {
                 landingRightFrac={viewConfig.landingRightFrac}
                 imageLeft={imageLeft}
                 imageDisplayWidth={imageDisplayWidth}
-                animActive={animActive}
-                animT={animT}
               />
             )}
 
