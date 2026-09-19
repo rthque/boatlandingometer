@@ -212,26 +212,32 @@ statement of what the app is for, plus the incident clip that explains why the
 window matters. It is last in the stack deliberately — the date/theme row above
 it already runs close to the centred view switcher on a phone.
 
-The clip lives on Google Drive and is **the only third-party request the page
-makes**; everything else is served from our own origin. Two things follow from
-that, and both have bitten already:
+The clip is `src/assets/splash-zone-incident.mp4` (368x640, 33 s, 2.8 MB —
+lighter than `fou.png`), imported directly and played by a plain `<video>`. It
+is **not** declared with an aspect ratio: the file carries its own and the
+browser uses it, so swapping the clip needs no numbers re-derived. The only
+constraint is `max-h-[60dvh]`, which stops a portrait clip filling the panel.
+`playsInline` is load-bearing — without it iOS hijacks the tap into its own
+fullscreen player.
 
-- It plays for visitors only while the file's sharing is "Anyone with the link
-  — Viewer". Restricted to an account, Google renders a sign-in wall inside the
-  iframe. The plain link under the player is the way out when that happens, so
-  keep it.
-- **The clip is portrait**, shot on a phone held upright. It first shipped in an
-  `aspect-video` box, where Drive letterboxed it to roughly a quarter of the
-  frame's width between two black bars — unreadable on a 390px screen. The box
-  is now `aspect-[9/16]` with a capped width. Its exact ratio is unknown (the
-  file is not ours to inspect), so 9/16 is a deliberate near-miss: whichever way
-  it is wrong, the player only adds thin bars instead of swallowing the frame.
-- **A cross-origin iframe swallows the Escape key.** Radix focuses the first
-  tabbable child when the dialog opens, which is the iframe; focus then sits in
-  Google's document, the keydown never reaches our handler, and the dialog
-  cannot be closed from the keyboard at all. `onOpenAutoFocus` is overridden to
-  put focus on the panel instead. Don't remove it — Tab still walks into the
-  player for anyone who wants it, and the tests cover both halves.
+It was briefly embedded from Google Drive instead, and that is worth not
+repeating:
+
+- Drive's player folds its controls into a stacked column **in the middle of
+  the picture** once the frame is narrow, and a phone dialog is only ~340px
+  wide, so there is no width to give it. The iframe is cross-origin, so none of
+  it can be styled from here.
+- Before that it sat in an `aspect-video` box, where Drive letterboxed the
+  portrait frame down to about a quarter of the width between two black bars.
+- **A cross-origin iframe also swallows the Escape key.** Radix focuses the
+  first tabbable child on open; with an iframe there, focus sat in Google's
+  document, the keydown never reached our handler, and the dialog could not be
+  closed from the keyboard at all. `onOpenAutoFocus` is still overridden to put
+  focus on the panel — now mostly so the player does not take a focus ring, but
+  keep it if a frame ever comes back.
+
+Serving the file ourselves also means the page makes no third-party request at
+all, which is the rest of this repo's posture anyway.
 
 ## Deployment
 

@@ -9,27 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// The incident clip stays on Google Drive rather than being committed here: it
-// is the one asset in this app that isn't ours to re-encode, and a video would
-// dwarf every other file in the repo.
-//
-// It only plays for a visitor if the file's sharing is set to "Anyone with the
-// link — Viewer". Left restricted to an account, Google serves a sign-in wall
-// inside the iframe instead of the player, which is why the plain link sits
-// underneath as a way out. This is also the one thing on the page that reaches
-// a third party; everything else is served from our own origin.
-const INCIDENT_VIDEO_ID = "11Ah42gQkb8zuc6EdlBskIq9bVLdkcVJW";
-const INCIDENT_VIDEO_URL = `https://drive.google.com/file/d/${INCIDENT_VIDEO_ID}/view`;
-const INCIDENT_VIDEO_EMBED = `https://drive.google.com/file/d/${INCIDENT_VIDEO_ID}/preview`;
+import incidentClip from "@/assets/splash-zone-incident.mp4";
 
 /**
  * The "what is this for" button and its panel.
  *
  * Deliberately an icon at the end of the control stack rather than anything
  * louder: someone who already knows what the app does should never have to look
- * at it. The dialog only mounts its contents when open, so the Drive iframe is
- * not fetched for the people who never press it.
+ * at it.
  */
 export function AboutDialog() {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -51,12 +38,9 @@ export function AboutDialog() {
       <DialogContent
         ref={contentRef}
         tabIndex={-1}
-        // On open, Radix focuses the first tabbable child — which here is the
-        // Drive iframe. Focus inside a cross-origin frame means the Escape key
-        // is delivered to Google's document and never reaches the handler that
-        // closes this, so a keyboard user has no way out. Put the focus on the
-        // panel itself instead; Tab still walks into the player for anyone who
-        // wants it.
+        // Radix focuses the first tabbable child on open, which here is the
+        // video. Landing on the panel instead keeps the focus ring off the
+        // player and keeps Escape unambiguous; Tab still reaches the controls.
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           contentRef.current?.focus();
@@ -97,34 +81,17 @@ export function AboutDialog() {
             A rope access technician caught by a wave in the splash zone. Anticipating the window is
             what keeps a job from ending like this.
           </p>
-          {/* The clip was shot on a phone, held upright, so the frame is
-              portrait. In a 16:9 box Drive letterboxes it down to a sliver
-              between two wide black bars — on a 390px screen the footage ended
-              up about a quarter of the frame's width. A portrait box with a
-              capped width keeps it legible on a phone without letting it eat
-              the whole panel on a desktop, and it degrades gently: the exact
-              ratio of the source is unknown (it is not a file we hold), so
-              whichever way 9/16 is off, the player just adds thin bars. */}
-          <div className="mx-auto aspect-[9/16] w-full max-w-[300px] overflow-hidden rounded-md border border-border bg-black">
-            <iframe
-              src={INCIDENT_VIDEO_EMBED}
-              title="Rope access technician struck by a wave in the splash zone"
-              className="h-full w-full"
-              allowFullScreen
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Hosted on Google Drive —{" "}
-            <a
-              href={INCIDENT_VIDEO_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2"
-            >
-              open it there
-            </a>{" "}
-            if the player above does not load.
-          </p>
+          {/* No aspect ratio declared: the file carries its own (368x640), and
+              the height cap is the only thing stopping a portrait clip from
+              filling the panel. playsInline matters — without it iOS hijacks
+              the tap into its own fullscreen player. */}
+          <video
+            src={incidentClip}
+            controls
+            playsInline
+            preload="metadata"
+            className="mx-auto max-h-[60dvh] w-auto rounded-md border border-border bg-black"
+          />
         </div>
       </DialogContent>
     </Dialog>
