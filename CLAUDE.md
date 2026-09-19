@@ -220,6 +220,12 @@ that, and both have bitten already:
   — Viewer". Restricted to an account, Google renders a sign-in wall inside the
   iframe. The plain link under the player is the way out when that happens, so
   keep it.
+- **The clip is portrait**, shot on a phone held upright. It first shipped in an
+  `aspect-video` box, where Drive letterboxed it to roughly a quarter of the
+  frame's width between two black bars — unreadable on a 390px screen. The box
+  is now `aspect-[9/16]` with a capped width. Its exact ratio is unknown (the
+  file is not ours to inspect), so 9/16 is a deliberate near-miss: whichever way
+  it is wrong, the player only adds thin bars instead of swallowing the frame.
 - **A cross-origin iframe swallows the Escape key.** Radix focuses the first
   tabbable child when the dialog opens, which is the iframe; focus then sits in
   Google's document, the keydown never reaches our handler, and the dialog

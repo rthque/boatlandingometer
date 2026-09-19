@@ -97,7 +97,15 @@ export function AboutDialog() {
             A rope access technician caught by a wave in the splash zone. Anticipating the window is
             what keeps a job from ending like this.
           </p>
-          <div className="aspect-video w-full overflow-hidden rounded-md border border-border bg-muted">
+          {/* The clip was shot on a phone, held upright, so the frame is
+              portrait. In a 16:9 box Drive letterboxes it down to a sliver
+              between two wide black bars — on a 390px screen the footage ended
+              up about a quarter of the frame's width. A portrait box with a
+              capped width keeps it legible on a phone without letting it eat
+              the whole panel on a desktop, and it degrades gently: the exact
+              ratio of the source is unknown (it is not a file we hold), so
+              whichever way 9/16 is off, the player just adds thin bars. */}
+          <div className="mx-auto aspect-[9/16] w-full max-w-[300px] overflow-hidden rounded-md border border-border bg-black">
             <iframe
               src={INCIDENT_VIDEO_EMBED}
               title="Rope access technician struck by a wave in the splash zone"
