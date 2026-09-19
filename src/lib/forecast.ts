@@ -10,23 +10,26 @@
 // usable from a static site with no server and no credentials to hide.
 
 /**
- * Where the forecast is taken.
+ * Where the forecast is taken: the structure itself, 50°10\'46.9"N 1°10\'21.1"E.
  *
- * NOT the tide reference. Tides stay on Dieppe (see DIEPPE in views.ts) because
- * that is the harmonic station; waves are read at the structure, because
- * significant height in a sheltered harbour and significant height in the open
- * sea a few miles out are not the same number, and it is the second one that
- * decides whether anybody goes down to the splash zone.
+ * NOT the tide reference, and the gap is the point. Tides stay on Dieppe (see
+ * DIEPPE in views.ts) because that is the harmonic station, but the structure
+ * is 29 km NNE of it, in open Channel. Significant height in a sheltered
+ * harbour and significant height 29 km offshore are not the same number, and it
+ * is the second one that decides whether anybody goes down to the splash zone.
+ *
+ * The placeholder this replaced sat 17 km away, which is why the panel wore an
+ * "approx. position" chip until the real position arrived.
  */
 export const FORECAST_SITE = {
-  latitude: 50.03,
-  longitude: 1.2,
+  latitude: 50.179694,
+  longitude: 1.172528,
   /**
-   * True once the exact position of the structure is filled in above. While
-   * this is false the panel says so, because a wave height is worth nothing
-   * without knowing which patch of sea it belongs to.
+   * Whether the coordinates above are the structure's own. False makes the
+   * panel say so, because a wave height is worth nothing without knowing which
+   * patch of sea it belongs to.
    */
-  exact: false,
+  exact: true,
 };
 
 const MARINE_URL = "https://marine-api.open-meteo.com/v1/marine";

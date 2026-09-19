@@ -272,14 +272,18 @@ Two numbers deserve care:
   UI shows it as `max ~x.x m` and says so in its tooltip. Don't present it as a
   modelled value.
 
-`FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference. Tides stay
-on Dieppe because that is the harmonic station; waves are read at the structure,
-because significant height in a sheltered harbour and significant height in open
-sea a few miles out are different numbers and it is the second that decides
-whether anyone goes down. While `FORECAST_SITE.exact` is `false` the panel
-carries an "approx. position" chip — a wave height is worth nothing without
-knowing which patch of sea it belongs to. Set the real coordinates, flip
-`exact` to `true`, and the chip goes away.
+`FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference, and the gap
+between them is the whole point. Tides stay on Dieppe because that is the
+harmonic station; the structure is at 50°10'46.9"N 1°10'21.1"E — **29 km NNE of
+Dieppe port**, in open Channel. Significant height in a sheltered harbour and
+significant height 29 km offshore are different numbers, and it is the second
+that decides whether anyone goes down.
+
+That distance is not academic. The panel first shipped against an approximate
+offshore point which turned out to be 17 km from the real one, and wore an
+"approx. position" chip for exactly that reason. `FORECAST_SITE.exact` drives
+that chip: if the coordinates are ever replaced by a guess again, set it back to
+`false` rather than letting the panel imply a precision it does not have.
 
 The app's date range runs to 2028 but the model only runs about a week, so the
 panel says "Forecast covers 7 days" for anything beyond it. `outOfRange` is
