@@ -205,6 +205,28 @@ transparency badly. The rest keep their alpha channel.
 for Android home screens. `og:image` must stay an **absolute** URL; social
 crawlers don't resolve relative ones.
 
+## About panel
+
+`AboutDialog.tsx` is the ⓘ at the end of the control stack: a short English
+statement of what the app is for, plus the incident clip that explains why the
+window matters. It is last in the stack deliberately — the date/theme row above
+it already runs close to the centred view switcher on a phone.
+
+The clip lives on Google Drive and is **the only third-party request the page
+makes**; everything else is served from our own origin. Two things follow from
+that, and both have bitten already:
+
+- It plays for visitors only while the file's sharing is "Anyone with the link
+  — Viewer". Restricted to an account, Google renders a sign-in wall inside the
+  iframe. The plain link under the player is the way out when that happens, so
+  keep it.
+- **A cross-origin iframe swallows the Escape key.** Radix focuses the first
+  tabbable child when the dialog opens, which is the iframe; focus then sits in
+  Google's document, the keydown never reaches our handler, and the dialog
+  cannot be closed from the keyboard at all. `onOpenAutoFocus` is overridden to
+  put focus on the panel instead. Don't remove it — Tab still walks into the
+  player for anyone who wants it, and the tests cover both halves.
+
 ## Deployment
 
 Push to `main` → `.github/workflows/deploy.yml` runs lint + build and publishes

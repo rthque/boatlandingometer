@@ -11,6 +11,7 @@ import {
   SunIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AboutDialog } from "@/components/tide/AboutDialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
@@ -208,6 +209,10 @@ export function Controls({
           </Button>
         </div>
       )}
+      {/* Last in the stack on purpose: it is the one control nobody needs twice,
+          and putting it in the date/theme row above would crowd a row that
+          already runs close to the centred view switcher on a phone. */}
+      <AboutDialog />
     </div>
   );
 }
