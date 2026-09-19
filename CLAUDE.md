@@ -236,8 +236,60 @@ repeating:
   focus on the panel — now mostly so the player does not take a focus ring, but
   keep it if a frame ever comes back.
 
-Serving the file ourselves also means the page makes no third-party request at
-all, which is the rest of this repo's posture anyway.
+Serving the file ourselves means the About panel costs no third-party request,
+which was this repo's posture everywhere until the forecast arrived (below) —
+that one is now the single outbound call the page makes.
+
+## Forecast panel
+
+`ForecastPanel.tsx` shows wave and wind for the selected day, under the tide
+extremes in the top-left column. Two lines, because it sits over the drawing
+and the drawing is what is being read; the detail lives in `title` attributes.
+
+**This is the only network call the app makes.** Everything else — tides, sun
+times, the whole scene — is computed locally or served from our own origin, and
+should stay that way. `src/lib/tides.ts` in particular must remain free of
+network calls. A forecast cannot be computed offline, so it is the exception,
+and it is written to fail quietly: react-query caches it for 30 minutes, retries
+once, and the panel renders "Forecast unavailable" rather than taking the page
+down.
+
+Source is Open-Meteo — free, no API key, CORS-enabled, which is the combination
+that makes it usable from a static site with no server and no secret to hide.
+Two endpoints, both asked for the same days in `Europe/Paris` so their daily
+buckets line up with the calendar the app already shows: the marine API for
+`wave_height_max` and `wave_period_max`, the forecast API for
+`wind_speed_10m_max`, `wind_gusts_10m_max` and `wind_direction_10m_dominant` in
+knots.
+
+Two numbers deserve care:
+
+- **Hs** is the daily peak _significant_ wave height, straight from the model.
+- **Hmax** is **derived, not forecast**: `1.86 × Hs`. Hs is the mean of the
+  highest third, not a ceiling, and the wave that reaches someone on the ladder
+  is the big one. For Rayleigh-distributed heights over N waves the ratio is
+  `0.5·√(2·ln N)`, and N ≈ 1000 waves in a three-hour sea state gives 1.86. The
+  UI shows it as `max ~x.x m` and says so in its tooltip. Don't present it as a
+  modelled value.
+
+`FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference. Tides stay
+on Dieppe because that is the harmonic station; waves are read at the structure,
+because significant height in a sheltered harbour and significant height in open
+sea a few miles out are different numbers and it is the second that decides
+whether anyone goes down. While `FORECAST_SITE.exact` is `false` the panel
+carries an "approx. position" chip — a wave height is worth nothing without
+knowing which patch of sea it belongs to. Set the real coordinates, flip
+`exact` to `true`, and the chip goes away.
+
+The app's date range runs to 2028 but the model only runs about a week, so the
+panel says "Forecast covers 7 days" for anything beyond it. `outOfRange` is
+deliberately false while loading: claiming a date is past the window before
+anything has come back would be a lie that then corrects itself on screen.
+
+Response parsing trusts nothing. Open-Meteo returns parallel arrays, and a
+missing or short one yields nulls for that field rather than throwing, so an
+endpoint changing shape degrades the panel instead of blanking the app. There
+are tests for the malformed-response path for that reason.
 
 ## Deployment
 

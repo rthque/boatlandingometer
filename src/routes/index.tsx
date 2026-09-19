@@ -12,6 +12,7 @@ import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
 import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
+import { ForecastPanel } from "@/components/tide/ForecastPanel";
 import { Controls } from "@/components/tide/Controls";
 import { BackgroundLayer } from "@/components/tide/BackgroundLayer";
 import { AxisGrid } from "@/components/tide/AxisGrid";
@@ -305,7 +306,12 @@ function Index() {
   return (
     <div className="h-[100dvh] overflow-hidden bg-background text-foreground">
       <div className="w-full h-full flex flex-col">
-        <ExtremesList extremes={visibleExtremes} />
+        {/* One column so the forecast always sits directly under the last
+            extreme, whether the day has three or four of them. */}
+        <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
+          <ExtremesList extremes={visibleExtremes} />
+          <ForecastPanel selectedDate={selectedDate} />
+        </div>
         <ViewSwitcher view={view} setView={setView} />
         <Controls
           selectedDate={selectedDate}

@@ -1,11 +1,12 @@
 import { fmtTime, type ExtremePoint } from "@/lib/tide-math";
 
 // The list of the day's high/low waters (time, height and, for high waters, the
-// tidal coefficient), pinned to the bottom-left on phones and top-left on wider
-// screens.
+// tidal coefficient). Positioning lives with the caller — it shares the
+// top-left column with the forecast panel, which has to sit directly under it
+// however many extremes the day has.
 export function ExtremesList({ extremes }: { extremes: ExtremePoint[] }) {
   return (
-    <div className="absolute top-24 left-2 z-20 flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5">
       {extremes.map((e, i) => (
         <div
           key={i}
