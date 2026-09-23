@@ -205,12 +205,35 @@ transparency badly. The rest keep their alpha channel.
 for Android home screens. `og:image` must stay an **absolute** URL; social
 crawlers don't resolve relative ones.
 
+## Control stack
+
+`Controls.tsx` is the top-right column. It is right-anchored and the view
+switcher is centred, so on a phone the two meet in the middle: every row that
+grows sideways eats into that gap, and every row that exists at all pushes the
+stack further down the screen. Both budgets are tight, which is why the rows
+are grouped rather than one control per line:
+
+```
+[<]  [Sep 23, 2026]  [>]
+              [Jump to today]
+     [Bottom tether line works]
+        [WC59] [☾] [ⓘ]
+             [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
+                                        [Speed        12 s/day ]
+                                        [ —●———————————— ]
+```
+
+WC59 with the two icon buttons is 131px at 390px wide, which clears the
+switcher. Putting them together is also what buys the room for the speed
+slider: the theme toggle and the ⓘ each used to own a row, and the stack now
+ends at the same height as before even with the slider open.
+
 ## About panel
 
-`AboutDialog.tsx` is the ⓘ at the end of the control stack: a short English
-statement of what the app is for, plus the incident clip that explains why the
-window matters. It is last in the stack deliberately — the date/theme row above
-it already runs close to the centred view switcher on a phone.
+`AboutDialog.tsx` is the ⓘ in the control stack: a short English statement of
+what the app is for, plus the incident clip that explains why the window
+matters. It shares a row with WC59 and the day/night toggle (see **Control
+stack** below).
 
 The clip is `src/assets/splash-zone-incident.mp4` (368x640, 33 s, 2.8 MB —
 lighter than `fou.png`), imported directly and played by a plain `<video>`. It
@@ -334,6 +357,42 @@ sandbox these sessions run in denies every weather host at the egress proxy, so
 the live response has never been seen from inside one. If you change a field
 name, you are changing something no automated check in the repo covers — load
 the real site and look.
+
+## Time-lapse
+
+`use-time-lapse.ts` is a clock, not an animation: it accumulates real elapsed
+time into `animT` (hours since local midnight) and rolls the selected date over
+at 24. `animT` drives the dashed marker and the red height line; the tide curve
+itself is just redrawn for whatever day is selected.
+
+Speed is adjustable from **12 s per simulated day** (the rate it always ran at,
+and still the default) to **0.25 s** — four days a second. The fast end is not
+the slow end with the patience removed, it answers a different question: at four
+days a second a single day is a blur but the _envelope_ is not, and you watch
+the range swell and collapse across springs and neaps. That is the thing a
+column of coefficients states and no single day's graph ever shows.
+
+Three things in there are load-bearing:
+
+- **The slider is logarithmic.** Linear over a 48× range puts the whole legible
+  half of the scale in the last few percent of the travel. `posToSecPerDay` is
+  geometric, so equal distances are equal _ratios_.
+- **The loop reads the rate from a ref**, never from the effect's dependency
+  array. Taking `secPerDay` as a dependency would tear down and rebuild the rAF
+  loop on every pixel the thumb moves. Through a ref the running clock picks up
+  the new rate on its next frame, so dragging never interrupts playback.
+- **`MAX_FRAME_S` clamps `dt`.** requestAnimationFrame stops in a hidden tab, so
+  the first frame back carries the whole absence with it — at four days a second
+  half a minute in another tab is four months of tide in one step. Clamped, the
+  time-lapse resumes where you left it. The clamp also keeps any single frame
+  under one day at top speed, and the rollover is a `while` loop rather than one
+  subtraction so a stutter that does span a day cannot leave the clock past
+  midnight with the marker off the right-hand edge.
+
+Measured on the production build in Chromium: 60 fps at every speed, with and
+without the WC59 overlay. `crossings` re-runs 2880 tide evaluations on each
+frame while the line tracks the water and that is still not the bottleneck, so
+don't optimise it on suspicion — measure first.
 
 ## Deployment
 

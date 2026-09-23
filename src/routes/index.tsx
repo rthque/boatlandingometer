@@ -260,10 +260,17 @@ function Index() {
 
   const nowH = isToday ? tideHeight(nowT) : null;
 
-  const { animState, setAnimState, animT, animActive, startAnim, stopAnim } = useTimeLapse(
-    selectedDate,
-    setSelectedDate,
-  );
+  const {
+    animState,
+    setAnimState,
+    animT,
+    animActive,
+    startAnim,
+    stopAnim,
+    speedPos,
+    setSpeedPos,
+    secPerDay,
+  } = useTimeLapse(selectedDate, setSelectedDate);
 
   useEffect(() => {
     if (targetHeight === null && allExtremes.length > 0) {
@@ -329,6 +336,9 @@ function Index() {
           animActive={animActive}
           startAnim={startAnim}
           stopAnim={stopAnim}
+          speedPos={speedPos}
+          setSpeedPos={setSpeedPos}
+          secPerDay={secPerDay}
           theme={theme}
           toggleTheme={toggleTheme}
         />

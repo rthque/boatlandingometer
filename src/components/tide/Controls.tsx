@@ -11,12 +11,13 @@ import {
   SunIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { AboutDialog } from "@/components/tide/AboutDialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
 import type { CoefDayButtonComponent } from "@/components/tide/CoefDayButton";
-import type { AnimState } from "@/hooks/use-time-lapse";
+import { fmtSpeed, SPEED_POS_MAX, type AnimState } from "@/hooks/use-time-lapse";
 import type { Theme } from "@/hooks/use-theme";
 
 type Props = {
@@ -35,12 +36,16 @@ type Props = {
   animActive: boolean;
   startAnim: () => void;
   stopAnim: () => void;
+  speedPos: number;
+  setSpeedPos: (v: number) => void;
+  secPerDay: number;
   theme: Theme;
   toggleTheme: () => void;
 };
 
 // The top-right control cluster: day navigation + date picker, "jump to today",
-// the tether-line preset, the WC59 toggle and the time-lapse transport.
+// the tether-line preset, the WC59 / theme / about row and the time-lapse
+// transport with its speed slider.
 export function Controls({
   selectedDate,
   setSelectedDate,
@@ -57,6 +62,9 @@ export function Controls({
   animActive,
   startAnim,
   stopAnim,
+  speedPos,
+  setSpeedPos,
+  secPerDay,
   theme,
   toggleTheme,
 }: Props) {
@@ -129,11 +137,39 @@ export function Controls({
           <ChevronRightIcon className="size-4" />
         </Button>
       </div>
-      {/* The day/night toggle rides with "Jump to today" rather than in the date
-          row above: on a phone that row is right-anchored and the centred view
-          switcher is already close, so every extra pixel there pushes them into
-          each other. */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="bg-background/90 backdrop-blur-sm"
+        onClick={() => {
+          const today = new Date();
+          const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
+          setSelectedDate(clamped);
+        }}
+      >
+        Jump to today
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="bg-background/90 backdrop-blur-sm"
+        onClick={() => setTargetHeight(2.2)}
+      >
+        Bottom tether line works
+      </Button>
+      {/* WC59, the day/night toggle and the about panel share a line. The two
+          icons are narrow enough to ride alongside WC59 without reaching the
+          centred view switcher on a phone, and pulling them out of their own
+          rows buys back two rows of the stack for the speed slider below. */}
       <div className="flex items-center gap-1">
+        <Button
+          variant={showWC59 ? "default" : "outline"}
+          size="sm"
+          className={showWC59 ? undefined : "bg-background/90 backdrop-blur-sm"}
+          onClick={() => setShowWC59((v) => !v)}
+        >
+          WC59
+        </Button>
         <Button
           variant="outline"
           size="icon"
@@ -144,35 +180,8 @@ export function Controls({
         >
           {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-background/90 backdrop-blur-sm"
-          onClick={() => {
-            const today = new Date();
-            const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
-            setSelectedDate(clamped);
-          }}
-        >
-          Jump to today
-        </Button>
+        <AboutDialog />
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="bg-background/90 backdrop-blur-sm"
-        onClick={() => setTargetHeight(2.2)}
-      >
-        Bottom tether line works
-      </Button>
-      <Button
-        variant={showWC59 ? "default" : "outline"}
-        size="sm"
-        className={showWC59 ? undefined : "bg-background/90 backdrop-blur-sm"}
-        onClick={() => setShowWC59((v) => !v)}
-      >
-        WC59
-      </Button>
       {!animActive ? (
         <Button
           variant="outline"
@@ -183,36 +192,56 @@ export function Controls({
           <PlayIcon className="size-4" /> Time-lapse
         </Button>
       ) : (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setAnimState(animState === "playing" ? "paused" : "playing")}
-          >
-            {animState === "playing" ? (
-              <>
-                <PauseIcon className="size-4" /> Pause
-              </>
-            ) : (
-              <>
-                <PlayIcon className="size-4" /> Resume
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-background/90 backdrop-blur-sm"
-            onClick={stopAnim}
-          >
-            <SquareIcon className="size-4" /> Stop
-          </Button>
-        </div>
+        <>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setAnimState(animState === "playing" ? "paused" : "playing")}
+            >
+              {animState === "playing" ? (
+                <>
+                  <PauseIcon className="size-4" /> Pause
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="size-4" /> Resume
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-background/90 backdrop-blur-sm"
+              onClick={stopAnim}
+            >
+              <SquareIcon className="size-4" /> Stop
+            </Button>
+          </div>
+          {/* Fixed width so the panel does not twitch as the readout changes
+              between "12 s/day" and "4.0 days/s". */}
+          <div className="w-44 rounded-md border border-border bg-background/90 px-2.5 py-1 backdrop-blur-sm">
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-muted-foreground">Speed</span>
+              <span className="font-medium tabular-nums">{fmtSpeed(secPerDay)}</span>
+            </div>
+            {/* The root is given a height and the thumb is grown past shadcn's
+                16px. Radix takes a pointer down anywhere on the root and its
+                thumb is absolutely positioned, so the root's own height is the
+                entire grab area — left at its content size it is a 22px strip,
+                which is a hairline under a thumb. 36px is a finger. */}
+            <Slider
+              value={[speedPos]}
+              onValueChange={([v]) => setSpeedPos(v)}
+              min={0}
+              max={SPEED_POS_MAX}
+              step={1}
+              aria-label="Time-lapse speed"
+              className="h-9 [&_[role=slider]]:size-5"
+            />
+          </div>
+        </>
       )}
-      {/* Last in the stack on purpose: it is the one control nobody needs twice,
-          and putting it in the date/theme row above would crowd a row that
-          already runs close to the centred view switcher on a phone. */}
-      <AboutDialog />
     </div>
   );
 }
