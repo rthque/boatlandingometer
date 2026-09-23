@@ -243,7 +243,7 @@ that one is now the single outbound call the page makes.
 ## Forecast panel
 
 `ForecastPanel.tsx` shows wave and wind for the selected day, under the tide
-extremes in the top-left column. Two lines, because it sits over the drawing
+extremes in the top-left column. Three lines, because it sits over the drawing
 and the drawing is what is being read; the detail lives in `title` attributes.
 
 **This is the only network call the app makes.** Everything else — tides, sun
@@ -256,21 +256,50 @@ down.
 
 Source is Open-Meteo — free, no API key, CORS-enabled, which is the combination
 that makes it usable from a static site with no server and no secret to hide.
-Two endpoints, both asked for the same days in `Europe/Paris` so their daily
-buckets line up with the calendar the app already shows: the marine API for
-`wave_height_max` and `wave_period_max`, the forecast API for
-`wind_speed_10m_max`, `wind_gusts_10m_max` and `wind_direction_10m_dominant` in
-knots.
+Two endpoints, both asked in `Europe/Paris`: the marine API for `wave_height`
+and `wave_period`, the forecast API for `wind_speed_10m`, `wind_gusts_10m` and
+`wind_direction_10m` with `wind_speed_unit=ms`.
+
+### Everything here is the 08:00–18:00 peak
+
+This is the part to understand before touching the module. Every figure the
+panel shows is the worst hour between `WORK_START_H` and `WORK_END_H`
+**inclusive**, and nothing outside it.
+
+It used to read Open-Meteo's `daily=` aggregates, and those cover 24 h. A swell
+that peaked at 03:00 and had died by breakfast still set the number a crew read
+at 08:00 and planned around, so the panel ran consistently rougher than the sea
+anyone met — the worst way for a safety-adjacent number to be wrong, because it
+cries wolf until it is ignored. **Don't go back to `daily=`.** Hourly series
+plus an explicit window is the only way to answer "what will it be like while we
+are out there".
+
+Two consequences worth keeping:
+
+- The timezone is load-bearing in a way it was not before. Asked in UTC, "08:00"
+  would be 09:00 or 10:00 local depending on the season. The hourly timestamps
+  come back as naive local strings (`2026-09-23T14:00`) and `parseHours` splits
+  them **textually** on purpose — parsing them into `Date` would re-interpret
+  them in the viewer's zone and shift the window for anyone outside France.
+- The period and the wind direction are read at the hour of their own peak
+  rather than averaged, so they describe one real moment instead of a blend of
+  eleven. `peakByDay` returns the hour alongside the value for exactly that.
+
+The window is on screen ("Peak 08:00–18:00"), not only in a tooltip: a number
+whose span you have to guess is worse than no number.
 
 Two numbers deserve care:
 
-- **Hs** is the daily peak _significant_ wave height, straight from the model.
+- **Hs** is the _significant_ wave height of the roughest hour in the window,
+  straight from the model.
 - **Hmax** is **derived, not forecast**: `1.86 × Hs`. Hs is the mean of the
   highest third, not a ceiling, and the wave that reaches someone on the ladder
   is the big one. For Rayleigh-distributed heights over N waves the ratio is
   `0.5·√(2·ln N)`, and N ≈ 1000 waves in a three-hour sea state gives 1.86. The
   UI shows it as `max ~x.x m` and says so in its tooltip. Don't present it as a
   modelled value.
+
+Wind is in **m/s**, not knots.
 
 `FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference, and the gap
 between them is the whole point. Tides stay on Dieppe because that is the
@@ -292,8 +321,19 @@ anything has come back would be a lie that then corrects itself on screen.
 
 Response parsing trusts nothing. Open-Meteo returns parallel arrays, and a
 missing or short one yields nulls for that field rather than throwing, so an
-endpoint changing shape degrades the panel instead of blanking the app. There
-are tests for the malformed-response path for that reason.
+endpoint changing shape degrades the panel instead of blanking the app. A day
+that comes back only partly covered is counted (`hoursCovered`) and the tooltips
+say so, because a window filled by four hours must not read like one filled by
+eleven.
+
+There is **no test runner in this repo** — no vitest, no `npm test`. The
+malformed-response path, the window arithmetic and its inclusive edges are
+checked by driving the production build in a real browser with Playwright and
+`page.route()` mocks. That is also the only way they _can_ be checked here: the
+sandbox these sessions run in denies every weather host at the egress proxy, so
+the live response has never been seen from inside one. If you change a field
+name, you are changing something no automated check in the repo covers — load
+the real site and look.
 
 ## Deployment
 
