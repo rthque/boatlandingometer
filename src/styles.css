@@ -176,6 +176,22 @@
      thing. */
   --tide-fill-top: oklch(0.8 0.068 229 / 0.32);
   --tide-fill-deep: oklch(0.59 0.072 239 / 0.46);
+
+  /* Photographic day scene (src/assets/day-sea.*). Only read when that plate
+     exists, so they are not overridden in .dark: the scene is day-only.
+
+     These are allowed more chroma than the drawn sea above, and deliberately.
+     The drawn sea is scenery behind the subject and has to stay out of the
+     way. This water is in FRONT of the structure and is the thing being
+     judged — how far up the legs it reaches — so it has to be legible as
+     water, and the turquoise-to-navy run is the depth cue doing that job.
+     The alpha is what keeps the legs visible through it. */
+  --day-veil-shallow: oklch(0.7 0.05 214 / 0.12);
+  --day-veil-mid: oklch(0.48 0.055 228 / 0.44);
+  --day-veil-deep: oklch(0.3 0.045 250 / 0.88);
+  --day-surface-line: oklch(0.96 0.03 205 / 0.5);
+  --day-surface-shadow: oklch(0.43 0.05 229 / 0.5);
+  --day-surface-glow: oklch(0.95 0.052 196);
 }
 
 .dark {

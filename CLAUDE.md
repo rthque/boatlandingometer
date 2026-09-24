@@ -141,6 +141,116 @@ darkened) legs to black, and the tide band read as a lit slab sitting _on_ the
 picture. If you swap in a lighter or darker photo, `--veil-*` and
 `--tide-fill-*` in `.dark` are the tokens to nudge.
 
+### Photographic day scene (provisional)
+
+By day, if `src/assets/day-sea.*` exists, the drawn sky and sea are replaced by
+a photographic **over-under** plate and the scene changes shape: the sea surface
+is no longer chart datum, it is **the red height line**. Drag the line and the
+water really does climb the legs, and the plate's own horizon slides up and down
+behind the structure with it.
+
+**The plate currently in the repo is a placeholder.** It is procedural, it was
+generated to have the right geometry and the right colour ramp, and it is not
+the artwork. Replace `src/assets/day-sea.webp` with the real photograph; nothing
+else needs to change.
+
+Delete the file and the day view is exactly what it was before this existed —
+drawn sky, fixed 4 m horizon, waterline on datum. That is the whole rollback
+story, and it is why every branch this scene takes is gated on `dayPhotoScene`
+rather than replacing the old code.
+
+#### The plate's framing is derived, not chosen
+
+`DAY_SEA_HORIZON_FRAC` is 0.5 because the horizon has to be able to sit anywhere
+the red line can, which is 0–10 m. Worked out from the calibrations in
+`views.ts`, the binding case is the BL view, which must be able to show **93.4%
+of the plot in sky** (line at 0 m) and **92.1% in water** (line at 10 m). With
+the horizon centred the plate is drawn at 1.868 x the plot height and neither
+half is the constraint; at 0.45 or 0.55 it needs 2.05–2.08 x, which is more
+upscaling for nothing. If you swap in a plate framed differently, measure its
+horizon the way the night one was measured and set the constant — don't
+re-frame the app around it.
+
+`dayPlateHeight()` sizes the plate **once for the whole travel**, not per frame.
+Sizing it to the current line position makes the picture breathe in and out as
+the tide is dragged, which is instantly visible and completely wrong: the sea
+does not zoom when the tide comes in.
+
+#### Grading the immersed structure: keep it light
+
+The immersed legs are graded much more gently than the night ones, and that is
+measured rather than taste. In the reference composite a leg just under the
+surface is still `(206,158,47)` — near enough the dry yellow — and only loses
+its colour further down. So the depth fade belongs to the **veil**, whose alpha
+climbs with depth, and `daySubmergedRefract` only does the refraction plus
+enough cool cast to say "other side of a surface". Grading hard here instead
+produced a grey ghost at every depth, which is the one thing the reference is
+not.
+
+`VEIL_DEPTH_M` is a depth in metres, not a fraction of what is left on screen.
+With the surface at 1 m the water below it is a few centimetres and must read as
+shallow turquoise, not as a compressed copy of the full ocean gradient.
+
+The tide band is pulled back to 18% opacity in this scene. It is drawn over real
+water, and two translucent blues stacked on each other turned the lower half
+milky and swallowed the legs. The curve keeps a pale casing under it so it stays
+legible through the water — it is the measured thing, and readability wins.
+
+#### Performance: what costs, and why
+
+Every SVG filter in this scene is re-evaluated on every frame the waterline
+moves — and here it moves on every frame of a time-lapse. Measured at 4 days/s
+on a 1400x900 desktop viewport, the scene started at **18 fps**. The fixes, in
+the order they paid:
+
+- **Simplify while playing.** Caustics and refraction are close-inspection
+  details; nobody reads ripple filaments at four days a second and everybody
+  sees a stutter. `simplify` (= `animActive`) drops both. The flat grade it
+  falls back to is deliberately the _same_ grade as the refracting one, because
+  a different one made the legs change colour the instant you pressed play.
+- **Caustics at half resolution**, scaled back up, with `baseFrequency` doubled
+  to keep the filaments the same size. `feTurbulence` costs in proportion to
+  its region; this one rect alone measured ~27 ms a frame at full size.
+- **The dry pass is drawn whole, unclipped** — day scene only. Clipping the
+  structure into two halves means both filtered images re-rasterise every
+  frame. Note the two are NOT pixel-identical: drawn whole, the dry pass shows
+  through wherever the overlay is not fully opaque, which along the artwork's
+  antialiased edges is a few hundred pixels. **Night and IRL keep the clipped
+  path** for exactly that reason.
+- **A CSS filter instead of `dayGrade`** for the dry pass. dayGrade is nearly a
+  no-op and measured ~11 ms a frame as an SVG filter; the CSS equivalent is
+  composited.
+- **`will-change: transform`** on the water group, worth about 4 fps.
+- **One WC59 sprite while playing** instead of a split hull, worth about 6 fps.
+
+Result: **60 fps at phone width** at every speed, drag included; **45 fps at
+4 days/s on desktop**, 55 at 12 s/day, 60 dragging. Those numbers come from a
+container rendering through **SwiftShader with no GPU at all**, so they are
+floors rather than what a real device does.
+
+If more is ever needed, the remaining lever is the submerged overlay: its clip
+moves every frame over a filtered image. Pre-baking the graded structure into a
+canvas once at load would make that clip cheap. It was not done because the
+stated requirement — a finger drag and 4 days/s on a phone — already measures
+60 fps.
+
+#### Night and IRL must not move
+
+Both are required to be pixel-identical to the pre-photo build, and there is a
+test for it. Two things about that test are worth keeping:
+
+- It **freezes the clock**. Without that, the two builds load a second or two
+  apart, the "now" marker lands on a different column, and the diff measures
+  the wall clock.
+- It compares against the renderer's own **noise floor**, measured by diffing
+  the baseline against itself, rather than demanding exactly zero. This
+  container's rasteriser is not bit-deterministic: the card's rounded corners
+  land 3–5 units apart between runs, and a run of the baseline against itself
+  showed more differing pixels than the baseline against the new build.
+
+An explicit `opacity="1"` was enough to break the identity once, by opening a
+transparency group and shifting antialiasing. Prefer leaving the attribute off.
+
 ### Grading the structure
 
 The night grade uses `feColorMatrix type="saturate"` plus a per-channel

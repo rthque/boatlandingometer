@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as SunCalc from "suncalc";
 import type { PlotGeom } from "@/lib/geom";
 import { DATE_MAX, DATE_MIN, fracToHeight, heightToFrac, makeTideHeight } from "@/lib/tide-math";
-import { DIEPPE, VIEWS, type ViewId } from "@/lib/views";
+import { DAY_SEA_IMG, DIEPPE, VIEWS, type ViewId } from "@/lib/views";
 import { useTideExtremes, useCoefByDay } from "@/hooks/use-tide-data";
 import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
@@ -43,6 +43,14 @@ function Index() {
   });
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(selectedDate);
+
+  // Declared up here because the scene geometry below now depends on the
+  // target height: in the photographic day view the sea surface IS the red
+  // line, so the waterline is no longer a constant.
+  const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
+  const [targetHeight, setTargetHeight] = useState<number | null>(null);
+  const [showWC59, setShowWC59] = useState(false);
+  const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);
   const coefByDay = useCoefByDay(datePickerOpen, calMonth);
@@ -129,15 +137,34 @@ function Index() {
   const yOfH = (h: number) => imageTop + heightToFrac(h, viewConfig.calib) * imageDisplayHeight;
   const tOfX = (x: number) => ((x - PAD_L) / plotWidth) * 24;
 
-  // Chart datum on screen: where the sea meets the structure. Anything the
-  // schema draws below this is genuinely always underwater, whatever the tide
-  // is doing.
-  const waterY = yOfH(0);
+  /**
+   * Photographic day scene: only when a day plate exists, only in the day
+   * theme, and never over the IRL photo, which brings its own sky and sea.
+   *
+   * Everything this flag switches is additive. With no plate the day view is
+   * byte-for-byte the drawn scene it always was, which is what makes deleting
+   * the file a complete rollback.
+   */
+  const dayPhotoScene = showScene && theme === "day" && DAY_SEA_IMG !== null;
+
+  /**
+   * The height the sea surface is drawn at.
+   *
+   * Chart datum everywhere except the photographic day scene, where the water
+   * is the tide the user is pointing at — drag the red line and the sea really
+   * does rise up the legs. Datum stays the anchor for the night scene because
+   * there the sea is scenery the day's tide rides on top of; here it is the
+   * subject.
+   */
+  const seaLevelH = dayPhotoScene ? (targetHeight ?? 0) : 0;
+  const waterY = yOfH(seaLevelH);
   // The sea recedes to a horizon at eye level — roughly the deck of the CTV you
   // would be looking from. Expressing it as a height rather than a screen
-  // fraction keeps it consistent when a view zooms in.
+  // fraction keeps it consistent when a view zooms in. In the photographic day
+  // scene the plate's own horizon rides the waterline instead: the picture is
+  // an over-under, so its sky/sea boundary IS the surface the legs enter.
   const HORIZON_M = 4;
-  const horizonY = Math.max(PAD_T + 8, yOfH(HORIZON_M));
+  const horizonY = dayPhotoScene ? waterY : Math.max(PAD_T + 8, yOfH(HORIZON_M));
 
   // Convert a pointer event to plot-space pixels (accounts for the SVG being
   // rendered at a different CSS size than its coordinate system).
@@ -196,11 +223,6 @@ function Index() {
     return d;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width, plotHeight, tideHeight, Y_MIN, Y_MAX]);
-
-  const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
-  const [targetHeight, setTargetHeight] = useState<number | null>(null);
-  const [showWC59, setShowWC59] = useState(false);
-  const [draggingLine, setDraggingLine] = useState(false);
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.pointerType === "touch") return; // no hover on touch
@@ -368,11 +390,17 @@ function Index() {
                 <stop offset="0%" style={{ stopColor: "var(--tide-fill-top)" }} />
                 <stop offset="100%" style={{ stopColor: "var(--tide-fill-deep)" }} />
               </linearGradient>
-              <SceneDefs geom={geom} horizonY={horizonY} waterY={waterY} />
+              <SceneDefs geom={geom} horizonY={horizonY} waterY={waterY} dayPhoto={dayPhotoScene} />
             </defs>
 
             {showScene && (
-              <SkyLayer geom={geom} horizonY={horizonY} waterY={waterY} theme={theme} />
+              <SkyLayer
+                geom={geom}
+                horizonY={horizonY}
+                waterY={waterY}
+                theme={theme}
+                dayPhoto={dayPhotoScene}
+              />
             )}
 
             <BackgroundLayer
@@ -387,9 +415,18 @@ function Index() {
               waterY={waterY}
               scene={showScene}
               theme={theme}
+              dayPhoto={dayPhotoScene}
+              simplify={animActive}
             />
 
-            {showScene && <WaterVeil geom={geom} waterY={waterY} />}
+            {showScene && (
+              <WaterVeil
+                geom={geom}
+                waterY={waterY}
+                dayPhoto={dayPhotoScene}
+                simplify={animActive}
+              />
+            )}
 
             <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} />
 
@@ -398,6 +435,7 @@ function Index() {
               seaPath={seaPath}
               curvePath={curvePath}
               visibleExtremes={visibleExtremes}
+              dayPhoto={dayPhotoScene}
             />
 
             {showWC59 && targetHeight !== null && (
@@ -407,6 +445,8 @@ function Index() {
                 bowBerthFrac={viewConfig.bowBerthFrac}
                 imageLeft={imageLeft}
                 imageDisplayWidth={imageDisplayWidth}
+                dayPhoto={dayPhotoScene}
+                simplify={animActive}
               />
             )}
 
