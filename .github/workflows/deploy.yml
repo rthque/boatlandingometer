@@ -3,8 +3,15 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  # Lets you re-deploy from the Actions tab without pushing a commit.
+  # Lets you re-deploy from the Actions tab without pushing a commit — and it
+  # is also the ONLY way to refresh /test/ once its branch has moved. See the
+  # note on the sub-site below.
   workflow_dispatch:
+    inputs:
+      test_ref:
+        description: "Branch, tag or SHA to publish at /test/ (type 'none' to publish the root alone)"
+        required: false
+        default: claude/repo-audit-xq6hvv
 
 permissions:
   contents: read
@@ -15,6 +22,18 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  # With GitHub Actions as the Pages source the whole site is published as ONE
+  # artifact, and each deployment replaces the previous one wholesale — there is
+  # no way to publish a sub-directory on its own without wiping everything else.
+  # The github-pages environment also only accepts deployments from main. So the
+  # root and the /test/ sub-site are built together, here, by the same run.
+  #
+  # Consequence worth knowing: pushing to the test branch does NOT update
+  # /test/. Re-run this workflow (Actions -> Deploy to GitHub Pages -> Run
+  # workflow) to pick the branch's new head up.
+  TEST_REF: ${{ github.event.inputs.test_ref || 'claude/repo-audit-xq6hvv' }}
 
 jobs:
   build:
@@ -33,6 +52,66 @@ jobs:
 
       # Runs tsc --noEmit then vite build; output lands in dist/.
       - run: npm run build
+
+      # Fingerprint the root site before the sub-site is folded in, so the
+      # assertion further down is against something measured rather than
+      # assumed. The root is what the crews use; it must not move.
+      - name: Fingerprint the root site
+        run: |
+          (cd dist && find . -type f | sort | xargs sha256sum) > /tmp/root-before.sha256
+          echo "root files: $(wc -l < /tmp/root-before.sha256)"
+
+      # --- the /test/ sub-site -------------------------------------------
+      # Every step below is best-effort. A broken test branch must never stop
+      # the root site from being published.
+
+      - name: Check out the ref for /test/
+        id: testsrc
+        if: env.TEST_REF != 'none'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TEST_REF }}
+          path: test-src
+
+      - name: Build the /test/ sub-site
+        id: testbuild
+        if: steps.testsrc.outcome == 'success'
+        continue-on-error: true
+        working-directory: test-src
+        env:
+          VITE_BASE: /test/
+          # Turns on the TEST badge and the noindex tag. Only this build gets
+          # them; the root never sees the flag.
+          VITE_BUILD_LABEL: TEST
+        run: |
+          npm ci
+          npm run build
+
+      - name: Fold /test/ into the site
+        if: steps.testbuild.outcome == 'success'
+        run: |
+          mkdir -p dist/test
+          cp -r test-src/dist/. dist/test/
+          # A sub-site has no business carrying the apex domain's CNAME.
+          rm -f dist/test/CNAME
+          echo "Published /test/ from \`$TEST_REF\` (${{ steps.testsrc.outputs.commit }})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Warn if /test/ was not published
+        if: env.TEST_REF != 'none' && steps.testbuild.outcome != 'success'
+        run: |
+          echo "::warning::/test/ was NOT published: the build from '$TEST_REF' failed. The root site was published as usual."
+          echo "⚠️ **/test/ not published** — the build from \`$TEST_REF\` failed. The root site is unaffected." >> "$GITHUB_STEP_SUMMARY"
+
+      # --- the root must be byte-for-byte what it was -------------------
+      - name: Assert the root site is unchanged
+        run: |
+          (cd dist && find . -type f -not -path './test/*' | sort | xargs sha256sum) > /tmp/root-after.sha256
+          if ! diff -u /tmp/root-before.sha256 /tmp/root-after.sha256; then
+            echo "::error::Folding /test/ in altered the root site. Refusing to deploy."
+            exit 1
+          fi
+          echo "Root site unchanged: $(wc -l < /tmp/root-after.sha256) files, identical hashes." >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-pages-artifact@v3
         with:
