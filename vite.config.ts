@@ -20,6 +20,34 @@ function spaFallback(): Plugin {
   };
 }
 
+/**
+ * Marks a build as something other than the live site.
+ *
+ * Set VITE_BUILD_LABEL and the page gets a robots noindex tag and a prefixed
+ * title; the app itself renders a badge off the same variable. Leave it unset —
+ * which the root build always does — and this plugin does nothing at all, so
+ * the site the crews use is byte-for-byte what it was.
+ *
+ * noindex lives in the HTML rather than in a robots.txt on purpose. A
+ * robots.txt only works at the site root, so it would mean editing the root
+ * build to describe a sub-site; and Disallow only stops crawling, not
+ * indexing — a disallowed URL can still be listed from a link elsewhere. The
+ * meta tag is the thing that actually keeps a page out of the index.
+ */
+function buildLabel(): Plugin {
+  const label = process.env.VITE_BUILD_LABEL;
+  return {
+    name: "build-label",
+    apply: "build",
+    transformIndexHtml(html) {
+      if (!label) return html;
+      return html
+        .replace("<head>", `<head>\n    <meta name="robots" content="noindex, nofollow" />`)
+        .replace(/<title>([^<]*)<\/title>/, `<title>[${label}] $1</title>`);
+    },
+  };
+}
+
 // Static single-page app. It is served from the apex of its own domain
 // (https://boatlandingometer.info/), so `base` is the root.
 //
@@ -39,6 +67,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     tsConfigPaths(),
+    buildLabel(),
     spaFallback(),
   ],
   build: {

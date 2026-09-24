@@ -510,6 +510,46 @@ Push to `main` → `.github/workflows/deploy.yml` runs lint + build and publishe
 `dist/` to GitHub Pages. Nothing else to do; there is no deploy token or
 third-party account involved.
 
+### The /test/ sub-site
+
+`https://boatlandingometer.info/test/` is a second copy of the app, built from
+a work branch, for trying something out without touching what the crews use.
+
+The two are published **together, by the same run on `main`**, and that is
+forced rather than chosen. With Actions as the Pages source the whole site is
+one artifact and each deployment replaces the previous one wholesale — there is
+no publishing a sub-directory on its own without wiping everything else — and
+the `github-pages` environment only accepts deployments from `main`. So the
+workflow checks out the branch named by `TEST_REF`, builds it with
+`VITE_BASE=/test/` and `VITE_BUILD_LABEL=TEST`, and folds the result into
+`dist/test/`.
+
+**Pushing to the test branch does not update `/test/`.** Re-run the workflow
+(Actions → Deploy to GitHub Pages → Run workflow) to pick up its new head; the
+input lets you point at a different branch, or type `none` to publish the root
+alone.
+
+Two guard rails, both because the root is what people rely on:
+
+- Every `/test/` step is `continue-on-error`. A broken test branch logs a
+  warning and the root is published as usual. The cost is that `/test/`
+  disappears from that deployment rather than keeping its old content — it
+  cannot keep it, because the artifact is all-or-nothing.
+- The workflow fingerprints `dist/` before folding `/test/` in and **fails the
+  deploy** if any root file's hash moved. Adding a sub-directory cannot change
+  a root file, which is exactly why the assertion is cheap and worth having.
+
+`VITE_BUILD_LABEL` is what marks a build as not-the-live-site: the Vite plugin
+adds `<meta name="robots" content="noindex, nofollow">` and prefixes the title,
+and `BuildBadge.tsx` draws the amber ring and tabs. Unset — which the root
+build always leaves it — none of that exists in the output.
+
+noindex is in the HTML rather than a `robots.txt` on purpose. robots.txt only
+works at the site root, so it would mean editing the root build to describe a
+sub-site; and `Disallow` only stops crawling, not indexing — a disallowed URL
+can still be listed from a link elsewhere. The meta tag is the thing that
+actually keeps a page out of the index.
+
 ## Working on this repo from anywhere
 
 Everything needed lives in the repo: `npm ci && npm run dev` on a cold clone is
