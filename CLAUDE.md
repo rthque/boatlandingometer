@@ -541,8 +541,19 @@ Two guard rails, both because the root is what people rely on:
 
 `VITE_BUILD_LABEL` is what marks a build as not-the-live-site: the Vite plugin
 adds `<meta name="robots" content="noindex, nofollow">` and prefixes the title,
-and `BuildBadge.tsx` draws the amber ring and tabs. Unset — which the root
-build always leaves it — none of that exists in the output.
+`BuildBadge` draws an amber ring round the viewport, and `BuildTag` puts the
+word itself in the control stack next to "Jump to today". Unset — which the
+root build always leaves it — none of that exists in the output.
+
+The tag is **in the flow, not over it**, and that is the second attempt. The
+first pinned vertical tabs to the viewport edges at 30% height, which was
+checked at one viewport and turned out to cover the forecast panel at
+1440x756, the fourth tide row at 375x667, and the right-hand end of the
+time-lapse speed slider — its readout with it. There is no fixed offset that
+is free at every viewport in both the idle and the playing layouts, because
+every edge of this UI already has a control pinned to it. Taking space in a
+row that has some is the only arrangement that cannot cover anything; the ring
+is what carries the signal.
 
 noindex is in the HTML rather than a `robots.txt` on purpose. robots.txt only
 works at the site root, so it would mean editing the root build to describe a

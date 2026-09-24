@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { AboutDialog } from "@/components/tide/AboutDialog";
+import { BuildTag } from "@/components/tide/BuildBadge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
@@ -137,18 +138,24 @@ export function Controls({
           <ChevronRightIcon className="size-4" />
         </Button>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="bg-background/90 backdrop-blur-sm"
-        onClick={() => {
-          const today = new Date();
-          const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
-          setSelectedDate(clamped);
-        }}
-      >
-        Jump to today
-      </Button>
+      {/* The build tag rides here rather than floating over the plot: this row
+          is the one with width to spare, and in the flow it cannot cover
+          anything at any viewport. Nothing in the root build — see BuildTag. */}
+      <div className="flex items-center gap-1">
+        <BuildTag />
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-background/90 backdrop-blur-sm"
+          onClick={() => {
+            const today = new Date();
+            const clamped = today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today;
+            setSelectedDate(clamped);
+          }}
+        >
+          Jump to today
+        </Button>
+      </div>
       <Button
         variant="outline"
         size="sm"
