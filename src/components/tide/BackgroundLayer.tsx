@@ -109,17 +109,28 @@ export function BackgroundLayer({
               pass shows through wherever the overlay is less than fully
               opaque, which along the artwork's antialiased edges is a few
               hundred pixels. Night and IRL are required to be unchanged, so
-              they keep the old path. */}
+              they keep the old path.
+
+              "The old path" means this markup and not merely this effect: the
+              clip goes on the <image>, never on a wrapping <g>. The two are
+              equivalent on paper — filter first, then clip, either way — but
+              equivalent on paper is not what night and IRL are held to, and
+              wrapping them measured a handful of pixels off the baseline on
+              one run in five. Identical markup cannot.
+
+              The keys are load-bearing for the same reason. Without them React
+              reconciles one <image> across the theme toggle, and clearing the
+              day branch's inline filter leaves an empty style="" behind on the
+              night element — inert, but a difference from the baseline that
+              only appears when you arrive at night BY TOGGLING. Distinct keys
+              remount instead, so night's markup is the same however you got
+              there. */}
           {dayPhoto ? (
-            <image {...common} style={{ filter: cssGrade }} />
+            <image key="dry-photo" {...common} style={{ filter: cssGrade }} />
           ) : (
-            <g clipPath="url(#aboveWater)">
-              <image {...common} filter={aboveGrade} />
-            </g>
+            <image key="dry-clipped" {...common} clipPath="url(#aboveWater)" filter={aboveGrade} />
           )}
-          <g clipPath="url(#belowWater)">
-            <image {...common} filter={belowGrade} />
-          </g>
+          <image {...common} clipPath="url(#belowWater)" filter={belowGrade} />
         </>
       ) : (
         // The photo already contains its own horizon; splitting it at chart

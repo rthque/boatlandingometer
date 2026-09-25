@@ -149,10 +149,14 @@ is no longer chart datum, it is **the red height line**. Drag the line and the
 water really does climb the legs, and the plate's own horizon slides up and down
 behind the structure with it.
 
-**The plate currently in the repo is a placeholder.** It is procedural, it was
-generated to have the right geometry and the right colour ramp, and it is not
-the artwork. Replace `src/assets/day-sea.webp` with the real photograph; nothing
-else needs to change.
+**The plate currently in the repo is a placeholder, and the live site ships
+it.** It is procedural — generated to have the right geometry and the right
+colour ramp — and it is not the artwork. Everything around it is finished: the
+horizon tracking, the immersion, the light on the steel and the performance
+work were all built and measured against this plate precisely so the real
+photograph could arrive as one file. Replace `src/assets/day-sea.webp` and
+nothing else needs to change, unless its horizon is not centred, in which case
+measure it and set `DAY_SEA_HORIZON_FRAC` (see below).
 
 Delete the file and the day view is exactly what it was before this existed —
 drawn sky, fixed 4 m horizon, waterline on datum. That is the whole rollback
@@ -292,6 +296,26 @@ test for it. Two things about that test are worth keeping:
 
 An explicit `opacity="1"` was enough to break the identity once, by opening a
 transparency group and shifting antialiasing. Prefer leaving the attribute off.
+
+**Compare the markup, not only the pixels.** A pixel count on this renderer
+cannot separate a real regression from jitter, so it has to be judged against a
+noise floor — which means a difference the same size as the floor is invisible
+to it. Dumping the rendered DOM of both builds and diffing it tag by tag is the
+check that has actual resolution, and it found two things the pixel test had
+been reporting intermittently or not at all:
+
+- The clip had migrated from the `<image>` onto a wrapping `<g>` during a
+  refactor. Filter-then-clip either way, equivalent on paper, and it measured
+  11 px off the baseline on one run in five.
+- Arriving at night **by toggling** left an empty `style=""` on the structure,
+  because React had reconciled one `<image>` across the day branch's inline
+  filter and cleared it. Loading straight into night never produced it. Keys on
+  the two branches remount instead.
+
+What the night DOM is now allowed to differ by, against `16b94a2`, is exactly
+two things: the day scene's five `<defs>`, referenced nowhere — the harness
+asserts the set of `url(#…)` actually referenced is identical — and the flex
+wrapper that holds `BuildTag`, whose geometry is measured button by button.
 
 ### Grading the structure
 

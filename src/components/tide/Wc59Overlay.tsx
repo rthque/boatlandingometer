@@ -81,7 +81,9 @@ export function Wc59Overlay({
       <g clipPath="url(#wc59Above)">
         <image {...common} />
       </g>
-      {/* Clip on the wrapper, filter on the image — see BackgroundLayer. */}
+      {/* The clip is on the wrapper here, not on the <image> as in
+          BackgroundLayer: this branch is the day scene only, which has no
+          baseline to match, and the group is what carries plotClip anyway. */}
       <g clipPath="url(#wc59Below)">
         <image {...common} filter={simplify ? "url(#daySubmerged)" : "url(#daySubmergedRefract)"} />
       </g>
