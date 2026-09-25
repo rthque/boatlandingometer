@@ -27,6 +27,40 @@ export const NIGHT_SEA_IMG: string | null = Object.values(nightSeaModules)[0]?.d
 // swap in a photo framed differently.
 export const NIGHT_SEA_HORIZON_FRAC = 0.492;
 
+// Optional DAY backdrop, same contract as the night one: a photo saved as
+// src/assets/day-sea.{jpg,jpeg,png,webp} turns on the photographic day scene.
+// With no such file this is null and the day view falls back, unchanged, to the
+// drawn sky with its fixed 4 m horizon and its waterline on chart datum.
+//
+// That fallback is the whole rollback story for this feature: delete the file
+// and the day view is exactly what it was before the photo existed. Sorted so
+// two files matching at once resolve the same way every build rather than
+// depending on glob order.
+const daySeaModules = import.meta.glob<{ default: string }>(
+  "../assets/day-sea.{jpg,jpeg,png,webp}",
+  { eager: true },
+);
+export const DAY_SEA_IMG: string | null =
+  Object.keys(daySeaModules)
+    .sort()
+    .map((k) => daySeaModules[k].default)[0] ?? null;
+
+/**
+ * Where the horizon sits in the day plate, as a fraction of its height.
+ *
+ * Unlike the night photo, whose horizon is pinned to a fixed 4 m, this plate's
+ * horizon rides the red height line — so it sweeps the whole 0..10 m range and
+ * both halves of the picture get used. Mid-height is therefore the efficient
+ * framing, and the brief for the artwork asks for it: in the BL view the app
+ * has to be able to show 93.4% of the plot in sky (line at 0 m) and 92.1% in
+ * water (line at 10 m), and a centred horizon is the only framing where
+ * neither half is the binding constraint.
+ *
+ * Measure it the same way as the night one if you swap the plate: mean row
+ * luminance, not eyeballing.
+ */
+export const DAY_SEA_HORIZON_FRAC = 0.5;
+
 export type ViewId = "BL" | "FOU" | "IRL";
 
 export type ViewConfig = {

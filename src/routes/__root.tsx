@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
+import { BuildBadge } from "@/components/tide/BuildBadge";
 
 function NotFoundComponent() {
   return (
@@ -71,6 +72,8 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      {/* Nothing in the root build — see BuildBadge. */}
+      <BuildBadge />
     </QueryClientProvider>
   );
 }

@@ -141,6 +141,182 @@ darkened) legs to black, and the tide band read as a lit slab sitting _on_ the
 picture. If you swap in a lighter or darker photo, `--veil-*` and
 `--tide-fill-*` in `.dark` are the tokens to nudge.
 
+### Photographic day scene (provisional)
+
+By day, if `src/assets/day-sea.*` exists, the drawn sky and sea are replaced by
+a photographic **over-under** plate and the scene changes shape: the sea surface
+is no longer chart datum, it is **the red height line**. Drag the line and the
+water really does climb the legs, and the plate's own horizon slides up and down
+behind the structure with it.
+
+**The plate currently in the repo is a placeholder, and the live site ships
+it.** It is procedural — generated to have the right geometry and the right
+colour ramp — and it is not the artwork. Everything around it is finished: the
+horizon tracking, the immersion, the light on the steel and the performance
+work were all built and measured against this plate precisely so the real
+photograph could arrive as one file. Replace `src/assets/day-sea.webp` and
+nothing else needs to change, unless its horizon is not centred, in which case
+measure it and set `DAY_SEA_HORIZON_FRAC` (see below).
+
+Delete the file and the day view is exactly what it was before this existed —
+drawn sky, fixed 4 m horizon, waterline on datum. That is the whole rollback
+story, and it is why every branch this scene takes is gated on `dayPhotoScene`
+rather than replacing the old code.
+
+#### The plate's framing is derived, not chosen
+
+`DAY_SEA_HORIZON_FRAC` is 0.5 because the horizon has to be able to sit anywhere
+the red line can, which is 0–10 m. Worked out from the calibrations in
+`views.ts`, the binding case is the BL view, which must be able to show **93.4%
+of the plot in sky** (line at 0 m) and **92.1% in water** (line at 10 m). With
+the horizon centred the plate is drawn at 1.868 x the plot height and neither
+half is the constraint; at 0.45 or 0.55 it needs 2.05–2.08 x, which is more
+upscaling for nothing. If you swap in a plate framed differently, measure its
+horizon the way the night one was measured and set the constant — don't
+re-frame the app around it.
+
+`dayPlateHeight()` sizes the plate **once for the whole travel**, not per frame.
+Sizing it to the current line position makes the picture breathe in and out as
+the tide is dragged, which is instantly visible and completely wrong: the sea
+does not zoom when the tide comes in.
+
+#### The water is not a gas
+
+The first version drew caustics as their own layer over the water: a
+full-width rect of `feTurbulence`, masked with a depth fade. It read as pale
+clouds floating in the sea, and it was the single most expensive thing in the
+scene. Both problems had the same cause — light through waves is something you
+see landing **on a surface**, not hanging in a volume.
+
+So the caustics live inside `daySubmergedRefract` now, composited against the
+structure image's own alpha and screened over it. They can only ever appear on
+the steel. Nothing paints light into open water, and there is no second
+full-screen filtered layer to pay for. Don't put one back.
+
+Three numbers in that filter were measured rather than chosen, and each was
+wrong the obvious way first:
+
+- **`fractalNoise`, not `turbulence`.** `turbulence` sums absolute values, so
+  its output crowds the bottom of the range; a curve steep enough to pick out
+  crests discarded nearly everything. Measured, the luminance ripple along
+  submerged steel was 1.4 against dry steel's own 3.7 — the light was not
+  reaching it at all, while the code looked correct.
+- **The dimming slope.** Swept against a flat swatch of the structure's yellow:
+  at 0.58 the lit crests came out at 205 where dry steel is 201, which reads as
+  bleached rather than lit. It is the ceiling that matters, not the mean.
+- **Band frequency.** Wide horizontal bands read as a venetian blind laid over
+  the whole view. High frequency with some irregularity in x reads as light on
+  each leg.
+
+#### The surface has a thickness
+
+The waterline is not a stroke. Four passes share **one** wave path — a shadow
+under it, a soft glow straddling it, the meniscus, a highlight on the crests —
+and the water column beneath is a closed path with that same wavy top, not a
+rect. A rect was the tell: tinted water beginning on a ruled edge under an
+undulating highlight reads as two unrelated things rather than one surface with
+a body under it.
+
+`daySeaSkin` is the first few centimetres, where light still gets in and back
+out. It is most of what makes the surface something you look _through_ rather
+than a colour change.
+
+#### Grading the immersed structure: keep it light
+
+The immersed legs are graded much more gently than the night ones, and that is
+measured rather than taste. In the reference composite a leg just under the
+surface is still `(206,158,47)` — near enough the dry yellow — and only loses
+its colour further down. So the depth fade belongs to the **veil**, whose alpha
+climbs with depth, and `daySubmergedRefract` only does the refraction plus
+enough cool cast to say "other side of a surface". Grading hard here instead
+produced a grey ghost at every depth, which is the one thing the reference is
+not.
+
+`VEIL_DEPTH_M` is a depth in metres, not a fraction of what is left on screen.
+With the surface at 1 m the water below it is a few centimetres and must read as
+shallow turquoise, not as a compressed copy of the full ocean gradient.
+
+The tide band is pulled back to 18% opacity in this scene. It is drawn over real
+water, and two translucent blues stacked on each other turned the lower half
+milky and swallowed the legs. The curve keeps a pale casing under it so it stays
+legible through the water — it is the measured thing, and readability wins.
+
+#### Performance: what costs, and why
+
+Every SVG filter in this scene is re-evaluated on every frame the waterline
+moves — and here it moves on every frame of a time-lapse. Measured at 4 days/s
+on a 1400x900 desktop viewport, the scene started at **18 fps**. The fixes, in
+the order they paid:
+
+- **No free-floating caustics layer at all.** Folding them into the submerged
+  structure's own filter removed a full-screen `feTurbulence` rect that had
+  measured ~27 ms a frame at full size — the single biggest cost in the scene,
+  and the reason the desktop fast end sat at 45 fps. It now sits at 60.
+- **Simplify while playing.** Refraction and the light on the steel are
+  close-inspection details; nobody reads them at four days a second and
+  everybody sees a stutter. `simplify` (= `animActive`) drops both. The flat
+  grade it falls back to is deliberately the _same_ grade as the refracting
+  one, because a different one made the legs change colour the instant you
+  pressed play.
+- **The dry pass is drawn whole, unclipped** — day scene only. Clipping the
+  structure into two halves means both filtered images re-rasterise every
+  frame. Note the two are NOT pixel-identical: drawn whole, the dry pass shows
+  through wherever the overlay is not fully opaque, which along the artwork's
+  antialiased edges is a few hundred pixels. **Night and IRL keep the clipped
+  path** for exactly that reason.
+- **A CSS filter instead of `dayGrade`** for the dry pass. dayGrade is nearly a
+  no-op and measured ~11 ms a frame as an SVG filter; the CSS equivalent is
+  composited.
+- **`will-change: transform`** on the water group, worth about 4 fps.
+- **One WC59 sprite while playing** instead of a split hull, worth about 6 fps.
+
+Result: **60 fps everywhere measured** — phone and desktop, idle, dragging,
+12 s/day and 4 days/s, with and without the WC59 overlay. Those numbers come
+from a container rendering through **SwiftShader with no GPU at all**, so they
+are floors rather than what a real device does.
+
+If more is ever needed, the remaining lever is the submerged overlay: its clip
+moves every frame over a filtered image. Pre-baking the graded structure into a
+canvas once at load would make that clip cheap. There is no call for it while
+everything measures 60 fps.
+
+#### Night and IRL must not move
+
+Both are required to be pixel-identical to the pre-photo build, and there is a
+test for it. Two things about that test are worth keeping:
+
+- It **freezes the clock**. Without that, the two builds load a second or two
+  apart, the "now" marker lands on a different column, and the diff measures
+  the wall clock.
+- It compares against the renderer's own **noise floor**, measured by diffing
+  the baseline against itself, rather than demanding exactly zero. This
+  container's rasteriser is not bit-deterministic: the card's rounded corners
+  land 3–5 units apart between runs, and a run of the baseline against itself
+  showed more differing pixels than the baseline against the new build.
+
+An explicit `opacity="1"` was enough to break the identity once, by opening a
+transparency group and shifting antialiasing. Prefer leaving the attribute off.
+
+**Compare the markup, not only the pixels.** A pixel count on this renderer
+cannot separate a real regression from jitter, so it has to be judged against a
+noise floor — which means a difference the same size as the floor is invisible
+to it. Dumping the rendered DOM of both builds and diffing it tag by tag is the
+check that has actual resolution, and it found two things the pixel test had
+been reporting intermittently or not at all:
+
+- The clip had migrated from the `<image>` onto a wrapping `<g>` during a
+  refactor. Filter-then-clip either way, equivalent on paper, and it measured
+  11 px off the baseline on one run in five.
+- Arriving at night **by toggling** left an empty `style=""` on the structure,
+  because React had reconciled one `<image>` across the day branch's inline
+  filter and cleared it. Loading straight into night never produced it. Keys on
+  the two branches remount instead.
+
+What the night DOM is now allowed to differ by, against `16b94a2`, is exactly
+two things: the day scene's five `<defs>`, referenced nowhere — the harness
+asserts the set of `url(#…)` actually referenced is identical — and the flex
+wrapper that holds `BuildTag`, whose geometry is measured button by button.
+
 ### Grading the structure
 
 The night grade uses `feColorMatrix type="saturate"` plus a per-channel
@@ -429,9 +605,27 @@ Two guard rails, both because the root is what people rely on:
   deploy** if any root file's hash moved. Adding a sub-directory cannot change
   a root file, which is exactly why the assertion is cheap and worth having.
 
-The branch being tested is what carries `VITE_BUILD_LABEL`'s effects — the
-robots noindex tag and the badge. `main` has no such code, so a root build
-cannot accidentally produce them.
+`VITE_BUILD_LABEL` is what marks a build as not-the-live-site: the Vite plugin
+adds `<meta name="robots" content="noindex, nofollow">` and prefixes the title,
+`BuildBadge` draws an amber ring round the viewport, and `BuildTag` puts the
+word itself in the control stack next to "Jump to today". Unset — which the
+root build always leaves it — none of that exists in the output.
+
+The tag is **in the flow, not over it**, and that is the second attempt. The
+first pinned vertical tabs to the viewport edges at 30% height, which was
+checked at one viewport and turned out to cover the forecast panel at
+1440x756, the fourth tide row at 375x667, and the right-hand end of the
+time-lapse speed slider — its readout with it. There is no fixed offset that
+is free at every viewport in both the idle and the playing layouts, because
+every edge of this UI already has a control pinned to it. Taking space in a
+row that has some is the only arrangement that cannot cover anything; the ring
+is what carries the signal.
+
+noindex is in the HTML rather than a `robots.txt` on purpose. robots.txt only
+works at the site root, so it would mean editing the root build to describe a
+sub-site; and `Disallow` only stops crawling, not indexing — a disallowed URL
+can still be listed from a link elsewhere. The meta tag is the thing that
+actually keeps a page out of the index.
 
 ## Working on this repo from anywhere
 
