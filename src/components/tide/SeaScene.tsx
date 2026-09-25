@@ -90,15 +90,6 @@ const STARS: Star[] = (() => {
 })();
 
 /**
- * How deep the caustics reach, as a fraction of the plot.
- *
- * Constant on purpose. Tie it to the actual water column and it would change
- * every frame, which would rebuild the mask and defeat the whole point of
- * moving the water with an ancestor transform. Anything below it is clipped.
- */
-const CAUSTIC_BAND_FRAC = 0.45;
-
-/**
  * Depth at which the water veil reaches its deepest colour, in metres.
  *
  * A depth, not a fraction of what is left on screen: with the surface at 1 m
@@ -109,7 +100,6 @@ const VEIL_DEPTH_M = 9;
 
 export function SceneDefs({ geom, horizonY, waterY }: Props) {
   const { PAD_L, PAD_T, plotWidth, plotHeight } = geom;
-  const causticH = plotHeight * CAUSTIC_BAND_FRAC;
   const skyTop = PAD_T;
   const skyBottom = Math.max(skyTop + 1, horizonY);
   const seaBottom = PAD_T + plotHeight;
@@ -209,33 +199,19 @@ export function SceneDefs({ geom, horizonY, waterY }: Props) {
           rather than on datum, because in this scene the surface moves: the
           whole point is that dragging the red line floods the legs. Turquoise
           where the light still reaches, deep navy where it does not. */}
+      {/* The lit skin just under the surface: bright where the light gets back
+          out, gone a few centimetres down. It is what gives the waterline a
+          thickness instead of an edge. */}
+      <linearGradient id="daySeaSkin" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stopColor="var(--day-skin-top)" />
+        <stop offset="45%" stopColor="var(--day-skin-mid)" />
+        <stop offset="100%" stopColor="var(--day-skin-out)" />
+      </linearGradient>
+
       <linearGradient id="daySeaVeil" x1="0" x2="0" y1="0" y2="1">
         <stop offset="0%" style={{ stopColor: "var(--day-veil-shallow)" }} />
         <stop offset="34%" style={{ stopColor: "var(--day-veil-mid)" }} />
         <stop offset="100%" style={{ stopColor: "var(--day-veil-deep)" }} />
-      </linearGradient>
-
-      {/* Depth fade for the caustics, in the surface's own frame so it never
-          has to be rebuilt when the tide moves. */}
-      <mask
-        id="dayCausticFade"
-        maskUnits="userSpaceOnUse"
-        x={PAD_L}
-        y={0}
-        width={plotWidth}
-        height={causticH}
-      >
-        <rect x={PAD_L} y={0} width={plotWidth} height={causticH} fill="url(#dayCausticFadeGrad)" />
-      </mask>
-
-      {/* Caustics fade out with depth — they are surface light, so they have no
-          business halfway down. A mask rather than an opacity so the falloff is
-          smooth instead of a visible edge. */}
-      <linearGradient id="dayCausticFadeGrad" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0%" stopColor="#fff" stopOpacity="0.15" />
-        <stop offset="9%" stopColor="#fff" stopOpacity="1" />
-        <stop offset="46%" stopColor="#fff" stopOpacity="0.35" />
-        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
       </linearGradient>
 
       {/* Light gathering where the water meets the legs. This is the cue that
@@ -247,50 +223,24 @@ export function SceneDefs({ geom, horizonY, waterY }: Props) {
         <stop offset="100%" stopColor="var(--day-surface-glow)" stopOpacity="0" />
       </linearGradient>
 
-      {/* Ripple filaments. feTurbulence is expensive but has no dynamic input,
-          so the result caches; the surface is moved by translating an ancestor
-          <g>, which never dirties the filter. Don't put waterY in here. */}
-      <filter
-        id="dayCaustics"
-        x="-2%"
-        y="-2%"
-        width="104%"
-        height="104%"
-        colorInterpolationFilters="sRGB"
-      >
-        <feTurbulence type="turbulence" baseFrequency="0.038 0.094" numOctaves="2" seed="17" />
-        {/* Keep the red channel as alpha, then a steep curve so only the crests
-            survive as filaments instead of the whole cloud. */}
-        <feColorMatrix
-          type="matrix"
-          values="0 0 0 0 1
-                  0 0 0 0 1
-                  0 0 0 0 1
-                  1 0 0 0 0"
-        />
-        <feComponentTransfer result="filaments">
-          <feFuncA type="table" tableValues="0 0 0 0.05 0.3 1" />
-        </feComponentTransfer>
-        <feFlood floodColor="#c8f2ec" result="tint" />
-        {/* in2 is the filaments, NOT SourceGraphic: compositing against the
-            source rect would just mask the flood with a solid rectangle and
-            paint the whole band flat. */}
-        <feComposite in="tint" in2="filaments" operator="in" />
-        <feGaussianBlur stdDeviation="0.8" />
-      </filter>
+      {/* The submerged structure: refracted, graded, and lit.
 
-      {/* The submerged structure, refracted. Same grade as daySubmerged with a
-          displacement in front of it — water bends what you see through it, and
-          without that the legs read as a tinted cut-out rather than as objects
-          under a surface. Static turbulence again, for the same reason. */}
-      {/* Deliberately a LIGHT touch — much lighter than the night grade.
+          The grade is a LIGHT touch — much lighter than the night one.
           Measured against the reference composite, a leg just under the surface
-          there is still (206,158,47): almost the dry yellow. It only loses its
-          colour further down. So the depth fade belongs to the veil, whose
-          alpha climbs with depth, and this filter's whole job is the refraction
-          plus enough of a cool cast to say "other side of a surface".
+          there is still (206,158,47): almost the dry yellow, losing its colour
+          only further down. So the depth fade belongs to the veil, whose alpha
+          climbs with depth, and this filter does the refraction and the light.
           Grading hard here instead produced a grey ghost at every depth, which
-          is the one thing the reference is not. */}
+          is the one thing the reference is not.
+
+          The caustics are INSIDE this filter, and that is the whole point.
+          Drawn as their own layer over the water they read as pale clouds
+          floating in the sea — water is not a gas. Light through waves is
+          something you see landing ON a surface, so it is composited against
+          this image's own alpha and screened over it, which means it can only
+          ever appear on the steel. A low x frequency against a high y one
+          stretches it into the wide thin bands light off a moving surface
+          actually makes, rather than blobs. */}
       <filter id="daySubmergedRefract" colorInterpolationFilters="sRGB">
         <feTurbulence
           type="fractalNoise"
@@ -306,13 +256,67 @@ export function SceneDefs({ geom, horizonY, waterY }: Props) {
           xChannelSelector="R"
           yChannelSelector="G"
         />
-        <feColorMatrix type="saturate" values="0.84" />
+        {/* Darker than what is above the line, and cooler: measured, the
+            immersed steel was coming out LIGHTER than the dry steel, which is
+            the opposite of being under water. Blue keeps the most, red loses
+            the most, so the yellow walks toward olive without the hue rotating
+            — the same reason the night grade is a per-channel curve and not a
+            mixed colour matrix. */}
+        <feColorMatrix type="saturate" values="0.78" />
         <feComponentTransfer>
-          <feFuncR type="linear" slope="0.86" intercept="0.0" />
-          <feFuncG type="linear" slope="0.93" intercept="0.01" />
-          <feFuncB type="linear" slope="0.9" intercept="0.05" />
+          <feFuncR type="linear" slope="0.7" intercept="0.0" />
+          <feFuncG type="linear" slope="0.78" intercept="0.01" />
+          <feFuncB type="linear" slope="0.84" intercept="0.06" />
         </feComponentTransfer>
-        <feGaussianBlur stdDeviation="0.5" />
+        <feGaussianBlur stdDeviation="0.5" result="steel" />
+
+        {/* fractalNoise, NOT turbulence. turbulence sums absolute values, so
+            its output crowds the bottom of the range and any curve steep
+            enough to pick out crests discards nearly everything — measured,
+            the light was reaching the steel at a luminance ripple of 1.4
+            against dry steel's own 3.7, which is to say not at all.
+            fractalNoise sits around the middle and responds to the curve. */}
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.009 0.21"
+          numOctaves="3"
+          seed="23"
+          result="ripple"
+        />
+        {/* One channel into alpha, then a steep curve so only the crests
+            survive as bands instead of the whole cloud. */}
+        <feColorMatrix
+          in="ripple"
+          type="matrix"
+          values="0 0 0 0 1
+                  0 0 0 0 1
+                  0 0 0 0 1
+                  1 0 0 0 0"
+          result="rippleA"
+        />
+        {/* Steep, so only the crests survive: a gentler curve lit the whole
+            leg evenly, which reads as washed-out rather than as light moving
+            over it. */}
+        <feComponentTransfer in="rippleA" result="bands">
+          <feFuncA type="table" tableValues="0 0 0.05 0.3 0.75 1 1" />
+        </feComponentTransfer>
+        <feFlood floodColor="#cfeee0" result="lightColour" />
+        <feComposite in="lightColour" in2="bands" operator="in" result="lightRaw" />
+        {/* Dimmed before it is screened on, and 0.48 is calibrated rather than
+            picked: swept against a flat swatch of the structure's own yellow,
+            no part of the lit steel comes out brighter than the steel above
+            the line — at 0.58 the crests passed it and read as bleached. The
+            band frequency is high and slightly irregular in x on purpose:
+            wide, perfectly horizontal bands read as a venetian blind laid over
+            the whole view rather than as light refracted onto each leg. */}
+        <feComponentTransfer in="lightRaw" result="light">
+          <feFuncA type="linear" slope="0.4" />
+        </feComponentTransfer>
+        {/* in2 is the graded steel, so the light exists only where the
+            structure does. This is what keeps it out of the open water. */}
+        <feComposite in="light" in2="steel" operator="in" result="onSteel" />
+        <feGaussianBlur in="onSteel" stdDeviation="0.4" result="onSteelSoft" />
+        <feBlend in="steel" in2="onSteelSoft" mode="screen" />
       </filter>
 
       {/* The same grade as daySubmergedRefract with the refraction taken out,
@@ -543,16 +547,36 @@ export function SkyLayer({ geom, horizonY, waterY, theme, dayPhoto }: Props & { 
  * string that often is exactly the kind of per-frame work that turns a scene
  * into a slideshow.
  */
+function waveOffsets(n: number, amp: number): number[] {
+  return Array.from(
+    { length: n + 1 },
+    (_, i) => amp * (Math.sin((i / n) * 31.7) * 0.6 + Math.sin((i / n) * 12.1 + 1.9) * 0.4),
+  );
+}
+
 function surfaceWavePath(x0: number, x1: number, amp: number): string {
   const n = 96;
   const span = x1 - x0;
-  let d = `M ${x0.toFixed(1)} 0`;
-  for (let i = 1; i <= n; i++) {
-    const u = i / n;
-    const y = amp * (Math.sin(u * 31.7) * 0.6 + Math.sin(u * 12.1 + 1.9) * 0.4);
-    d += ` L ${(x0 + span * u).toFixed(1)} ${y.toFixed(2)}`;
-  }
+  const off = waveOffsets(n, amp);
+  let d = `M ${x0.toFixed(1)} ${off[0].toFixed(2)}`;
+  for (let i = 1; i <= n; i++) d += ` L ${(x0 + (span * i) / n).toFixed(1)} ${off[i].toFixed(2)}`;
   return d;
+}
+
+/**
+ * The water column itself, with the SAME wavy top as the surface line.
+ *
+ * A rectangle here was the tell: the tinted water began on a ruled edge while
+ * the highlight above it undulated, so the two read as two unrelated things
+ * instead of one surface with a body under it.
+ */
+function surfaceWaveArea(x0: number, x1: number, amp: number, depth: number): string {
+  const n = 96;
+  const span = x1 - x0;
+  const off = waveOffsets(n, amp);
+  let d = `M ${x0.toFixed(1)} ${off[0].toFixed(2)}`;
+  for (let i = 1; i <= n; i++) d += ` L ${(x0 + (span * i) / n).toFixed(1)} ${off[i].toFixed(2)}`;
+  return `${d} L ${x1.toFixed(1)} ${depth.toFixed(1)} L ${x0.toFixed(1)} ${depth.toFixed(1)} Z`;
 }
 
 /**
@@ -578,9 +602,28 @@ export function WaterVeil({ geom, waterY, dayPhoto, simplify }: Omit<Props, "hor
   // Wave amplitude scales with the plot so it is the same apparent chop on a
   // phone as on a desktop, and is clamped so it never becomes a feature.
   const amp = Math.min(5, Math.max(1.6, plotHeight * 0.004));
+  // Screen height of VEIL_DEPTH_M of water, measured on the height axis so it
+  // is a real depth in both views rather than a fraction of the viewport.
+  const veilSpan = Math.max(1, yOfH(0) - yOfH(VEIL_DEPTH_M));
+  // The lit band just under the surface, where the water is still thin enough
+  // to see through cleanly. Scaled to the plot so it is the same apparent
+  // thickness on a phone as on a desktop.
+  const skinH = Math.min(26, Math.max(8, plotHeight * 0.022));
+
+  // Every hook lives above the drawn-scene early return. Below it they would
+  // run only in the photographic branch, so toggling the theme would change
+  // the hook order and corrupt React's state for this component.
   const wave = useMemo(
     () => surfaceWavePath(PAD_L, PAD_L + plotWidth, amp),
     [PAD_L, plotWidth, amp],
+  );
+  const column = useMemo(
+    () => surfaceWaveArea(PAD_L, PAD_L + plotWidth, amp, veilSpan),
+    [PAD_L, plotWidth, amp, veilSpan],
+  );
+  const skin = useMemo(
+    () => surfaceWaveArea(PAD_L, PAD_L + plotWidth, amp, skinH),
+    [PAD_L, plotWidth, amp, skinH],
   );
 
   if (!dayPhoto) {
@@ -610,12 +653,6 @@ export function WaterVeil({ geom, waterY, dayPhoto, simplify }: Omit<Props, "hor
     );
   }
 
-  // Screen height of VEIL_DEPTH_M of water, measured on the height axis so it
-  // is a real depth in both views rather than a fraction of the viewport.
-  const veilSpan = Math.max(1, yOfH(0) - yOfH(VEIL_DEPTH_M));
-  const causticH = plotHeight * CAUSTIC_BAND_FRAC;
-  const glowH = Math.max(6, plotHeight * 0.012);
-
   return (
     <g clipPath="url(#plotClip)" pointerEvents="none">
       {/* Promoted to its own layer: the whole water body moves on every frame
@@ -623,9 +660,9 @@ export function WaterVeil({ geom, waterY, dayPhoto, simplify }: Omit<Props, "hor
           under it each time. Measured worth about 4 fps at four days a
           second. */}
       <g transform={`translate(0, ${waterY.toFixed(2)})`} style={{ willChange: "transform" }}>
-        {/* Below the graded column it is simply deep: one flat rect, tall
-            enough to reach the bottom of the plot from the highest the line
-            can go, and clipped by the plot either way. */}
+        {/* Below the graded column it is simply deep and opaque: one flat rect,
+            tall enough to reach the bottom of the plot from the highest the
+            line can go, and clipped by the plot either way. */}
         <rect
           x={PAD_L}
           y={veilSpan}
@@ -633,57 +670,49 @@ export function WaterVeil({ geom, waterY, dayPhoto, simplify }: Omit<Props, "hor
           height={plotHeight + veilSpan}
           fill="var(--day-veil-deep)"
         />
-        <rect x={PAD_L} y={0} width={plotWidth} height={veilSpan} fill="url(#daySeaVeil)" />
 
-        {/* Caustics over the immersed structure, not just over the water: they
-            are what stops the legs reading as a tinted cut-out.
+        {/* The column, with the same wavy top as the line above it. A rect here
+            was the tell: tinted water beginning on a ruled edge under an
+            undulating highlight reads as two unrelated things rather than one
+            surface with a body. */}
+        <path d={column} fill="url(#daySeaVeil)" />
 
-            Generated at HALF resolution and scaled back up. feTurbulence costs
-            in proportion to the filter region, and at full size this one rect
-            was measured at ~27 ms a frame — on its own the single most
-            expensive thing in the scene. A quarter of the pixels is a quarter
-            of the cost, and on soft rippling light the difference is not
-            visible; the filter's baseFrequency is doubled to keep the
-            filaments the same size on screen. */}
-        {!simplify && (
-          <g mask="url(#dayCausticFade)" opacity={0.72}>
-            <g transform="scale(2)">
-              <rect
-                x={PAD_L / 2}
-                y={0}
-                width={plotWidth / 2}
-                height={causticH / 2}
-                fill="#c8f2ec"
-                filter="url(#dayCaustics)"
-              />
-            </g>
-          </g>
-        )}
+        {/* The skin: the first few centimetres, where light still gets in and
+            back out. This is most of what makes the surface a plane you are
+            looking THROUGH rather than a colour change. */}
+        <path d={skin} fill="url(#daySeaSkin)" />
 
-        {/* Light gathering along the contact line, above and below it. */}
-        <rect
-          x={PAD_L}
-          y={-glowH / 2}
-          width={plotWidth}
-          height={glowH}
-          fill="url(#daySurfaceGlow)"
-        />
-
-        {/* The surface itself: a soft shadow just under a bright meniscus, both
-            following the same chop so they read as one plane. */}
+        {/* The surface itself. Four passes on the SAME wave, so they read as
+            one plane: the water's shadow just under it, a soft glow straddling
+            it, the meniscus, and a fine highlight on the crests. */}
         <path
           d={wave}
-          transform={`translate(0, ${(amp + 1.6).toFixed(2)})`}
+          transform={`translate(0, ${(amp + 2.6).toFixed(2)})`}
           fill="none"
           stroke="var(--day-surface-shadow)"
-          strokeWidth={2.6}
-          opacity={0.55}
+          strokeWidth={4.5}
+          opacity={0.45}
+        />
+        <path
+          d={wave}
+          fill="none"
+          stroke="var(--day-surface-glow)"
+          strokeWidth={Math.max(5, amp * 2.4)}
+          opacity={0.3}
         />
         <path
           d={wave}
           fill="none"
           stroke="var(--day-surface-line)"
-          strokeWidth={1.4}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+        <path
+          d={wave}
+          transform="translate(0, -0.9)"
+          fill="none"
+          stroke="var(--day-surface-crest)"
+          strokeWidth={0.9}
           strokeLinecap="round"
         />
       </g>

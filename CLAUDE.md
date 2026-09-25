@@ -176,6 +176,47 @@ Sizing it to the current line position makes the picture breathe in and out as
 the tide is dragged, which is instantly visible and completely wrong: the sea
 does not zoom when the tide comes in.
 
+#### The water is not a gas
+
+The first version drew caustics as their own layer over the water: a
+full-width rect of `feTurbulence`, masked with a depth fade. It read as pale
+clouds floating in the sea, and it was the single most expensive thing in the
+scene. Both problems had the same cause — light through waves is something you
+see landing **on a surface**, not hanging in a volume.
+
+So the caustics live inside `daySubmergedRefract` now, composited against the
+structure image's own alpha and screened over it. They can only ever appear on
+the steel. Nothing paints light into open water, and there is no second
+full-screen filtered layer to pay for. Don't put one back.
+
+Three numbers in that filter were measured rather than chosen, and each was
+wrong the obvious way first:
+
+- **`fractalNoise`, not `turbulence`.** `turbulence` sums absolute values, so
+  its output crowds the bottom of the range; a curve steep enough to pick out
+  crests discarded nearly everything. Measured, the luminance ripple along
+  submerged steel was 1.4 against dry steel's own 3.7 — the light was not
+  reaching it at all, while the code looked correct.
+- **The dimming slope.** Swept against a flat swatch of the structure's yellow:
+  at 0.58 the lit crests came out at 205 where dry steel is 201, which reads as
+  bleached rather than lit. It is the ceiling that matters, not the mean.
+- **Band frequency.** Wide horizontal bands read as a venetian blind laid over
+  the whole view. High frequency with some irregularity in x reads as light on
+  each leg.
+
+#### The surface has a thickness
+
+The waterline is not a stroke. Four passes share **one** wave path — a shadow
+under it, a soft glow straddling it, the meniscus, a highlight on the crests —
+and the water column beneath is a closed path with that same wavy top, not a
+rect. A rect was the tell: tinted water beginning on a ruled edge under an
+undulating highlight reads as two unrelated things rather than one surface with
+a body under it.
+
+`daySeaSkin` is the first few centimetres, where light still gets in and back
+out. It is most of what makes the surface something you look _through_ rather
+than a colour change.
+
 #### Grading the immersed structure: keep it light
 
 The immersed legs are graded much more gently than the night ones, and that is
@@ -203,14 +244,16 @@ moves — and here it moves on every frame of a time-lapse. Measured at 4 days/s
 on a 1400x900 desktop viewport, the scene started at **18 fps**. The fixes, in
 the order they paid:
 
-- **Simplify while playing.** Caustics and refraction are close-inspection
-  details; nobody reads ripple filaments at four days a second and everybody
-  sees a stutter. `simplify` (= `animActive`) drops both. The flat grade it
-  falls back to is deliberately the _same_ grade as the refracting one, because
-  a different one made the legs change colour the instant you pressed play.
-- **Caustics at half resolution**, scaled back up, with `baseFrequency` doubled
-  to keep the filaments the same size. `feTurbulence` costs in proportion to
-  its region; this one rect alone measured ~27 ms a frame at full size.
+- **No free-floating caustics layer at all.** Folding them into the submerged
+  structure's own filter removed a full-screen `feTurbulence` rect that had
+  measured ~27 ms a frame at full size — the single biggest cost in the scene,
+  and the reason the desktop fast end sat at 45 fps. It now sits at 60.
+- **Simplify while playing.** Refraction and the light on the steel are
+  close-inspection details; nobody reads them at four days a second and
+  everybody sees a stutter. `simplify` (= `animActive`) drops both. The flat
+  grade it falls back to is deliberately the _same_ grade as the refracting
+  one, because a different one made the legs change colour the instant you
+  pressed play.
 - **The dry pass is drawn whole, unclipped** — day scene only. Clipping the
   structure into two halves means both filtered images re-rasterise every
   frame. Note the two are NOT pixel-identical: drawn whole, the dry pass shows
@@ -223,16 +266,15 @@ the order they paid:
 - **`will-change: transform`** on the water group, worth about 4 fps.
 - **One WC59 sprite while playing** instead of a split hull, worth about 6 fps.
 
-Result: **60 fps at phone width** at every speed, drag included; **45 fps at
-4 days/s on desktop**, 55 at 12 s/day, 60 dragging. Those numbers come from a
-container rendering through **SwiftShader with no GPU at all**, so they are
-floors rather than what a real device does.
+Result: **60 fps everywhere measured** — phone and desktop, idle, dragging,
+12 s/day and 4 days/s, with and without the WC59 overlay. Those numbers come
+from a container rendering through **SwiftShader with no GPU at all**, so they
+are floors rather than what a real device does.
 
 If more is ever needed, the remaining lever is the submerged overlay: its clip
 moves every frame over a filtered image. Pre-baking the graded structure into a
-canvas once at load would make that clip cheap. It was not done because the
-stated requirement — a finger drag and 4 days/s on a phone — already measures
-60 fps.
+canvas once at load would make that clip cheap. There is no call for it while
+everything measures 60 fps.
 
 #### Night and IRL must not move
 
