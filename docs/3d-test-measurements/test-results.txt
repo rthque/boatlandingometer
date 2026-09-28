@@ -1,0 +1,63 @@
+jacket triangles 9496 bounds [ -8.209097862243652, -12.239999771118164, -8.218171119689941 ] [ 8.209097862243652, 33, 8.218171119689941 ]
+monopile triangles 8248 bounds [ -5.534999847412109, -12, -5.534999847412109 ] [ 5.534999847412109, 33, 6.9019999504089355 ]
+✔ production reference: extrema and coefficients (6.457812ms)
+✔ original tether threshold and daylight windows (1.369413ms)
+✔ Paris DST: exact midnight boundaries, repeated and missing hours (6.805778ms)
+✔ crossing inversion and extreme thresholds across dates (13.546934ms)
+✔ procedural variants: finite metric geometry and bounded complexity (147.41574ms)
+✔ weather aggregation uses independent peaks and retains missing data (1.36645ms)
+✔ renderer resize: zero-to-visible and pixel budget, no CSS feedback (1.802271ms)
+✔ camera presets: every bounding corner fits portrait and desktop landscape (44.923743ms)
+✔ target height: two decimals and French decimal input (1.967942ms)
+✔ resize burst: one allocation after debounce, single RAF, no per-frame resize (2.075244ms)
+✔ resize exception is contained once, with no RAF or retry storm (0.834747ms)
+✔ exception before renderer.render is contained by the complete animation guard (0.397765ms)
+✔ context lost/restored pauses, rebuilds viewport and resumes exactly one loop (0.372563ms)
+✔ context loss during a thrown GPU call recovers without fatal error; timeout falls back (0.307711ms)
+✔ unmount cancels resize, RAF and restoration timers; late events cannot restart (0.191753ms)
+✔ UI watchdog: no confirmed frame terminates after 3 seconds, once (0.311993ms)
+✔ UI watchdog: frames renew, hidden tabs suspend, cleanup disarms (0.370363ms)
+✔ worker input forwards orbit/pan/wheel without DOM (10.121453ms)
+✔ UI canvas is never transferred to OffscreenCanvas (8.513809ms)
+✔ URL rendering modes resolve before the 3D component mounts (1.050458ms)
+✔ real STEP GLB: <10 MB, finite metres, bounded draws, documented provisional LAT offset (1167.842887ms)
+✔ real boat landing: raycast world elevations survive transformed compressed geometry (1070.718185ms)
+✔ real cameras: FOU / BL / Tether bounds fit phone, desktop and ultra-wide scenes (241.538856ms)
+✔ invalid replacement is rejected before a working procedural model is removed (2.988535ms)
+✔ recovered conical CAD surfaces are present within 25 mm after compression (1244.235832ms)
+✔ Windcat59: web GLB loads below 3 MB, metre-scale hull, baked AO and 12 material draws (42.602512ms)
+✔ Windcat59: waterline follows LAT and bow contact stays on actual jacket during gentle motion (1416.909489ms)
+✔ Windcat59: full foundation and CTV fit FOU across phone and desktop ratios (456.030446ms)
+✔ Windcat59: invalid replacement rejected and 2D/safe keep their recovery paths (13.517788ms)
+✔ keyboard pan respects camera basis, AZERTY and input modifiers (5.019704ms)
+✔ desktop OrbitControls: Shift drag pans and cursor zoom follows off-centre ray (2.531745ms)
+✔ paint shader uses transformed surface LAT in normal and safe modes; fixed bands isolate two front tubes (426.872964ms)
+✔ installation removal is limited to complete accessory components; structural piles retained (270.795706ms)
+✔ 3D polyline: true chord lengths, total, signed height and FR/EN results (11.772208ms)
+✔ polygon computes rotated planar area, concave boundaries, and rejects bow-ties and collinearity (0.668028ms)
+✔ edit lifecycle preserves saved measures through exit, undo applies to draft, delete is individual (0.81518ms)
+✔ diameter fitted from surfaces: cylinder detected, box rejected, inclined band formula and dissimilar tubes rejected (278.694612ms)
+✔ snapping selects actual box edges but ignores triangulation diagonals on a flat face (3.747946ms)
+✔ point gestures: move stays on steel, cancel restores, second touch resumes navigation; surface P1 closes (6.565882ms)
+✔ normal tether: same red rope radius, above clamp only, follows ladder and meets measured SRL hook (10.48289ms)
+Real BL fitted diameter (m) 0.4504261267653096 rope minimum clearance (m) 0.10561015298725596
+✔ real encrypted jacket: tube diameters match two BL heights; tether clears ladder and its preset clears WC59 (1529.240133ms)
+✔ browser key derivation opens the Node packer check with a non-extractable key (1225.01622ms)
+✔ AES-GCM rejects wrong passwords, altered payloads and swapped asset AAD; rekey retains bytes (3218.827406ms)
+✔ camera movement cannot tunnel through thin steel; ship envelopes exclude hull and cabin (7.759458ms)
+✔ BL / Tether preset cameras sit on clear port side for phone and desktop (1.148854ms)
+✔ photo clamp eye is at 3.50 m LAT, bracket joins rung around 3.58; rope and two jaws exist (12.293083ms)
+✔ deployed protected resources contain no plaintext GLB and all payloads decrypt (117.507763ms)
+✔ actual rubber face is in contact with both steel tubes, perpendicular to their tangent (1544.394578ms)
+✔ missing encrypted model reaches the procedural fallback without a public plaintext request (799.343766ms)
+✔ satin finish retains drawable single-material meshes without groups (0.758669ms)
+✔ adaptive resolution tolerates a transient stall and changes in bounded steps (0.378974ms)
+✔ phone retains DPR2 while large desktop stays inside the memory budget (0.206353ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16004.605795
