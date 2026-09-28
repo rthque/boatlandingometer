@@ -1,0 +1,78 @@
+jacket triangles 9496 bounds [ -8.209097862243652, -12.239999771118164, -8.218171119689941 ] [ 8.209097862243652, 33, 8.218171119689941 ]
+monopile triangles 8248 bounds [ -5.534999847412109, -12, -5.534999847412109 ] [ 5.534999847412109, 33, 6.9019999504089355 ]
+✔ production reference: extrema and coefficients (7.019627ms)
+✔ original tether threshold and daylight windows (1.59243ms)
+✔ Paris DST: exact midnight boundaries, repeated and missing hours (6.126012ms)
+✔ crossing inversion and extreme thresholds across dates (14.249574ms)
+✔ procedural variants: finite metric geometry and bounded complexity (111.755456ms)
+✔ weather aggregation uses independent peaks and retains missing data (4.401378ms)
+✔ renderer resize: zero-to-visible and pixel budget, no CSS feedback (3.496284ms)
+✔ camera presets: every bounding corner fits portrait and desktop landscape (53.42518ms)
+✔ target height: two decimals and French decimal input (2.04333ms)
+✔ resize burst: one allocation after debounce, single RAF, no per-frame resize (1.748868ms)
+✔ resize exception is contained once, with no RAF or retry storm (0.805736ms)
+✔ exception before renderer.render is contained by the complete animation guard (0.400114ms)
+✔ context lost/restored pauses, rebuilds viewport and resumes exactly one loop (0.434739ms)
+✔ context loss during a thrown GPU call recovers without fatal error; timeout falls back (0.285577ms)
+✔ unmount cancels resize, RAF and restoration timers; late events cannot restart (0.138384ms)
+✔ UI watchdog: no confirmed frame terminates after 3 seconds, once (0.479972ms)
+✔ UI watchdog: frames renew, hidden tabs suspend, cleanup disarms (0.215932ms)
+✔ worker input forwards orbit/pan/wheel without DOM (11.492188ms)
+✔ UI canvas is never transferred to OffscreenCanvas (8.657809ms)
+✔ URL rendering modes resolve before the 3D component mounts (1.140588ms)
+✔ real STEP GLB: <10 MB, finite metres, bounded draws, documented provisional LAT offset (970.941166ms)
+✔ real boat landing: raycast world elevations survive transformed compressed geometry (991.527134ms)
+✔ real cameras: FOU / BL / Tether bounds fit phone, desktop and ultra-wide scenes (253.509503ms)
+✔ invalid replacement is rejected before a working procedural model is removed (7.418639ms)
+✔ recovered conical CAD surfaces are present within 25 mm after compression (992.190847ms)
+✔ Windcat59: web GLB loads below 3 MB, metre-scale hull, baked AO and 12 material draws (37.171928ms)
+✔ Windcat59: waterline follows LAT and bow contact stays on actual jacket during gentle motion (1269.390992ms)
+✔ Windcat59: full foundation and CTV fit FOU across phone and desktop ratios (239.193201ms)
+✔ Windcat59: invalid replacement rejected and 2D/safe keep their recovery paths (3.196953ms)
+✔ keyboard pan respects camera basis, AZERTY and input modifiers (4.330042ms)
+✔ desktop OrbitControls: Shift drag pans and cursor zoom follows off-centre ray (1.46226ms)
+✔ paint shader uses transformed surface LAT in normal and safe modes; fixed bands isolate two front tubes (396.857749ms)
+✔ installation removal is limited to complete accessory components; structural piles retained (199.059297ms)
+✔ 3D polyline: true chord lengths, total, signed height and FR/EN results (9.457993ms)
+✔ polygon computes rotated planar area, concave boundaries, and rejects bow-ties and collinearity (0.578065ms)
+✔ edit lifecycle preserves saved measures through exit, undo applies to draft, delete is individual (0.648249ms)
+✔ diameter fitted from surfaces: cylinder detected, box rejected, inclined band formula and dissimilar tubes rejected (217.09387ms)
+✔ snapping selects actual box edges but ignores triangulation diagonals on a flat face (4.699522ms)
+✔ point gestures: move stays on steel, cancel restores, second touch resumes navigation; surface P1 closes (7.628852ms)
+✔ normal tether: same red rope radius, above clamp only, follows ladder and meets measured SRL hook (11.50094ms)
+Real BL fitted diameter (m) 0.4504261267653096 rope minimum clearance (m) 0.10561015298725596
+✔ real encrypted jacket: tube diameters match two BL heights; tether clears ladder and its preset clears WC59 (1639.849486ms)
+✔ hourly sea follows Paris time, not the 08–18 peak, with no gap/date extrapolation (1.789163ms)
+✔ UTC forecast timestamps distinguish repeated Paris hours and skip the spring gap (0.652198ms)
+✔ missing and invalid data remain unknown; zero Hs is a valid flat sea (0.885998ms)
+✔ spectrum preserves Hs variance, mean period and direction-from convention (0.69239ms)
+sea 2 h numerical reference {
+  mean: -0.00014592396409984415,
+  Hs: 2.003229558840278,
+  maxWave: 3.5536169708599594,
+  HmaxEstimate: 3.72,
+  waves: 1034
+}
+✔ varied illustrative waves stay zero-mean with occasional heights near the estimated Hmax (61.995893ms)
+✔ analytic normals agree with the displacement derivative; sea never changes tide/window inputs (3.285307ms)
+✔ browser key derivation opens the Node packer check with a non-extractable key (1225.183055ms)
+✔ AES-GCM rejects wrong passwords, altered payloads and swapped asset AAD; rekey retains bytes (3007.846495ms)
+✔ camera movement cannot tunnel through thin steel; ship envelopes exclude hull and cabin (3.180356ms)
+✔ BL / Tether preset cameras sit on clear port side for phone and desktop (2.258986ms)
+✔ photo clamp eye is at 3.50 m LAT, bracket joins rung around 3.58; rope and two jaws exist (12.793147ms)
+✔ deployed protected resources contain no plaintext GLB and all payloads decrypt (36.907838ms)
+✔ actual rubber face is in contact with both steel tubes, perpendicular to their tangent (4182.715954ms)
+✔ missing encrypted model reaches the procedural fallback without a public plaintext request (828.621624ms)
+✔ satin finish retains drawable single-material meshes without groups (0.757068ms)
+✔ adaptive resolution tolerates a transient stall and changes in bounded steps (0.374734ms)
+✔ phone retains DPR2 while large desktop stays inside the memory budget (0.269328ms)
+ℹ tests 58
+ℹ suites 0
+ℹ pass 58
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17373.760693
+
+Additional validation: normal Water and safe MeshPhong shaders compiled and linked in Mesa EGL OpenGL ES 3. TypeScript and Vite build /3D/test/ passed. Browser 390x844 / 1200x844: hourly state, toggle, missing data, FR/EN, neutral login title, 2D fallback. Browser WebGL unavailable; no on-device FPS measurement.
