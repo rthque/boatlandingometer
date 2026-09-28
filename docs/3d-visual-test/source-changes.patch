@@ -1,0 +1,383 @@
+diff --git a/.gitignore b/.gitignore
+index 1897de5..e91a717 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -51,3 +51,7 @@ next-env.d.ts
+ *.glb
+ *.gltf
+ *.blend
++
++/out-test/
++/app/qa/
++/public/qa-assets/
+diff --git a/components/boat/BoatApp.tsx b/components/boat/BoatApp.tsx
+index 59a8ae0..8c8c304 100644
+--- a/components/boat/BoatApp.tsx
++++ b/components/boat/BoatApp.tsx
+@@ -72,7 +72,7 @@ export default function BoatApp({renderMode='3d',onLogout}:{renderMode?:RenderMo
+  <div className="scene-viewport" onPointerDownCapture={()=>interact(true)} onPointerUpCapture={()=>interact(false)} onPointerCancelCapture={()=>interact(false)} onWheelCapture={()=>interact(false)}>
+  {view==='IRL'||flat||!ready?<FlatView view={view} water={water} threshold={threshold} ctv={ctv} onPick={pick}/>:<SceneGate safe={renderMode==='safe'} assets={assetRegistry()} water={water} threshold={threshold} opacity={opacity} night={night} waves={waves} ctv={ctv} view={view} kind={kind} recenter={recenter} onPick={pick} onFail={fail} onReady={onReady} onCtvSource={setCtvSource} onPerformance={perf} onStatus={setSceneStatus}/>}
+  </div>
+- <header className="compact-top hud-layer"><a className="wordmark" href="https://boatlandingometer.info/">boatlandingometer <b>3D</b></a><div className="compact-date"><button aria-label={t('Jour précédent','Previous day')} disabled={date<=MIN_DATE} onClick={()=>selectDate(shiftDate(date,-1))}><ChevronLeft/></button><button onClick={()=>{setMonth(date.slice(0,7));setModal('calendar');}}><CalendarDays/><span>{longDate(date)}</span></button><button aria-label={t('Jour suivant','Next day')} disabled={date>=MAX_DATE} onClick={()=>selectDate(shiftDate(date,1))}><ChevronRight/></button></div><div className="compact-views"><Tabs value={view} onValueChange={chooseView}><TabsList><TabsTrigger value="FOU">FOU</TabsTrigger><TabsTrigger value="BL">BL</TabsTrigger><TabsTrigger value="TETHER"><Anchor/>Tether</TabsTrigger><TabsTrigger value="IRL">IRL</TabsTrigger></TabsList></Tabs></div></header>
++ <header className="compact-top hud-layer"><a className="wordmark" href="https://boatlandingometer.info/">boatlandingometer <b>3D</b>{import.meta.env?.VITE_BLO_CHANNEL==='test'&&<small style={{color:'#ffc965',fontSize:10,letterSpacing:1,marginLeft:8}}>TEST</small>}</a><div className="compact-date"><button aria-label={t('Jour précédent','Previous day')} disabled={date<=MIN_DATE} onClick={()=>selectDate(shiftDate(date,-1))}><ChevronLeft/></button><button onClick={()=>{setMonth(date.slice(0,7));setModal('calendar');}}><CalendarDays/><span>{longDate(date)}</span></button><button aria-label={t('Jour suivant','Next day')} disabled={date>=MAX_DATE} onClick={()=>selectDate(shiftDate(date,1))}><ChevronRight/></button></div><div className="compact-views"><Tabs value={view} onValueChange={chooseView}><TabsList><TabsTrigger value="FOU">FOU</TabsTrigger><TabsTrigger value="BL">BL</TabsTrigger><TabsTrigger value="TETHER"><Anchor/>Tether</TabsTrigger><TabsTrigger value="IRL">IRL</TabsTrigger></TabsList></Tabs></div></header>
+  <nav className="tool-rail hud-layer" aria-label={t('Commandes de la scène','Scene controls')}>
+  <button aria-label={t('Informations et horaires','Information and times')} aria-pressed={side} title={t('Informations et horaires','Information and times')} onClick={()=>{setSide(v=>!v);}}><PanelLeft/></button>
+  <button aria-label={t('Recentrer la vue','Recenter view')} title={t('Recentrer la vue','Recenter view')} onClick={()=>setRecenter(n=>n+1)}><LocateFixed/></button>
+diff --git a/components/boat/scene-engine.ts b/components/boat/scene-engine.ts
+index 17e637d..e0b28de 100644
+--- a/components/boat/scene-engine.ts
++++ b/components/boat/scene-engine.ts
+@@ -1,4 +1,6 @@
+ import * as T from 'three';
++import {adaptiveResolution} from '@/lib/render-quality';
++import {finishFoundation} from '@/lib/foundation-finish';
+ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+ import {Water} from 'three/examples/jsm/objects/Water.js';
+ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+@@ -21,25 +23,29 @@ import type {SceneCommand,SceneOptions,SceneReply,SceneViewport,InputEventData}
+ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLCanvasElement|OffscreenCanvas,send:(message:SceneReply)=>void,present:(frames:number)=>void,safe=false){
+  let latest=init.props,viewport=init.size,visible=init.visible;
+  const props=init.props,input=new WorkerInput();
+- const context=canvas.getContext('webgl2',{antialias:false,alpha:false,powerPreference:'default',preserveDrawingBuffer:!safe}) as WebGL2RenderingContext|null;
++ const context=canvas.getContext('webgl2',{antialias:!safe,alpha:false,powerPreference:'default',preserveDrawingBuffer:!safe}) as WebGL2RenderingContext|null;
+  if(!context||context.isContextLost())throw new Error('WebGL2 context unavailable');
+- const renderer=new T.WebGLRenderer({canvas,context,outputBufferType:T.UnsignedByteType,antialias:false,alpha:false,powerPreference:'default'});
++ const renderer=new T.WebGLRenderer({canvas,context,outputBufferType:T.UnsignedByteType,antialias:!safe,alpha:false,powerPreference:'default'});
+  const asset=(path:string)=>props.assets?.[path]??new URL(path.replace(/^\//,''),init.origin).href;
+   let alive=true,lastView='',lastKind='',loaded=false,transition=0,needsFrame=true;
+   let previousCtv=props.ctv,previousRecenter=props.recenter??0;
+-  let currentSize:ReturnType<typeof viewportSize>=null;let qualityRatio=safe?1:2;
++  let currentSize:ReturnType<typeof viewportSize>=null;const quality=adaptiveResolution(safe?1:2);let qualityRatio=quality.ratio;
+   const gl=renderer.getContext();const limits=gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;const maxBufferSide=Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number,limits[0],limits[1]);
+   // Initialize at a tiny buffer; all later GPU resizing has one debounced owner.
+   renderer.setPixelRatio(1);renderer.shadowMap.enabled=false;
+   const scene=new T.Scene();scene.background=new T.Color('#132c3c');scene.fog=new T.FogExp2('#132c3c',.0016);
+   const camera=new T.PerspectiveCamera(40,1,.1,1800);camera.position.set(42,34,58);
+-  renderer.setSize(1,1,false);renderer.toneMapping=safe?T.NoToneMapping:T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.outputColorSpace=T.SRGBColorSpace;
++  renderer.setSize(1,1,false);renderer.toneMapping=safe?T.NoToneMapping:T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.outputColorSpace=T.SRGBColorSpace;
+   const controls=new OrbitControls(camera,input as unknown as HTMLElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.target.set(0,10,0);controls.minDistance=.65;controls.maxDistance=450;controls.maxPolarAngle=Math.PI*.57;controls.screenSpacePanning=true;controls.zoomToCursor=true;controls.mouseButtons={LEFT:T.MOUSE.ROTATE,MIDDLE:T.MOUSE.DOLLY,RIGHT:T.MOUSE.PAN};controls.update();
+   const orbitStart=()=>{transition=0;};controls.addEventListener('start',orbitStart);
+   const hem=new T.HemisphereLight('#c8e6fa','#162523',2.6);scene.add(hem);
+   const sun=new T.DirectionalLight('#ffe6ad',4);sun.position.set(-35,60,30);scene.add(sun);
+   const rim=new T.DirectionalLight('#9bd4ff',2);rim.position.set(20,25,-35);scene.add(rim);
+-  const waterUniform={value:props.water},targetUniform={value:props.threshold};
++  const waterUniform={value:props.water},targetUniform={value:props.threshold},pixelWorld={value:0};
++  let environment:T.WebGLRenderTarget|null=null;
++  const refreshEnvironment=()=>{if(safe)return;environment?.dispose();
++   const sky=new T.Scene(),dome=new T.Mesh(new T.SphereGeometry(50,16,12),new T.ShaderMaterial({side:T.BackSide,vertexShader:'varying vec3 p; void main(){p=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec3 p;void main(){float h=smoothstep(-.3,.8,normalize(p).y);gl_FragColor=vec4(mix(vec3(.10,.16,.19),vec3(.65,.79,.88),h),1.);}'}));sky.add(dome);const pmrem=new T.PMREMGenerator(renderer);environment=pmrem.fromScene(sky,.04,.1,100,{size:64});scene.environment=environment.texture;scene.environmentIntensity=.6;pmrem.dispose();dome.geometry.dispose();dome.material.dispose();
++  };refreshEnvironment();
+   const materials:Record<string,T.MeshStandardMaterial>={
+    yellow:new T.MeshStandardMaterial({color:'#e9b52c',metalness:.48,roughness:.37}),
+    steel:new T.MeshStandardMaterial({color:'#a0aeb6',metalness:.8,roughness:.32}),
+@@ -68,16 +74,16 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+    if(!alive){disposeFoundation(candidate,true);return;}
+    try{
+     prepareFoundation(candidate);steelColliders=indexCollision(candidate);
+-    candidate.traverse(o=>{if(o instanceof T.Mesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(mat=>applyStructureMarkings(mat as T.MeshStandardMaterial,waterUniform,targetUniform,true,safe));});
++    finishFoundation(candidate,waterUniform,targetUniform,pixelWorld,safe);
+    }catch(error){disposeFoundation(candidate,true);throw error;}
+    const previous=structure;scene.add(candidate);structure=candidate;loaded=true;
+    scene.remove(previous);disposeFoundation(previous);scene.remove(clampModel);disposeFoundation(clampModel,true);clampModel=buildTetherClamp(true);clampModel.traverse(o=>{if(o instanceof T.Mesh)applyStructureMarkings(o.material as T.MeshStandardMaterial,waterUniform,targetUniform,true,safe);});scene.add(clampModel);steelColliders.push(...indexCollision(clampModel));picked.visible=false;needsFrame=true;
+    send({type:'source',source:R.label});
+   }).catch(()=>{if(alive)send({type:'source',source:'Représentation 3D indicative'});}).finally(()=>clearTimeout(loadTimeout));
+-  const normals=new Uint8Array(128*128*4);for(let y=0;y<128;y++)for(let x=0;x<128;x++){const i=(y*128+x)*4;normals[i]=128+45*Math.sin(x*.29+y*.17);normals[i+1]=128+45*Math.cos(y*.31-x*.13);normals[i+2]=245;normals[i+3]=255;}
+-  const normalTex=new T.DataTexture(normals,128,128);normalTex.wrapS=normalTex.wrapT=T.RepeatWrapping;normalTex.needsUpdate=true;
++  const normals=new Uint8Array(128*128*4);for(let y=0;y<128;y++)for(let x=0;x<128;x++){const i=(y*128+x)*4;normals[i]=128+22*Math.sin(x*.29+y*.17);normals[i+1]=128+22*Math.cos(y*.31-x*.13);normals[i+2]=245;normals[i+3]=255;}
++  const normalTex=new T.DataTexture(normals,128,128);normalTex.wrapS=normalTex.wrapT=T.RepeatWrapping;normalTex.generateMipmaps=true;normalTex.minFilter=T.LinearMipmapLinearFilter;normalTex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());normalTex.needsUpdate=true;
+   const seaGeometry=new T.PlaneGeometry(1300,1300,safe?24:144,safe?24:144);const seaVertices=seaGeometry.attributes.position;for(let i=0;i<seaVertices.count;i++){const x=seaVertices.getX(i),y=seaVertices.getY(i);seaVertices.setXY(i,Math.sign(x)*Math.pow(Math.abs(x)/650,1.7)*650,Math.sign(y)*Math.pow(Math.abs(y)/650,1.7)*650);}seaVertices.needsUpdate=true;
+-  const reflectiveSea=safe?null:new Water(seaGeometry,{textureWidth:512,textureHeight:512,waterNormals:normalTex,sunDirection:sun.position.clone().normalize(),sunColor:0xffe4b0,waterColor:0x124452,distortionScale:2.2,alpha:.88,fog:false});
++  const reflectiveSea=safe?null:new Water(seaGeometry,{textureWidth:512,textureHeight:512,waterNormals:normalTex,sunDirection:sun.position.clone().normalize(),sunColor:0xffe4b0,waterColor:0x124452,distortionScale:.9,alpha:.88,fog:false});
+   const simpleSea=safe?new T.Mesh(seaGeometry,new T.MeshPhongMaterial({color:'#2e6670',transparent:true,opacity:props.opacity,depthWrite:false,side:T.DoubleSide,shininess:40})):null;
+   const sea=reflectiveSea??simpleSea!;sea.rotation.x=-Math.PI/2;sea.position.y=props.water;scene.add(sea);sea.material.transparent=true;sea.material.depthWrite=false;
+   if(reflectiveSea){
+@@ -104,7 +110,7 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+    shipColliders=indexCollision(candidate);ctvModel=candidate;scene.add(candidate);candidate.visible=latest.ctv;ctv.visible=false;needsFrame=true;
+    if(!safe){
+     // Small shadow map, ship meshes only. No jacket shadow pass or post-processing.
+-    renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
++    renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+     sun.castShadow=true;sun.shadow.mapSize.set(512,512);sun.shadow.camera.left=-23;sun.shadow.camera.right=23;sun.shadow.camera.top=23;sun.shadow.camera.bottom=-23;sun.shadow.camera.near=5;sun.shadow.camera.far=140;sun.shadow.normalBias=.025;sun.shadow.bias=-.0001;sun.shadow.camera.updateProjectionMatrix();scene.add(sun.target);sea.receiveShadow=true;
+    }
+    send({type:'ctv-source',source:'TSM Windcat 59 · modèle 3D photographique'});
+@@ -131,7 +137,9 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+    const size=viewportSize(viewport.width,viewport.height,Math.min(viewport.dpr,qualityRatio),maxBufferSide);
+    if(!size){currentSize=null;return false;}
+    if(!currentSize||size.width!==currentSize.width||size.height!==currentSize.height||size.dpr!==currentSize.dpr){
+-    updateViewport(renderer,camera,size);currentSize=size;needsFrame=true;
++    const refit=!currentSize||size.width!==currentSize.width||size.height!==currentSize.height;
++    updateViewport(renderer,camera,size);currentSize=size;if(refit)needsFrame=true;
++    pixelWorld.value=2*Math.tan(camera.fov*Math.PI/360)/(size.height*size.dpr);
+     input.clientWidth=size.width;input.clientHeight=size.height;
+     send({type:'viewport',width:size.width,height:size.height,bufferWidth:canvas.width,bufferHeight:canvas.height});
+    }
+@@ -172,7 +180,7 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+    waterUniform.value=p.water;targetUniform.value=p.threshold;sea.position.y=p.water;
+    if(reflectiveSea){reflectiveSea.material.uniforms.time.value=(now-start)/1000*.5;reflectiveSea.material.uniforms.waveAmount.value=p.waves&&!reduced?1:0;reflectiveSea.material.uniforms.alpha.value=p.opacity;}
+    if(simpleSea){simpleSea.material.opacity=p.opacity;simpleSea.material.color.set(p.night?'#0a2635':'#2e6670');const t=(now-start)/1000;for(let i=0;i<seaVertices.count;i++){const x=seaVertices.getX(i),y=seaVertices.getY(i);seaVertices.setZ(i,p.waves&&!reduced?.13*Math.sin((.94*x+.34*y)*.42-t*1.55)+.07*Math.sin((-.43*x+.90*y)*.73-t*2):0);}seaVertices.needsUpdate=true;seaGeometry.computeVertexNormals();}
+-   const bg=p.night?'#0a1828':'#698999';(scene.background as T.Color).set(bg);(scene.fog as T.FogExp2).color.set(bg);hem.intensity=p.night?1.6:2.8;sun.intensity=p.night?2.6:4.2;renderer.toneMappingExposure=p.night?1.05:1.25;
++   const bg=p.night?'#0a1828':'#698999';(scene.background as T.Color).set(bg);(scene.fog as T.FogExp2).color.set(bg);hem.intensity=p.night?1.4:2.2;sun.intensity=p.night?2.1:3.3;renderer.toneMappingExposure=p.night?1.0:1.08;scene.environmentIntensity=p.night?.12:.6;
+    if(reflectiveSea){reflectiveSea.material.uniforms.waterColor.value.set(p.night?'#0a2635':'#2e6670');reflectiveSea.material.uniforms.sunColor.value.set(p.night?'#acdcf0':'#fff0c1');}
+    ctv.visible=p.ctv&&!ctvModel;
+    if(ctvModel){
+@@ -194,13 +202,13 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+    camera.lookAt(controls.target);camera.updateMatrixWorld(true);lastCamera.copy(camera.position);
+    renderer.setRenderTarget(null);renderer.render(scene,camera);count++;
+    if(!fence){fence=context!.fenceSync(context!.SYNC_GPU_COMMANDS_COMPLETE,0);if(!fence)throw new Error('GPU frame fence unavailable');context!.flush();}
+-   if(now-fpsStart>2500){const fps=count*1000/(now-fpsStart);send({type:'fps',fps:Math.round(fps)});if(fps<32&&qualityRatio>1){qualityRatio=1;lifecycle.requestResize();}count=0;fpsStart=now;}
++   if(now-fpsStart>4000){const fps=count*1000/(now-fpsStart);send({type:'fps',fps:Math.round(fps)});if(!safe&&now-start>12000){const next=quality.sample(fps);if(next!==qualityRatio){qualityRatio=next;lifecycle.requestResize();}}count=0;fpsStart=now;}
+   }
+   let lastState:SceneState|undefined;
+   const lifecycle=createSceneLifecycle({
+    clock:{request:cb=>typeof requestAnimationFrame==='function'?requestAnimationFrame(cb):Number(setTimeout(()=>cb(performance.now()),16)),cancel:id=>{if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(id);else clearTimeout(id);},delay:(cb,ms)=>Number(setTimeout(cb,ms)),clear:id=>clearTimeout(id)},
+    resize,render:animate,isContextLost:()=>context.isContextLost(),
+-   restore:()=>{fence=null;sea.visible=true;renderer.setRenderTarget(null);currentSize=null;needsFrame=true;transition=0;count=0;fpsStart=performance.now();normalTex.needsUpdate=true;tex.needsUpdate=true;},
++   restore:()=>{refreshEnvironment();fence=null;sea.visible=true;renderer.setRenderTarget(null);currentSize=null;needsFrame=true;transition=0;count=0;fpsStart=performance.now();normalTex.needsUpdate=true;tex.needsUpdate=true;},
+    state:status=>{if(status!==lastState){lastState=status;send({type:'status',status});}},
+    error:(error,phase)=>send({type:'error',reason:phase==='context'?'Contexte 3D perdu':'La scène 3D a rencontré une erreur',detail:`${phase}: ${error instanceof Error?error.message:String(error)}`}),
+   });
+@@ -210,7 +218,7 @@ export function startScene(init:Extract<SceneCommand,{type:'init'}>,canvas:HTMLC
+   lifecycle.requestResize(0);
+   return {
+    presented:()=>{waitingForPresentation=false;},
+-   dispose:()=>{alive=false;lifecycle.dispose();clearTimeout(loadTimeout);clearTimeout(ctvTimeout);abort.abort();ctvAbort.abort();if(ctvModel){scene.remove(ctvModel);disposeCtv(ctvModel);}sun.shadow.map?.dispose();controls.dispose();canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);scene.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});normalTex.dispose();tex.dispose();draco.dispose();renderer.dispose();},
++   dispose:()=>{alive=false;lifecycle.dispose();clearTimeout(loadTimeout);clearTimeout(ctvTimeout);abort.abort();ctvAbort.abort();if(ctvModel){scene.remove(ctvModel);disposeCtv(ctvModel);}sun.shadow.map?.dispose();controls.dispose();canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);scene.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});environment?.dispose();normalTex.dispose();tex.dispose();draco.dispose();renderer.dispose();},
+    update:(value:SceneOptions)=>{latest=value;},
+    resize:(size:SceneViewport)=>{if(viewport.width===size.width&&viewport.height===size.height&&viewport.dpr===size.dpr)return;viewport=size;lifecycle.requestResize(0);},
+    input:(event:InputEventData)=>{if(event.type==='blur'){heldKeys.clear();cancelPointer();return;}const key=navigationKey(event);if(key&&(event.type==='keydown'||event.type==='keyup')){if(event.type==='keydown'){heldKeys.add(key);transition=0;}else heldKeys.delete(key);return;}input.send(event);},
+diff --git a/lib/fine-profiles.ts b/lib/fine-profiles.ts
+new file mode 100644
+index 0000000..ab531f3
+--- /dev/null
++++ b/lib/fine-profiles.ts
+@@ -0,0 +1,19 @@
++import {MeshStandardMaterial} from 'three';
++/** Visual coverage only. Source mesh, LAT picking and collision remain metric.
++ * Radius grows only when below 0.7 physical px, capped at +3 cm. No scaling of
++ * the whole jacket. Camera-near profiles retain their measured CAD section.
++ */
++export function stabilizeProfiles(material:MeshStandardMaterial,pixelWorld:{value:number}){
++ const previous=material.onBeforeCompile.bind(material),key=material.customProgramCacheKey.bind(material);
++ const previousKey=key();
++ material.onBeforeCompile=(shader,renderer)=>{
++  previous(shader,renderer);shader.uniforms.bloPixelWorld=pixelWorld;
++  shader.vertexShader='attribute vec3 _blo_radial; attribute float _blo_radius; uniform float bloPixelWorld;\n'+shader.vertexShader;
++  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
++   float bloDepth=max(0.0,-(modelViewMatrix*vec4(position,1.0)).z);
++   float bloExpand=clamp(bloDepth*bloPixelWorld*0.7-_blo_radius,0.0,0.03);
++   float bloScale=max(length(mat3(modelMatrix)*_blo_radial),0.00001);
++   transformed+=_blo_radial*bloExpand/bloScale;`);
++ };
++ material.customProgramCacheKey=()=>previousKey+'-stable-profiles-v1';material.needsUpdate=true;
++}
+diff --git a/lib/foundation-finish.ts b/lib/foundation-finish.ts
+new file mode 100644
+index 0000000..d499e01
+--- /dev/null
++++ b/lib/foundation-finish.ts
+@@ -0,0 +1,12 @@
++import {Mesh,MeshStandardMaterial,type Group,type Material} from 'three';
++import {applyStructureMarkings} from './structure-markings.ts';
++import {stabilizeProfiles} from './fine-profiles.ts';
++export function finishFoundation(root:Group,water:{value:number},target:{value:number},pixelWorld:{value:number},safe:boolean){
++ root.traverse(o=>{if(o instanceof Mesh){
++  const fine=!!o.geometry.getAttribute('_blo_radial');
++  const finish=(original:Material)=>{const mat=(original as MeshStandardMaterial).clone();mat.roughness=Math.max(.5,mat.roughness);if(mat.name==='Acier jaune')mat.metalness=.22;applyStructureMarkings(mat,water,target,true,safe);if(fine&&!safe)stabilizeProfiles(mat,pixelWorld);return mat;};
++  // Keep single materials single: an array on a geometry without groups would
++  // suppress every draw, despite a successfully loaded and raycastable mesh.
++  o.material=Array.isArray(o.material)?o.material.map(finish):finish(o.material);
++ }});
++}
+diff --git a/lib/render-quality.ts b/lib/render-quality.ts
+new file mode 100644
+index 0000000..efa5153
+--- /dev/null
++++ b/lib/render-quality.ts
+@@ -0,0 +1,11 @@
++/** Slow hysteresis avoids alternating resolutions and never moves the camera. */
++export function adaptiveResolution(initial=2){
++ let ratio=Math.min(2,Math.max(1,initial)),fast=0,slow=0;
++ return {get ratio(){return ratio;},sample(fps:number){
++  if(!Number.isFinite(fps)||fps<=0)return ratio;
++  slow=fps<48?slow+1:0;fast=fps>57?fast+1:0;
++  if(slow>=2&&ratio>1){ratio=Math.max(1,ratio-.25);slow=fast=0;}
++  else if(fast>=4&&ratio<2){ratio=Math.min(2,ratio+.25);slow=fast=0;}
++  return ratio;
++ }};
++}
+diff --git a/lib/scene-viewport.ts b/lib/scene-viewport.ts
+index 20d90b1..6b84af8 100644
+--- a/lib/scene-viewport.ts
++++ b/lib/scene-viewport.ts
+@@ -6,7 +6,7 @@ export function viewportSize(width:number,height:number,deviceRatio=1,maxBufferS
+  const w=Math.max(1,Math.round(width)),h=Math.max(1,Math.round(height));
+  const ratio=Number.isFinite(deviceRatio)?Math.max(1,deviceRatio):1;
+  const limit=Number.isFinite(maxBufferSide)&&maxBufferSide>0?maxBufferSide:4096;
+- const dpr=Math.min(ratio,2,Math.sqrt(1800000/(w*h)),limit/w,limit/h);
++ const dpr=Math.min(ratio,2,Math.sqrt(2700000/(w*h)),limit/w,limit/h);
+  return {width:w,height:h,dpr,aspect:w/h};
+ }
+ 
+diff --git a/package.json b/package.json
+index 12ed41c..a9c018f 100644
+--- a/package.json
++++ b/package.json
+@@ -16,7 +16,8 @@
+     "typecheck": "tsc --noEmit",
+     "model:export": "node --experimental-strip-types scripts/export-model.mjs",
+     "model:optimize": "gltf-transform optimize",
+-    "build:pages": "node scripts/build-static.mjs --pages"
++    "build:pages": "node scripts/build-static.mjs --pages",
++    "build:test": "node scripts/build-static.mjs --test"
+   },
+   "dependencies": {
+     "@base-ui/react": "^1.7.0",
+diff --git a/scripts/build-static.mjs b/scripts/build-static.mjs
+index e95c585..2b44257 100644
+--- a/scripts/build-static.mjs
++++ b/scripts/build-static.mjs
+@@ -1,8 +1,11 @@
+ import {spawnSync} from 'node:child_process';
+ import {readFile,readdir,access} from 'node:fs/promises';
+ import path from 'node:path';
++const test=process.argv.includes('--test');
+ const pages=process.argv.includes('--pages');
++const base=test?'/3D/test/':pages?'/3D/':'/';
++const output=test?'out-test':pages?'out-pages':'dist';
+ for(const candidate of ['app/qa','public/qa-assets','public/v9-qa.html']){let exists=false;try{await access(candidate);exists=true;}catch{}if(exists)throw Error('Remove temporary layout QA before building: '+candidate);}
+ async function audit(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())await audit(p);else{if(/\.(glb|gltf|blend|step|stp|bz2)$/i.test(e.name))throw Error('Plain 3D resource refused: '+p);const data=await readFile(p);if(data.subarray(0,4).toString()==='glTF')throw Error('Plain GLB signature refused: '+p);}}}
+ await audit('public');const v=JSON.parse(await readFile('public/protected/vault.json','utf8'));if(v.iterations<200000)throw Error('Insufficient PBKDF2 work factor');
+-const result=spawnSync(process.execPath,['node_modules/vite/bin/vite.js','build','--config','vite.static.config.ts'],{stdio:'inherit',env:{...process.env,VITE_BASE:pages?'/3D/':'/',BLO_OUT:pages?'out-pages':'dist'}});if(result.status!==0)process.exit(result.status??1);await audit(pages?'out-pages':'dist');
++const result=spawnSync(process.execPath,['node_modules/vite/bin/vite.js','build','--config','vite.static.config.ts'],{stdio:'inherit',env:{...process.env,VITE_BASE:base,BLO_OUT:output,VITE_BLO_CHANNEL:test?'test':'production'}});if(result.status!==0)process.exit(result.status??1);await audit(output);
+diff --git a/scripts/cad/audit-visual.mjs b/scripts/cad/audit-visual.mjs
+new file mode 100644
+index 0000000..2a23784
+--- /dev/null
++++ b/scripts/cad/audit-visual.mjs
+@@ -0,0 +1,11 @@
++import {readFile,writeFile} from 'node:fs/promises';
++import * as T from 'three';
++import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
++import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
++const [input,prefix]=process.argv.slice(2),b=await readFile(input);
++const {scene}=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');scene.updateMatrixWorld(true);
++const positions=[],normals=[],indices=[],materials=[],colors=[],names=[],report=[];let off=0,mid=0;
++scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry,a=g.attributes.position,n=g.attributes.normal,p=new Float32Array(a.count*3),nn=new Float32Array(a.count*3),nm=new T.Matrix3().getNormalMatrix(o.matrixWorld);for(let i=0;i<a.count;i++){new T.Vector3().fromBufferAttribute(a,i).applyMatrix4(o.matrixWorld).toArray(p,i*3);new T.Vector3().fromBufferAttribute(n,i).applyMatrix3(nm).normalize().toArray(nn,i*3);}positions.push(p);normals.push(nn);const src=g.index?.array??Uint32Array.from({length:a.count},(_,i)=>i),idx=new Uint32Array(src.length);let opposite=0,degenerate=0,badNormal=0;const va=new T.Vector3(),vb=new T.Vector3(),vc=new T.Vector3(),na=new T.Vector3();for(let i=0;i<src.length;i+=3){va.fromArray(p,src[i]*3);vb.fromArray(p,src[i+1]*3).sub(va);vc.fromArray(p,src[i+2]*3).sub(va);vb.cross(vc);if(vb.length()<1e-8)degenerate++;else{vb.normalize();na.set(0,0,0);for(let k=0;k<3;k++)na.add(va.fromArray(nn,src[i+k]*3));na.normalize();if(vb.dot(na)<-.1)opposite++;if(vb.dot(na)<.1)badNormal++;}}for(let i=0;i<src.length;i++)idx[i]=src[i]+off;indices.push(idx);off+=a.count;materials.push(new Uint8Array(src.length/3).fill(mid));colors.push(o.material.color.toArray());names.push(o.material.name);report.push({material:o.material.name,vertices:a.count,triangles:src.length/3,opposite,degenerate,badNormal});mid++;});
++const concat=(parts,Type)=>{const out=new Type(parts.reduce((n,p)=>n+p.length,0));let at=0;for(const p of parts){out.set(p,at);at+=p.length;}return out;};
++for(const [key,parts,Type] of [['positions',positions,Float32Array],['normals',normals,Float32Array],['indices',indices,Uint32Array],['materials',materials,Uint8Array]])await writeFile(prefix+'.'+key+'.bin',Buffer.from(concat(parts,Type).buffer));
++await writeFile(prefix+'.json',JSON.stringify({colors,names,report},null,2));console.log(JSON.stringify(report));
+diff --git a/scripts/cad/clean-visual-model.mjs b/scripts/cad/clean-visual-model.mjs
+new file mode 100644
+index 0000000..eedbfcf
+--- /dev/null
++++ b/scripts/cad/clean-visual-model.mjs
+@@ -0,0 +1,49 @@
++// Offline TEST asset repair. Native metric coordinates; no LAT adjustment here.
++// Arguments: baseline.glb component-labels.bin profiles.json output.glb report.json
++import {readFile,writeFile} from 'node:fs/promises';
++import {createRequire} from 'node:module';
++import * as T from 'three';
++import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
++import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
++import {toCreasedNormals,mergeGeometries,mergeVertices} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
++const require=createRequire(import.meta.url),dep=createRequire(require.resolve('@gltf-transform/cli'));
++const {Document,NodeIO}=dep('@gltf-transform/core'),{ALL_EXTENSIONS}=dep('@gltf-transform/extensions'),{meshopt,compactPrimitive,prune}=dep('@gltf-transform/functions'),{MeshoptEncoder,MeshoptSimplifier}=dep('meshoptimizer');
++const [input,labelsFile,profilesFile,output,reportPath]=process.argv.slice(2);
++const bytes=await readFile(input),{scene}=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');scene.updateMatrixWorld(true);
++const labelBytes=await readFile(labelsFile),labels=new Int32Array(labelBytes.buffer.slice(labelBytes.byteOffset,labelBytes.byteOffset+labelBytes.length));
++const profiles=JSON.parse(await readFile(profilesFile,'utf8')),replaced=new Set(profiles.map(x=>x.component));
++const doc=new Document(),buffer=doc.createBuffer(),outScene=doc.createScene('Jacket — visual test'),report={baselineTriangles:0,removedDegenerate:0,removedDuplicate:0,flippedAgainstCADNormals:0,reconstructedProfiles:profiles.length,replacedTriangles:0,outputTriangles:0,creaseDegrees:35,latOffsetUnchanged:.4445};
++const mats=[];let materialId=0,faceOffset=0;
++function primitive(g,material,name,fine=false){
++ const mesh=doc.createMesh(name),p=doc.createPrimitive().setMaterial(material);
++ for(const [name,a] of Object.entries(g.attributes)){const semantic={position:'POSITION',normal:'NORMAL',bloRadial:'_BLO_RADIAL',bloRadius:'_BLO_RADIUS'}[name];if(semantic)p.setAttribute(semantic,doc.createAccessor().setBuffer(buffer).setType(a.itemSize===3?'VEC3':'SCALAR').setArray(new Float32Array(a.array)));}
++ if(g.index)p.setIndices(doc.createAccessor().setBuffer(buffer).setType('SCALAR').setArray(new Uint32Array(g.index.array)));
++ mesh.addPrimitive(p);outScene.addChild(doc.createNode(name).setMesh(mesh).setExtras(fine?{bloFineProfiles:true}:{}));report.outputTriangles+=(g.index?.count??g.attributes.position.count)/3;
++}
++scene.traverse(o=>{
++ if(!o.isMesh)return;const src=o.geometry,g=new T.BufferGeometry(),wp=new Float32Array(src.attributes.position.count*3),wn=new Float32Array(wp.length),nm=new T.Matrix3().getNormalMatrix(o.matrixWorld);for(let i=0;i<src.attributes.position.count;i++){new T.Vector3().fromBufferAttribute(src.attributes.position,i).applyMatrix4(o.matrixWorld).toArray(wp,i*3);new T.Vector3().fromBufferAttribute(src.attributes.normal,i).applyMatrix3(nm).normalize().toArray(wn,i*3);}g.setAttribute('position',new T.BufferAttribute(wp,3));g.setAttribute('normal',new T.BufferAttribute(wn,3));g.setIndex(src.index.clone());const p=g.attributes.position,n=g.attributes.normal,ix=g.index.array,keep=[],seen=new Set();const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),norm=new T.Vector3();
++ const mat=doc.createMaterial(o.material.name).setBaseColorFactor([...o.material.color.toArray(),1]).setMetallicFactor(o.material.metalness).setRoughnessFactor(o.material.roughness).setDoubleSided(false);mats.push(mat);
++ for(let j=0;j<ix.length;j+=3){report.baselineTriangles++;const comp=labels[faceOffset+j/3];if(replaced.has(comp)){report.replacedTriangles++;continue;}
++  a.fromBufferAttribute(p,ix[j]);b.fromBufferAttribute(p,ix[j+1]).sub(a);c.fromBufferAttribute(p,ix[j+2]).sub(a);b.cross(c);if(b.length()<1e-8){report.removedDegenerate++;continue;}
++  const key=[ix[j],ix[j+1],ix[j+2]].map(i=>[p.getX(i),p.getY(i),p.getZ(i)].map(v=>Math.round(v*100000)).join(',')).sort().join('/');if(seen.has(key)){report.removedDuplicate++;continue;}seen.add(key);
++  norm.set(0,0,0);for(let k=0;k<3;k++)norm.add(a.fromBufferAttribute(n,ix[j+k]));
++  if(b.normalize().dot(norm.normalize())<-.25){keep.push(ix[j],ix[j+2],ix[j+1]);report.flippedAgainstCADNormals++;}else keep.push(ix[j],ix[j+1],ix[j+2]);
++ }
++ faceOffset+=ix.length/3;g.setIndex(keep);g.deleteAttribute('normal');
++ // toCreasedNormals uses a 1 cm positional hash; scale temporarily so its weld
++ // tolerance is 0.1 mm. Copy ONLY the normals back, preserving source positions.
++ const flat=g.toNonIndexed(),scaled=flat.clone().scale(100,100,100),smooth=toCreasedNormals(scaled,35*Math.PI/180);flat.setAttribute('normal',smooth.attributes.normal);const cleaned=mergeVertices(flat,1e-5);primitive(cleaned,mat,o.material.name);
++ const tubes=profiles.filter(f=>f.material===materialId).map(f=>{const start=new T.Vector3(...f.a),end=new T.Vector3(...f.b),axis=end.clone().sub(start),q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),axis.clone().normalize());const cylinder=new T.CylinderGeometry(f.radius,f.radius,axis.length(),24,1,false);cylinder.deleteAttribute('uv');const pp=cylinder.attributes.position,radial=new Float32Array(pp.count*3);for(let i=0;i<pp.count;i++)new T.Vector3(pp.getX(i),0,pp.getZ(i)).normalize().applyQuaternion(q).toArray(radial,i*3);cylinder.applyQuaternion(q).translate(...start.add(end).multiplyScalar(.5).toArray());cylinder.setAttribute('bloRadial',new T.BufferAttribute(radial,3));cylinder.setAttribute('bloRadius',new T.BufferAttribute(new Float32Array(pp.count).fill(f.radius),1));return cylinder;});if(tubes.length)primitive(mergeGeometries(tubes),mat,o.material.name+' · continuous profiles',true);
++ materialId++;
++});
++await MeshoptEncoder.ready;await doc.transform(meshopt({encoder:MeshoptEncoder,level:'high',quantizePosition:16,quantizeNormal:12}));
++// Quantization can collapse tiny tessellation remnants. Remove these AFTER
++// quantization, without a second rescale/quantization of the metric mesh.
++report.postQuantizationRemoved=0;report.postQuantizationFlipped=0;
++for(const node of doc.getRoot().listNodes()){const mesh=node.getMesh();if(!mesh)continue;const matrix=new T.Matrix4().fromArray(node.getWorldMatrix());for(const primitive of mesh.listPrimitives()){
++ const pos=primitive.getAttribute('POSITION'),normal=primitive.getAttribute('NORMAL'),old=primitive.getIndices(),ids=old.getArray(),keep=[],v=[],n=[];const A=new T.Vector3(),B=new T.Vector3(),D=new T.Vector3(),N=new T.Vector3(),tmp=new T.Vector3();
++ for(let i=0;i<ids.length;i+=3){A.fromArray(pos.getElement(ids[i],v)).applyMatrix4(matrix);B.fromArray(pos.getElement(ids[i+1],v)).applyMatrix4(matrix).sub(A);D.fromArray(pos.getElement(ids[i+2],v)).applyMatrix4(matrix).sub(A);B.cross(D);if(B.length()<1e-8){report.postQuantizationRemoved++;continue;}N.set(0,0,0);for(let k=0;k<3;k++)N.add(tmp.fromArray(normal.getElement(ids[i+k],n)));if(B.normalize().dot(N.normalize())<-.1){keep.push(ids[i],ids[i+2],ids[i+1]);report.postQuantizationFlipped++;}else keep.push(ids[i],ids[i+1],ids[i+2]);}
++ primitive.setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(keep)).setBuffer(buffer));compactPrimitive(primitive);
++}}
++report.outputTriangles-=report.postQuantizationRemoved;await doc.transform(prune());
++const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder});await io.write(output,doc);report.bytes=(await readFile(output)).length;await writeFile(reportPath,JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+diff --git a/tests/core.test.mjs b/tests/core.test.mjs
+index 8f2a0c5..fa6048d 100644
+--- a/tests/core.test.mjs
++++ b/tests/core.test.mjs
+@@ -13,7 +13,7 @@ test('Paris DST: exact midnight boundaries, repeated and missing hours',()=>{ass
+ test('crossing inversion and extreme thresholds across dates',()=>{for(const key of ['2026-06-01','2026-10-25','2027-03-28','2028-12-31']){const d=tideDay(key);for(const h of [0,1.2,2.2,5,8.5,10])for(const t of crossings(d,h))assert.ok(Math.abs(heightAt(d,t)-h)<1e-7);assert.equal(windows(d,-12).length,0);assert.equal(windows(d,40).length,1);assert.equal(windows(d,40)[0].end,d.end);}});
+ test('procedural variants: finite metric geometry and bounded complexity',()=>{const mats=Object.fromEntries(['yellow','steel','dark','white','red'].map(k=>[k,new T.MeshStandardMaterial()]));for(const kind of ['jacket','monopile']){const m=buildStructure(kind,mats);const box=new T.Box3().setFromObject(m);assert.ok(Math.abs(box.max.y-C.towerTop)<1e-4);assert.ok(box.min.y<=C.bottom);assert.ok(box.max.x<15);let triangles=0;m.traverse(o=>{if(o.isMesh){const a=o.geometry.attributes.position.array;assert.ok(Array.from(a).every(Number.isFinite));triangles+=(o.geometry.index?.count??a.length/3)/3;}});assert.ok(triangles>1000&&triangles<80000);console.log(kind,'triangles',triangles,'bounds',box.min.toArray(),box.max.toArray());}});
+ test('weather aggregation uses independent peaks and retains missing data',async()=>{const prev=globalThis.fetch;const time=Array.from({length:24},(_,i)=>`2026-09-27T${String(i).padStart(2,'0')}:00`);try{globalThis.fetch=async url=>({ok:true,json:async()=>String(url).includes('marine-api')?{hourly:{time,wave_height:time.map((_,i)=>i===3?9:i===12?1:null),wave_period:time.map(()=>7)}}:{hourly:{time,wind_speed_10m:time.map((_,i)=>i===10?8:null),wind_gusts_10m:time.map((_,i)=>i===16?12:null),wind_direction_10m:time.map(()=>180)}}});const [w]=await fetchWeather();assert.equal(w.hs,1);assert.equal(w.hmax,1.86);assert.equal(w.waveHour,'12:00');assert.equal(w.wind,8);assert.equal(w.gust,12);assert.equal(w.windHour,'10:00');assert.equal(w.waveCount,1);}finally{globalThis.fetch=prev;}});
+-test('renderer resize: zero-to-visible and pixel budget, no CSS feedback',async()=>{const{viewportSize,updateViewport}=await import('../lib/scene-viewport.ts');assert.equal(viewportSize(1200,0),null);assert.equal(viewportSize(0,400),null);assert.equal(viewportSize(NaN,300),null);const camera=new T.PerspectiveCamera(40,1,.1,1800);const calls=[];const renderer={setDrawingBufferSize:(w,h,dpr)=>calls.push(['buffer',w,h,dpr])};for(const [w,h]of [[1200,330],[380,400],[1920,800],[484,360],[3840,2160]]){const size=viewportSize(w,h,3,4096);assert.ok(size.width*size.height*size.dpr**2<=1800000.1);assert.ok(size.width*size.dpr<=4096);updateViewport(renderer,camera,size);assert.equal(camera.aspect,w/h);assert.deepEqual(calls.at(-1),['buffer',w,h,size.dpr]);assert.ok(size.dpr<=2);assert.ok(camera.projectionMatrix.elements.every(Number.isFinite));}});
++test('renderer resize: zero-to-visible and pixel budget, no CSS feedback',async()=>{const{viewportSize,updateViewport}=await import('../lib/scene-viewport.ts');assert.equal(viewportSize(1200,0),null);assert.equal(viewportSize(0,400),null);assert.equal(viewportSize(NaN,300),null);const camera=new T.PerspectiveCamera(40,1,.1,1800);const calls=[];const renderer={setDrawingBufferSize:(w,h,dpr)=>calls.push(['buffer',w,h,dpr])};for(const [w,h]of [[1200,330],[380,400],[1920,800],[484,360],[3840,2160]]){const size=viewportSize(w,h,3,4096);assert.ok(size.width*size.height*size.dpr**2<=2700000.1);assert.ok(size.width*size.dpr<=4096);updateViewport(renderer,camera,size);assert.equal(camera.aspect,w/h);assert.deepEqual(calls.at(-1),['buffer',w,h,size.dpr]);assert.ok(size.dpr<=2);assert.ok(camera.projectionMatrix.elements.every(Number.isFinite));}});
+ test('camera presets: every bounding corner fits portrait and desktop landscape',async()=>{const{fittedCamera}=await import('../lib/scene-viewport.ts');const mats=Object.fromEntries(['yellow','steel','dark','white','red'].map(k=>[k,new T.MeshStandardMaterial()]));for(const kind of ['jacket','monopile'])for(const key of ['FOU','BL','TETHER']){const v=C.cameras[key];const box=key==='FOU'?new T.Box3().setFromObject(buildStructure(kind,mats)):new T.Box3(new T.Vector3(...v.bounds[0]),new T.Vector3(...v.bounds[1]));for(const aspect of [.45,.8,1.2,2,3.5,5]){const direction=new T.Vector3(...v.position).sub(new T.Vector3(...v.target));const fit=fittedCamera(box,direction,aspect);const camera=new T.PerspectiveCamera(40,aspect,.1,1800);camera.position.copy(fit.position);camera.lookAt(fit.target);camera.updateMatrixWorld(true);for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){const p=new T.Vector3(x,y,z).project(camera);assert.ok(Math.abs(p.x)<.87&&Math.abs(p.y)<.87,`${kind}/${key}/${aspect}: ${p.toArray()}`);assert.ok(p.z>-1&&p.z<1);}}}});
+ test('target height: two decimals and French decimal input',async()=>{const{formatHeight,parseHeight}=await import('../lib/height-input.ts');assert.equal(formatHeight(2.2),'2,20');assert.equal(formatHeight(10),'10,00');assert.equal(formatHeight(-12),'-12,00');assert.equal(parseHeight('3,50'),3.5);assert.equal(parseHeight('3.5'),3.5);assert.equal(parseHeight('-32,55'),-32.55);assert.equal(parseHeight('50'),50);for(const s of ['','-','2,5,3','NaN','101','-101'])assert.equal(parseHeight(s),null);});
+ 
+@@ -93,9 +93,9 @@ async function realFoundation(){
+  const bytes=await readProtected('/models/foundation.glb');const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  return {...prepareFoundation(gltf.scene),bytes};
+ }
+-test('real STEP GLB: <10 MB, finite metres, 7 draws, documented provisional LAT offset',async()=>{
++test('real STEP GLB: <10 MB, finite metres, bounded draws, documented provisional LAT offset',async()=>{
+  const {root,bounds,meshes,triangles,bytes}=await realFoundation();const {REAL_MODEL:R}=await import('../lib/structure-config.ts');
+- assert.ok(bytes.length<10000000);assert.equal(meshes,7);assert.equal(triangles,767506);
++ assert.ok(bytes.length<10000000);assert.ok(meshes<=9);assert.ok(triangles>500000&&triangles<700000);
+  assert.ok(Math.abs(bounds.min.y-(-26.555+R.anchor.offsetY))<.002);assert.ok(Math.abs(bounds.max.y-(38.360+R.anchor.offsetY))<.002);
+  assert.ok(bounds.max.x<25&&bounds.max.z<25);assert.equal(C.calibrationValidated,false);
+  const jsonLength=bytes.readUInt32LE(12),json=JSON.parse(bytes.subarray(20,20+jsonLength).toString());assert.ok(json.extensionsRequired.includes('EXT_meshopt_compression'));
+diff --git a/tests/visual-quality.test.mjs b/tests/visual-quality.test.mjs
+new file mode 100644
+index 0000000..5e72751
+--- /dev/null
++++ b/tests/visual-quality.test.mjs
+@@ -0,0 +1,22 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {adaptiveResolution} from '../lib/render-quality.ts';
++import {viewportSize} from '../lib/scene-viewport.ts';
++import {Group,Mesh,BoxGeometry,MeshStandardMaterial} from 'three';
++import {finishFoundation} from '../lib/foundation-finish.ts';
++test('satin finish retains drawable single-material meshes without groups',()=>{
++ const root=new Group(),geometry=new BoxGeometry();geometry.clearGroups();const material=new MeshStandardMaterial({roughness:.1});material.name='Acier jaune';const mesh=new Mesh(geometry,material);root.add(mesh);
++ finishFoundation(root,{value:3},{value:7.8},{value:.001},false);
++ assert.equal(Array.isArray(mesh.material),false);assert.equal(geometry.groups.length,0);assert.equal(mesh.material.roughness,.5);assert.equal(mesh.material.metalness,.22);assert.ok(mesh.material.customProgramCacheKey().includes('blo-markings'));
++});
++test('adaptive resolution tolerates a transient stall and changes in bounded steps',()=>{
++ const q=adaptiveResolution();assert.equal(q.sample(25),2);assert.equal(q.sample(59),2);
++ assert.equal(q.sample(40),2);assert.equal(q.sample(40),1.75);
++ for(let i=0;i<30;i++)q.sample(20);assert.equal(q.ratio,1);
++ for(let i=0;i<3;i++)assert.equal(q.sample(60),1);assert.equal(q.sample(60),1.25);
++ for(let i=0;i<60;i++)q.sample(60);assert.equal(q.ratio,2);assert.equal(q.sample(NaN),2);
++});
++test('phone retains DPR2 while large desktop stays inside the memory budget',()=>{
++ assert.equal(viewportSize(390,844,3).dpr,2);
++ for(const [w,h] of [[1920,1080],[3840,2160],[1024,768]]){const s=viewportSize(w,h,2);assert.ok(w*h*s.dpr*s.dpr<=2700000.01);}
++});
+diff --git a/types/worker.d.ts b/types/worker.d.ts
+index 81e7c5a..3180b88 100644
+--- a/types/worker.d.ts
++++ b/types/worker.d.ts
+@@ -1 +1,3 @@
+ declare module '*?worker' {const WorkerConstructor:new(options?:WorkerOptions)=>Worker;export default WorkerConstructor;}
++
++interface ImportMetaEnv { readonly VITE_BLO_CHANNEL?: 'test'|'production'; }
