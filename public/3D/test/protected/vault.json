@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "id": "f3f6d59243980d5a7c596020bd77fce0",
+  "salt": "QhLTu+qCNFfKj1MzDXt7Tq1J4090O4R4rCun80D9FEE=",
+  "iterations": 600000,
+  "check": {
+    "iv": "EYqc7JRSLohVVnfY",
+    "data": "FxnKxSeD1aZUt/9GCRoct/Wah22Bcy/Ov+21NQHnocIOpLjmTz05+tWETqnTRdZj"
+  },
+  "assets": [
+    {
+      "path": "/models/foundation.glb",
+      "file": "assets/56b960db346fd9677a0b24931d2bd238.bin",
+      "iv": "j0VyLPxabauyNI4C",
+      "type": "model/gltf-binary",
+      "size": 5688892
+    },
+    {
+      "path": "/models/tsm-windcat-59.glb",
+      "file": "assets/85de9e6ebb6925657a8d8301368f04fd.bin",
+      "iv": "R8Ifl8ARtoRIWKMD",
+      "type": "model/gltf-binary",
+      "size": 1046780
+    },
+    {
+      "path": "/assets/bl.png",
+      "file": "assets/7e0e827cfaa4e7fa080aa7868f138fe4.bin",
+      "iv": "udQhqpZbRXqhgciS",
+      "type": "image/png",
+      "size": 746694
+    },
+    {
+      "path": "/assets/fou.png",
+      "file": "assets/f0f698af2b0e2b3b9bb78806af7526c3.bin",
+      "iv": "eh8YoOCMQ0JfSWtQ",
+      "type": "image/png",
+      "size": 1511536
+    },
+    {
+      "path": "/assets/irl.png",
+      "file": "assets/f0ef00dd914afd561004de1bb2a9dead.bin",
+      "iv": "q3yuaBv+QSLaPVhx",
+      "type": "image/png",
+      "size": 1527138
+    },
+    {
+      "path": "/assets/splash-zone.mp4",
+      "file": "assets/bb1315ecf5a9f3a5c66cf18d18bf6712.bin",
+      "iv": "yGdI9hCgeni+Xhso",
+      "type": "video/mp4",
+      "size": 2939354
+    },
+    {
+      "path": "/assets/wc59.png",
+      "file": "assets/edb758bf1954d96e597071a32573103c.bin",
+      "iv": "oBGmklKvy6RD+U90",
+      "type": "image/png",
+      "size": 255667
+    }
+  ]
+}
