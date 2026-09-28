@@ -1,0 +1,31 @@
+{
+  "before": 49914,
+  "after": 46054,
+  "quantisationDegeneratesRemoved": 568,
+  "bytes": 1046780,
+  "materials": 12,
+  "AOtextures": 1,
+  "compressed": {
+    "numErrors": 0,
+    "numWarnings": 0,
+    "numInfos": 1,
+    "numHints": 0,
+    "messages": [
+      {
+        "code": "UNSUPPORTED_EXTENSION",
+        "message": "Cannot validate an extension as it is not supported by the validator: 'EXT_meshopt_compression'.",
+        "severity": 2,
+        "pointer": "/extensionsUsed/0"
+      }
+    ],
+    "truncated": false
+  },
+  "decoded": {
+    "numErrors": 0,
+    "numWarnings": 0,
+    "numInfos": 0,
+    "numHints": 0,
+    "messages": [],
+    "truncated": false
+  }
+}

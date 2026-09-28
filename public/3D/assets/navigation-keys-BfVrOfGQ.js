@@ -1,0 +1,1 @@
+function e(e){if(e.type!==`keyup`&&(e.ctrlKey||e.metaKey||e.altKey))return null;let t=e.key?.toLowerCase();return t===`arrowleft`||t===`q`||t===`a`?`left`:t===`arrowright`||t===`d`?`right`:t===`arrowup`||t===`z`||t===`w`?`up`:t===`arrowdown`||t===`s`?`down`:null}export{e as t};
