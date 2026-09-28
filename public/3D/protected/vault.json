@@ -10,10 +10,10 @@
   "assets": [
     {
       "path": "/models/foundation.glb",
-      "file": "assets/ee61cb6d27b435b340c1afa8b753dc34.bin",
-      "iv": "0H+GMZd92wgzAkWI",
+      "file": "assets/56b960db346fd9677a0b24931d2bd238.bin",
+      "iv": "j0VyLPxabauyNI4C",
       "type": "model/gltf-binary",
-      "size": 3705432
+      "size": 5688892
     },
     {
       "path": "/models/tsm-windcat-59.glb",
