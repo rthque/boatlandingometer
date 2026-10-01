@@ -48,6 +48,34 @@ export const FORECAST_SITE = {
 export const WORK_START_H = 8;
 export const WORK_END_H = 18;
 
+/**
+ * Peaks at or above these get a 🛑 on their row in the panel.
+ *
+ * They are read against the window peak, which is the figure the panel already
+ * prints, so the marker and the number beside it always describe the same hour.
+ * The marker flags a forecast; it does not make the call. That belongs to the
+ * crew and to the vessel's own limits, which this app does not know.
+ */
+export const HS_ALERT_M = 1.5;
+export const WIND_ALERT_MS = 12;
+
+/**
+ * One decimal — the precision the panel prints, and the precision the
+ * thresholds above are tested at.
+ *
+ * Both go through here so they cannot drift apart. Testing the raw value
+ * instead would let an Hs of 1.46 print "1.5 m" with no marker next to it,
+ * which reads as a bug at a glance; and of the two ways to be wrong on a
+ * safety-adjacent number, flagging the hair-under is the right one.
+ */
+export const shown = (v: number): string => v.toFixed(1);
+
+/** Whether a wave height is at or over HS_ALERT_M, as printed. */
+export const hsIsHigh = (hsM: number): boolean => Number(shown(hsM)) >= HS_ALERT_M;
+
+/** Whether a wind speed is at or over WIND_ALERT_MS, as printed. */
+export const windIsHigh = (windMs: number): boolean => Number(shown(windMs)) >= WIND_ALERT_MS;
+
 const MARINE_URL = "https://marine-api.open-meteo.com/v1/marine";
 const WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
 
