@@ -392,7 +392,7 @@ are grouped rather than one control per line:
 ```
 [<]  [Sep 23, 2026]  [>]
               [Jump to today]
-     [Bottom tether line works]
+     [2.2m tether clamp works]
         [WC59] [☾] [ⓘ]
              [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
                                         [Speed        12 s/day ]

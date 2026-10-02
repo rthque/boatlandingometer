@@ -162,7 +162,7 @@ export function Controls({
         className="bg-background/90 backdrop-blur-sm"
         onClick={() => setTargetHeight(2.2)}
       >
-        Bottom tether line works
+        2.2m tether clamp works
       </Button>
       {/* WC59, the day/night toggle and the about panel share a line. The two
           icons are narrow enough to ride alongside WC59 without reaching the
