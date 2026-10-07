@@ -1,0 +1,19 @@
+{
+  "textures": [
+    {
+      "name": "surface-detail",
+      "bytes": 867052
+    },
+    {
+      "name": "intertidal-colour",
+      "bytes": 365482
+    },
+    {
+      "name": "finish-detail",
+      "bytes": 213183
+    }
+  ],
+  "totalBytes": 1445717,
+  "aoBytes": 874070,
+  "geometryBytes": 4113848
+}
