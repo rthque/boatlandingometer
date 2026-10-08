@@ -381,6 +381,29 @@ transparency badly. The rest keep their alpha channel.
 for Android home screens. `og:image` must stay an **absolute** URL; social
 crawlers don't resolve relative ones.
 
+### The manifest decides how a tapped link opens
+
+Two fields in `site.webmanifest` have nothing to do with icons and change what
+happens when someone taps the link in WhatsApp:
+
+- **`display`** is `browser`. With `standalone`, an Android phone that has ever
+  added the site to its home screen installs a WebAPK, and that WebAPK then
+  **captures every link to the domain** — so a tap in a chat opens a chromeless
+  app window instead of a browser tab. `browser` keeps it a tab.
+- **`orientation`** is `portrait`. It was `landscape`, which is the direct
+  reason the app opened sideways and made people rotate the phone to read it.
+
+The two interact in a way worth knowing: `orientation` is only honoured in
+`standalone`/`fullscreen`, so with `display: browser` it does nothing and the
+phone's own rotation setting wins — which is the behaviour we want. It stays set
+purely for installs that already exist.
+
+**A manifest change does not reach an installed WebAPK immediately.** Chrome
+re-reads the manifest on its own schedule (roughly daily) and rebuilds the
+WebAPK after that; until it does, the installed icon keeps the old display mode
+and keeps capturing links. Removing the home-screen icon is the instant fix on a
+given phone. If this ever looks like "the deploy didn't work", that is why.
+
 ## Control stack
 
 `Controls.tsx` is the top-right column. It is right-anchored and the view
@@ -395,7 +418,7 @@ are grouped rather than one control per line:
      [2.2m tether clamp works]
         [WC59] [☾] [ⓘ]
              [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
-                                        [Speed        12 s/day ]
+                                        [Hours|Days]  12 s/day ]
                                         [ —●———————————— ]
 ```
 
@@ -438,6 +461,24 @@ repeating:
 Serving the file ourselves means the About panel costs no third-party request,
 which was this repo's posture everywhere until the forecast arrived (below) —
 that one is now the single outbound call the page makes.
+
+### Terms of use
+
+The panel ends with a disclaimer, and it is last on purpose: it is what should
+still be in view when the panel is closed. It states that the app is a personal
+project shared as-is, that the tide figures are **computed predictions and not
+official data** (pointing at the SHOM for anything acted on), that the wave and
+wind figures are a forecast rather than an observation, that the operational
+decision belongs to the vessel's master and the crew, and that the tool carries
+no warranty and its author no liability.
+
+Keep the SHOM sentence and the "decision remains yours" sentence if the text is
+ever shortened: a free, safety-adjacent tool's real protection is that nobody
+could reasonably have taken it for an official source, and those two sentences
+are what carry that. Note also what a disclaimer cannot do — it is not a
+contract, and under French law liability for personal injury caused by one's own
+fault cannot be signed away by a notice. The text reduces reliance; it does not
+replace legal advice.
 
 ## Forecast panel
 
@@ -570,6 +611,48 @@ the real site and look.
 time into `animT` (hours since local midnight) and rolls the selected date over
 at 24. `animT` drives the dashed marker and the red height line; the tide curve
 itself is just redrawn for whatever day is selected.
+
+### Two modes, one clock
+
+`animMode` picks what the time-lapse moves:
+
+- **`clock`** ("Hours") runs the hours of a day. The water climbs and falls and
+  the red line follows it. This is the original time-lapse, unchanged.
+- **`days`** ("Days") runs the calendar and **holds the water where you left
+  it**. The line does not move; the curve under it is redrawn for each new day,
+  and so are its crossings. That answers the other question a crew has — not
+  "what does the water do today" but "which days give me this height, and
+  when" — so freezing the level is the feature, not a simplification.
+
+The arithmetic is deliberately the _same clock_ in both: day mode still
+accumulates simulated hours and still rolls the date on the same `while` loop.
+Only two things differ, and keeping it to two is what stops this becoming a
+second animation engine to maintain:
+
+- the speed range (`SPEED_RANGE`): 12 s/day to 0.25 s/day for clock, 1 s/day to
+  0.1 s/day for days;
+- whether the UI reads `animT` at all. `clockDriven` (= active **and** clock
+  mode) gates the height effect and the marker in `index.tsx`; day mode leaves
+  both alone.
+
+Two details that are load-bearing:
+
+- **Day mode does not publish `animT` to React.** Nothing on screen reads it
+  there, so calling `setAnimT` every frame would re-render the whole plot sixty
+  times a second to draw the same picture. The date change is the render. This
+  is why day mode measures _faster_ than clock mode rather than slower.
+- **The mode is read from a ref inside the loop**, like the speed, so switching
+  mid-run picks up on the next frame instead of restarting. That is worth
+  having on its own: run the water to the height you care about, then switch to
+  Days, and it freezes there and scans the calendar from it.
+
+`MAX_FRAME_S` no longer guarantees one midnight per frame in day mode — at
+10 days/s a clamped frame is a full 24 h and can cross two. The rollover was
+already a loop rather than a subtraction, so this costs nothing; the old comment
+claiming one midnight was simply corrected.
+
+Measured on the production build, desktop and phone width: **60 fps in both
+modes at both ends of the slider**, with and without the WC59 overlay.
 
 Speed is adjustable from **12 s per simulated day** (the rate it always ran at,
 and still the default) to **0.25 s** — four days a second. The fast end is not

@@ -71,7 +71,9 @@ export function AboutDialog() {
           </ul>
           <p className="text-muted-foreground">
             Drag the red line to any height, or use the presets. WC59 puts the CTV against the
-            landing at that water level, and Time-lapse runs a full day in twelve seconds.
+            landing at that water level. Time-lapse runs either the hours of a day, with the water
+            climbing and falling, or the days themselves with the water held at the height you set —
+            so you can pick a level and watch which days give it to you, and when.
           </p>
         </div>
 
@@ -92,6 +94,49 @@ export function AboutDialog() {
             preload="metadata"
             className="mx-auto max-h-[60dvh] w-auto rounded-md border border-border bg-black"
           />
+        </div>
+
+        {/* Last, and deliberately so: it is what should still be in view when
+            the panel is closed. The app is safety-adjacent and free, which is
+            exactly the combination that needs the relationship stated. */}
+        <div className="space-y-2 border-t border-border pt-4">
+          <h3 className="text-sm font-semibold">Terms of use and disclaimer</h3>
+          <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+            <p>
+              Boatlandingometer is a personal project, built by its author for his own use and
+              shared as-is and free of charge. It is an{" "}
+              <strong className="text-foreground">indicative planning aid only</strong>: not a
+              navigational instrument, not a safety device, and not an official source of
+              information.
+            </p>
+            <p>
+              <strong className="text-foreground">
+                The tide heights and times shown are computed predictions, not official data.
+              </strong>{" "}
+              For anything you act on, refer to the SHOM (the French hydrographic and oceanographic
+              service) or to the official tide tables for the port concerned. Wave and wind figures
+              come from a public weather model and are a forecast, not an observation and not a
+              marine safety bulletin. Real water levels are additionally affected by atmospheric
+              pressure, wind, surge and local conditions that this tool does not model.
+            </p>
+            <p>
+              <strong className="text-foreground">Every operational decision remains yours.</strong>{" "}
+              Whether a transfer, a climb, an intervention or any other work may proceed is for the
+              vessel&rsquo;s master, the duty holder for the site and the crew to judge against
+              their own procedures, limits and risk assessment. Nothing displayed here authorises,
+              recommends or clears any operation.
+            </p>
+            <p>
+              The tool is provided{" "}
+              <strong className="text-foreground">without warranty of any kind</strong>, express or
+              implied, including as to accuracy, completeness, availability or fitness for a
+              particular purpose. To the fullest extent permitted by applicable law, the author
+              accepts no liability for any loss, damage, injury or cost arising from its use, its
+              misuse, its unavailability, or from any error, omission or interruption in the data it
+              displays.
+            </p>
+            <p>By using it, you accept these terms. If you do not accept them, do not use it.</p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

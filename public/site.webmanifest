@@ -4,8 +4,8 @@
   "description": "Dieppe tide times overlaid on the jacket structure and boat landing.",
   "start_url": ".",
   "scope": ".",
-  "display": "standalone",
-  "orientation": "landscape",
+  "display": "browser",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2d6799",
   "icons": [

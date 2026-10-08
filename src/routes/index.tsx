@@ -285,8 +285,11 @@ function Index() {
   const {
     animState,
     setAnimState,
+    animMode,
+    setAnimMode,
     animT,
     animActive,
+    clockDriven,
     startAnim,
     stopAnim,
     speedPos,
@@ -301,16 +304,22 @@ function Index() {
     }
   }, [allExtremes, targetHeight, isToday, nowH, tideHeight]);
 
-  // While the animation is active, the red height line follows the tide.
+  // In clock mode the red height line follows the tide. Day mode deliberately
+  // does NOT touch it: holding one level still while the dates run past is the
+  // whole point of that mode, so the line stays wherever the user put it and
+  // the crossings under it are recomputed for each new day.
   useEffect(() => {
-    if (!animActive) return;
+    if (!clockDriven) return;
     setTargetHeight(Math.max(0, Math.min(10, tideHeight(animT))));
-  }, [animActive, animT, tideHeight]);
+  }, [clockDriven, animT, tideHeight]);
 
-  // The "now" marker shows the animation clock while active, else the real time.
-  const markerT = animActive ? animT : nowT;
-  const markerH = animActive ? tideHeight(animT) : nowH;
-  const showMarker = animActive || (isToday && nowH !== null);
+  // The "now" marker shows the animation clock in clock mode; in day mode there
+  // is no simulated time of day, so it falls back to the real one and appears
+  // only on the day that really is today — which is a useful thing to see go
+  // past while scanning.
+  const markerT = clockDriven ? animT : nowT;
+  const markerH = clockDriven ? tideHeight(animT) : nowH;
+  const showMarker = clockDriven || (isToday && nowH !== null);
 
   const yTicks = useMemo(() => {
     const step = view === "FOU" ? 5 : view === "IRL" ? 2 : 1;
@@ -355,6 +364,8 @@ function Index() {
           setTargetHeight={setTargetHeight}
           animState={animState}
           setAnimState={setAnimState}
+          animMode={animMode}
+          setAnimMode={setAnimMode}
           animActive={animActive}
           startAnim={startAnim}
           stopAnim={stopAnim}

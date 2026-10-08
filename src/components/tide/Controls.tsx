@@ -18,7 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
 import type { CoefDayButtonComponent } from "@/components/tide/CoefDayButton";
-import { fmtSpeed, SPEED_POS_MAX, type AnimState } from "@/hooks/use-time-lapse";
+import { fmtSpeed, SPEED_POS_MAX, type AnimMode, type AnimState } from "@/hooks/use-time-lapse";
 import type { Theme } from "@/hooks/use-theme";
 
 type Props = {
@@ -34,6 +34,8 @@ type Props = {
   setTargetHeight: (h: number) => void;
   animState: AnimState;
   setAnimState: (s: AnimState) => void;
+  animMode: AnimMode;
+  setAnimMode: (m: AnimMode) => void;
   animActive: boolean;
   startAnim: () => void;
   stopAnim: () => void;
@@ -43,6 +45,20 @@ type Props = {
   theme: Theme;
   toggleTheme: () => void;
 };
+
+/** The two things the time-lapse can run. Order is the order on screen. */
+const MODES = [
+  {
+    mode: "clock" as const,
+    label: "Hours",
+    hint: "Run the hours of a day — the water climbs and falls",
+  },
+  {
+    mode: "days" as const,
+    label: "Days",
+    hint: "Run the days — the water stays at the height you set",
+  },
+];
 
 // The top-right control cluster: day navigation + date picker, "jump to today",
 // the tether-line preset, the WC59 / theme / about row and the time-lapse
@@ -60,6 +76,8 @@ export function Controls({
   setTargetHeight,
   animState,
   setAnimState,
+  animMode,
+  setAnimMode,
   animActive,
   startAnim,
   stopAnim,
@@ -227,10 +245,30 @@ export function Controls({
           </div>
           {/* Fixed width so the panel does not twitch as the readout changes
               between "12 s/day" and "4.0 days/s". */}
-          <div className="w-44 rounded-md border border-border bg-background/90 px-2.5 py-1 backdrop-blur-sm">
-            <div className="flex items-baseline justify-between text-xs">
-              <span className="text-muted-foreground">Speed</span>
-              <span className="font-medium tabular-nums">{fmtSpeed(secPerDay)}</span>
+          <div className="w-48 rounded-md border border-border bg-background/90 px-2.5 py-1 backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-1 text-xs">
+              {/* The mode replaces a static "Speed" label rather than taking a
+                  row of its own: it is what the number beside it means, and the
+                  stack pays for every row it grows by. */}
+              <div className="flex shrink-0 overflow-hidden rounded border border-border">
+                {MODES.map(({ mode, label, hint }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setAnimMode(mode)}
+                    aria-pressed={animMode === mode}
+                    title={hint}
+                    className={`flex h-7 items-center px-2.5 leading-none transition-colors ${
+                      animMode === mode
+                        ? "bg-primary font-medium text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span className="truncate font-medium tabular-nums">{fmtSpeed(secPerDay)}</span>
             </div>
             {/* The root is given a height and the thumb is grown past shadcn's
                 16px. Radix takes a pointer down anywhere on the root and its
