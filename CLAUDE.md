@@ -317,6 +317,58 @@ two things: the day scene's five `<defs>`, referenced nowhere — the harness
 asserts the set of `url(#…)` actually referenced is identical — and the flex
 wrapper that holds `BuildTag`, whose geometry is measured button by button.
 
+### The sun and the moon
+
+`SkyTrack.tsx` draws each body's path across the day and the body itself at the
+current hour, with the moon in its true phase. It exists to put the **cause** of
+the tide next to its effect, and it works because the chart's x axis is already
+the hour of the day: the gap between where the two tracks peak _is_ the sun–moon
+separation. Measured from the same ephemeris — culmination gaps of 0.5 h at new
+moon, 6.4 h and 6.3 h at the quarters, 11.8 h at full. That gap opening and
+closing is spring and neap, which the coefficient chips are already counting.
+
+Things that were wrong the obvious way first:
+
+- **This build of `suncalc` returns degrees, azimuth clockwise from north** —
+  not the radians-from-south most references describe. Checked against geometry
+  that cannot be argued with: solar-noon altitude at 50.18°N must be
+  90 − lat ± 23.44 at the solstices, and it comes back 63.3° and 16.4° against
+  a predicted 63.3° and 16.4°. If a bump ever flattens the arcs to a line, this
+  is the first thing to re-check.
+- **x is time, not direction, so occlusion means nothing.** The first version
+  drew everything behind the structure "because that is the honest order", and
+  hid the sun for most of the morning: 09:00 simply maps to an x the drawing
+  occupies. So the two parts are layered for legibility instead — `SkyTracks`
+  behind the structure (thin, long, context; in front they would be lines
+  across the subject), `SkyBodies` in front (the thing you watch move).
+- **Dots do not read as a path.** A dot every half hour read as dust against
+  the sky gradient and the lattice. Each track is now one stroked path, faded at
+  both ends so it asserts no horizon.
+- **The casing is dark by day.** A pale one was tried first, by analogy with the
+  tide curve's, and only fogged the amber — the sky and the steel are both pale.
+
+The band runs from 10% to 44% of the plot (or to the horizon, if that is
+higher). Not from the top, because both upper corners are HTML panels drawn
+above the SVG; not to the horizon in FOU, where it sits at 4 m of 25 and would
+sweep the sun across five sixths of the chart. Altitude 65° fills it: nothing
+here gets near the zenith, and scaling to 90° flattened every arc.
+
+The moon's lit shape is a semicircle plus a semi-ellipse of semi-axis
+`r·cos(2π·phase)`, so its lit area is exactly `(1 − cos 2π·phase)/2` — which
+matches suncalc's own `fraction` to 3×10⁻¹⁶ across a full lunation. The shape
+is not approximately right, it is the illuminated fraction.
+
+It uses `DIEPPE`, not `FORECAST_SITE`, so the sun's track starts and ends
+exactly on the existing sunrise/sunset chips; the 29 km between them is under a
+minute of sunrise. It is off for IRL, which brings its own sky.
+
+**Performance.** Each body's `<g>` carries `will-change: transform`. Without it
+the sky cost 4.8 fps at the hardest setting (clock mode, 4 days/s, desktop:
+53.9 against 58.7 off); with it, 0.6 — inside the noise. The bodies move every
+frame over a structure drawn through SVG filters, and promoting them stops each
+move re-rasterising what is under them. Same fix, same mechanism, as the water
+group.
+
 ### Grading the structure
 
 The night grade uses `feColorMatrix type="saturate"` plus a per-channel
@@ -416,14 +468,14 @@ are grouped rather than one control per line:
 [<]  [Sep 23, 2026]  [>]
               [Jump to today]
      [2.2m tether clamp works]
-        [WC59] [☾] [ⓘ]
+     [WC59] [☾] [☀☾] [ⓘ]
              [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
                                         [Hours|Days]  12 s/day ]
                                         [ —●———————————— ]
 ```
 
-WC59 with the two icon buttons is 131px at 390px wide, which clears the
-switcher. Putting them together is also what buys the room for the speed
+WC59 with its three icon buttons is 167px wide, which still clears the
+switcher: by 72px at 390 and 57px at 375, the tightest case. Putting them together is also what buys the room for the speed
 slider: the theme toggle and the ⓘ each used to own a row, and the stack now
 ends at the same height as before even with the slider open.
 

@@ -9,6 +9,7 @@ import {
   PlayIcon,
   SquareIcon,
   SunIcon,
+  SunMoonIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -31,6 +32,8 @@ type Props = {
   coefDayButton: CoefDayButtonComponent;
   showWC59: boolean;
   setShowWC59: (fn: (v: boolean) => boolean) => void;
+  showSky: boolean;
+  setShowSky: (fn: (v: boolean) => boolean) => void;
   setTargetHeight: (h: number) => void;
   animState: AnimState;
   setAnimState: (s: AnimState) => void;
@@ -73,6 +76,8 @@ export function Controls({
   coefDayButton,
   showWC59,
   setShowWC59,
+  showSky,
+  setShowSky,
   setTargetHeight,
   animState,
   setAnimState,
@@ -204,6 +209,16 @@ export function Controls({
           onClick={toggleTheme}
         >
           {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
+        </Button>
+        <Button
+          variant={showSky ? "default" : "outline"}
+          size="icon"
+          className={`size-8 ${showSky ? "" : "bg-background/90 backdrop-blur-sm"}`}
+          aria-label={showSky ? "Hide the sun and moon" : "Show the sun and moon"}
+          title={showSky ? "Hide the sun and moon" : "Show the sun and moon"}
+          onClick={() => setShowSky((v) => !v)}
+        >
+          <SunMoonIcon className="size-4" />
         </Button>
         <AboutDialog />
       </div>

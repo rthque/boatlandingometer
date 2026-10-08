@@ -9,6 +9,7 @@ import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
 import { useTheme } from "@/hooks/use-theme";
 import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
+import { SkyBodies, SkyTracks } from "@/components/tide/SkyTrack";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
 import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
@@ -50,6 +51,7 @@ function Index() {
   const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
   const [targetHeight, setTargetHeight] = useState<number | null>(null);
   const [showWC59, setShowWC59] = useState(false);
+  const [showSky, setShowSky] = useState(true);
   const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);
@@ -321,6 +323,12 @@ function Index() {
   const markerH = clockDriven ? tideHeight(animT) : nowH;
   const showMarker = clockDriven || (isToday && nowH !== null);
 
+  // The bodies sit at the hour the marker uses. On a date that is not today
+  // there is no "now" on the chart, but "where the sky is at this time of day,
+  // on that date" is still true and useful — and it is what makes the day-scan
+  // mode show the phase turning over while the dates run.
+  const skyHour = clockDriven ? animT : nowT;
+
   const yTicks = useMemo(() => {
     const step = view === "FOU" ? 5 : view === "IRL" ? 2 : 1;
     const ticks: number[] = [];
@@ -361,6 +369,8 @@ function Index() {
           coefDayButton={coefDayButton}
           showWC59={showWC59}
           setShowWC59={setShowWC59}
+          showSky={showSky}
+          setShowSky={setShowSky}
           setTargetHeight={setTargetHeight}
           animState={animState}
           setAnimState={setAnimState}
@@ -414,6 +424,19 @@ function Index() {
               />
             )}
 
+            {/* The tracks go behind the structure, the bodies in front of it —
+                see SkyTrack.tsx for why the two are layered differently. */}
+            {showScene && showSky && (
+              <SkyTracks
+                geom={geom}
+                horizonY={horizonY}
+                date={selectedDate}
+                hour={skyHour}
+                lat={DIEPPE.latitude}
+                lon={DIEPPE.longitude}
+              />
+            )}
+
             <BackgroundLayer
               geom={geom}
               img={viewConfig.img}
@@ -429,6 +452,17 @@ function Index() {
               dayPhoto={dayPhotoScene}
               simplify={animActive}
             />
+
+            {showScene && showSky && (
+              <SkyBodies
+                geom={geom}
+                horizonY={horizonY}
+                date={selectedDate}
+                hour={skyHour}
+                lat={DIEPPE.latitude}
+                lon={DIEPPE.longitude}
+              />
+            )}
 
             {showScene && (
               <WaterVeil

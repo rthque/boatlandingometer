@@ -77,6 +77,35 @@ export function AboutDialog() {
           </p>
         </div>
 
+        {/* Every claim here was measured from the same ephemeris the chart
+            draws: culmination gaps of 0.5 h at new moon, 6.4 h and 6.3 h at the
+            quarters and 11.8 h at full, and a mean moonrise lag of 52 minutes
+            over a month. Re-check them if the wording ever changes. */}
+        <div className="space-y-2 border-t border-border pt-4">
+          <h3 className="text-sm font-semibold">The sun, the moon and the tide</h3>
+          <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+            <p>
+              The sun and the moon cross the sky above the chart on the same time axis as the tide,
+              so you can read the cause next to the effect. The sun-and-moon button next to WC59
+              turns them off.
+            </p>
+            <p>
+              <strong className="text-foreground">
+                The moon&rsquo;s shape is its angle to the sun.
+              </strong>{" "}
+              At new and full moon the two line up, their pulls add, and the range is biggest —
+              spring tides, the high coefficients. At the quarters they pull at right angles and
+              partly cancel — neap tides. You can see it in where the two tracks peak: together at
+              new moon, six hours apart at the quarters, twelve apart at full.
+            </p>
+            <p>
+              The moon also rises about fifty minutes later each day, and the high waters slide with
+              it. Run the time-lapse in <em>Days</em> mode to watch the phase turn over, the tracks
+              drift apart and back, and the range swell and fall with them.
+            </p>
+          </div>
+        </div>
+
         <div className="space-y-2 border-t border-border pt-4">
           <h3 className="text-sm font-semibold">Why the window matters</h3>
           <p className="text-sm text-muted-foreground">
