@@ -392,7 +392,7 @@ are grouped rather than one control per line:
 ```
 [<]  [Sep 23, 2026]  [>]
               [Jump to today]
-     [Bottom tether line works]
+     [2.2m tether clamp works]
         [WC59] [☾] [ⓘ]
              [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
                                         [Speed        12 s/day ]
@@ -499,6 +499,36 @@ Two numbers deserve care:
   modelled value.
 
 Wind is in **m/s**, not knots.
+
+### The 🛑 marks
+
+A row leads with a 🛑 when the window's peak reaches its threshold:
+`HS_ALERT_M` (1.5 m) for waves, `WIND_ALERT_MS` (12 m/s) for wind. Both live in
+`forecast.ts` beside the window they are read over, because they describe the
+same thing — what the working day looks like, not what the calendar day does.
+
+Two decisions worth keeping:
+
+- **The test is on the printed number, not the raw one.** Both go through
+  `shown()`, the single `toFixed(1)` in the module, so they cannot drift apart.
+  Testing the raw value instead would let an Hs of 1.46 print "1.5 m" with no
+  mark beside it, which reads as a bug at a glance; and of the two ways to be
+  wrong about a safety-adjacent number, flagging the hair-under is the right
+  one.
+- **Gusts do not raise the wind mark.** The threshold is on sustained wind, the
+  figure the row leads with. The gust sits next to it and is routinely a few
+  m/s higher, so a day at 10.1 m/s gusting 12.5 is **not** marked. If that is
+  ever wrong it is a product decision rather than a bug — change `windIsHigh`,
+  not the panel.
+
+It is an emoji and not a lucide icon on purpose. Every icon on this panel is the
+same muted grey as the text it sits in, which is right for a label and wrong for
+a warning; colour is the only thing that carries at arm's length on a wet deck
+at 13 px. It is also why the mark goes _before_ the icon rather than after the
+number — it has to be the first thing in the row, not a footnote to it.
+
+The mark flags a forecast. It does not make the call: that belongs to the crew
+and to the vessel's own limits, which this app does not know.
 
 `FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference, and the gap
 between them is the whole point. Tides stay on Dieppe because that is the

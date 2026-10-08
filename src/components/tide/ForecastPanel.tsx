@@ -4,6 +4,11 @@ import {
   compass,
   FORECAST_DAYS,
   FORECAST_SITE,
+  HS_ALERT_M,
+  hsIsHigh,
+  shown,
+  WIND_ALERT_MS,
+  windIsHigh,
   WORK_END_H,
   WORK_START_H,
   workWindowLabel,
@@ -19,6 +24,26 @@ const panel = `${surface} px-2 py-1`;
 
 /** "14:00", from an hour index. */
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+/**
+ * Leads a row whose peak is at or over its threshold.
+ *
+ * An emoji rather than a lucide icon on purpose: every icon on this panel is
+ * the same muted grey as the text it sits in, which is right for a label and
+ * wrong for a warning. This has to carry at arm's length, on a deck, in
+ * daylight — colour is the only thing that does that at 13 px.
+ *
+ * It takes its own `title`: the row's tooltip explains the figure, this one
+ * says what the mark means, and hovering the mark should answer that question
+ * rather than the other one.
+ */
+function AlertMark({ title }: { title: string }) {
+  return (
+    <span role="img" aria-label={title} title={title} className="shrink-0 text-[13px] leading-none">
+      🛑
+    </span>
+  );
+}
 
 /**
  * Wave and wind forecast for the selected day, under the tide extremes.
@@ -80,15 +105,18 @@ export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
         <div
           className="flex items-center gap-1.5 font-medium"
           title={
-            `Significant wave height ${hs.toFixed(1)} m, the worst hour of ${window}` +
+            `Significant wave height ${shown(hs)} m, the worst hour of ${window}` +
             (day.waveHourH !== null ? ` (${hourLabel(day.waveHourH)})` : "") +
             (day.wavePeriodS !== null ? `, period ${day.wavePeriodS.toFixed(0)} s` : "") +
-            `. Max is the highest individual wave, estimated as 1.86 × Hs — a statistic of the sea state, not a modelled wave.${partial}`
+            `. Max is the highest individual wave, estimated as 1.86 × Hs — a statistic of the sea state, not a modelled wave.` +
+            (hsIsHigh(hs) ? ` Marked: the peak is at or over ${HS_ALERT_M} m.` : "") +
+            partial
           }
         >
+          {hsIsHigh(hs) && <AlertMark title={`Peak Hs is at or over ${HS_ALERT_M} m`} />}
           <WavesIcon className="size-3.5 shrink-0 text-muted-foreground" />
-          <span>Hs {hs.toFixed(1)} m</span>
-          {hmax !== null && <span className="text-muted-foreground">max ~{hmax.toFixed(1)} m</span>}
+          <span>Hs {shown(hs)} m</span>
+          {hmax !== null && <span className="text-muted-foreground">max ~{shown(hmax)} m</span>}
         </div>
       )}
 
@@ -98,14 +126,21 @@ export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
           title={
             `Strongest sustained wind at 10 m between ${window}` +
             (day.windHourH !== null ? ` (${hourLabel(day.windHourH)})` : "") +
-            (gust !== null ? `, strongest gust ${gust.toFixed(1)} m/s` : "") +
-            `. Direction is the one blowing at the peak-wind hour.${partial}`
+            (gust !== null ? `, strongest gust ${shown(gust)} m/s` : "") +
+            `. Direction is the one blowing at the peak-wind hour.` +
+            (windIsHigh(wind)
+              ? ` Marked: the peak is at or over ${WIND_ALERT_MS} m/s. Gusts do not raise the mark.`
+              : "") +
+            partial
           }
         >
+          {windIsHigh(wind) && (
+            <AlertMark title={`Peak sustained wind is at or over ${WIND_ALERT_MS} m/s`} />
+          )}
           <WindIcon className="size-3.5 shrink-0 text-muted-foreground" />
           {day.windFromDeg !== null && <span>{compass(day.windFromDeg)}</span>}
-          <span>{wind.toFixed(1)} m/s</span>
-          {gust !== null && <span className="text-muted-foreground">gust {gust.toFixed(1)}</span>}
+          <span>{shown(wind)} m/s</span>
+          {gust !== null && <span className="text-muted-foreground">gust {shown(gust)}</span>}
         </div>
       )}
 
