@@ -362,6 +362,11 @@ It uses `DIEPPE`, not `FORECAST_SITE`, so the sun's track starts and ends
 exactly on the existing sunrise/sunset chips; the 29 km between them is under a
 minute of sunrise. It is off for IRL, which brings its own sky.
 
+**Hidden by default**, shown by the sun-and-moon button in the WC59 row. It is
+an explanation rather than part of the reading, and someone opening the app to
+check a window should see only what they came for. The About panel's wording
+assumes this — it tells you the button _draws_ them — so change both together.
+
 **Performance.** Each body's `<g>` carries `will-change: transform`. Without it
 the sky cost 4.8 fps at the hardest setting (clock mode, 4 days/s, desktop:
 53.9 against 58.7 off); with it, 0.6 — inside the noise. The bodies move every

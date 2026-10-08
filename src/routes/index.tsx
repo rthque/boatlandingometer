@@ -51,7 +51,9 @@ function Index() {
   const [hover, setHover] = useState<{ x: number; t: number; h: number } | null>(null);
   const [targetHeight, setTargetHeight] = useState<number | null>(null);
   const [showWC59, setShowWC59] = useState(false);
-  const [showSky, setShowSky] = useState(true);
+  // Off by default: it is an explanation, not part of the reading, and a crew
+  // opening the app to check a window should see only what they came for.
+  const [showSky, setShowSky] = useState(false);
   const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);
