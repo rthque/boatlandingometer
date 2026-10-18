@@ -44,10 +44,21 @@ Validateur glTF : 0 erreur, 0 avertissement. 3,85 Mo au lieu de 5,69 Mo.
 
 - Mode immersif par défaut : seul « HUD · H » est affiché ; H fonctionne
   toujours.
-- Orbite automatique lente (360° en 60 s, plongée 30°), distance fixe calculée
-  pour garder fondation, boat landing et CTV dans le cadre sur tout le tour.
-  Arrêt à la première interaction (souris, tactile, molette, clavier).
-  Désactivée si le système demande de réduire les animations.
+- Orbite automatique lente vers la gauche (360° en 60 s, plongée 30°), arrêtée
+  à la première interaction (souris, tactile, molette, clavier) et désactivée si
+  le système demande de réduire les animations.
+- Cadrage serré, une seule distance pour tout le tour : enveloppe convexe des
+  sommets réels de la fondation (acier émergé, sous la plus basse mer) et du CTV
+  (pris à marée basse et haute), champ de vision et format réels de l'écran,
+  marge de 4 %. La distance est la plus courte qui garde tout visible sur les
+  72 positions du tour ; le centre est réglé pour rapprocher au mieux la caméra
+  du sujet, puis la marge verticale est répartie également en haut et en bas.
+  En portrait, c'est le CTV vu de travers qui fixe la distance ; en paysage,
+  la hauteur de la fondation. Distance mesurée : 151 → 90 m sur PC 1280×800,
+  247 → 172 m sur mobile 390×844.
+- Les sommets sont lus par tranches de quelques millisecondes par image : le
+  calcul n'interrompt jamais le rendu. En attendant le CTV, son encombrement
+  prévu tient sa place dans le cadre.
 - Time-lapse démarré à l'heure courante, une journée simulée toutes les
   6 secondes ; marée, heure, courbe et houle suivent la même horloge. Pause et
   reprise depuis le rail d'icônes du HUD (et toujours depuis le panneau du bas).
