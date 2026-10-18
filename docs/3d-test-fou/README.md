@@ -14,7 +14,8 @@ Seule l'entrée d'accès diffère (amorçage du runtime chiffré du TEST).
 
 Aucun paramètre de rendu n'est modifié : matériaux, couleurs, éclairage,
 environnement, tone mapping, ombres, antialiasing, résolution/DPR, mer, houle,
-CTV. Les ajouts du moteur ne concernent que la caméra au lancement.
+CTV. Les ajouts du moteur ne concernent que la caméra : le lancement et son
+plan proche (voir plus bas).
 
 ## Modèle 3D (GLB chiffré)
 
@@ -59,9 +60,49 @@ Validateur glTF : 0 erreur, 0 avertissement. 3,85 Mo au lieu de 5,69 Mo.
 - Les sommets sont lus par tranches de quelques millisecondes par image : le
   calcul n'interrompt jamais le rendu. En attendant le CTV, son encombrement
   prévu tient sa place dans le cadre.
+- Trait rouge de hauteur absent au lancement. Il apparaît au premier clic ou
+  toucher sur le métal de la fondation, à la cote touchée, puis fonctionne
+  comme avant. Une hauteur choisie dans le HUD (saisie, curseur, courbe,
+  préréglage) l'affiche aussi : la régler sans la voir serait incompréhensible.
+  Masqué, il est simplement placé très loin sous l'acier : aucune variante de
+  shader, rien n'est recompilé. La vue 2D de secours suit la même règle.
 - Time-lapse démarré à l'heure courante, une journée simulée toutes les
   6 secondes ; marée, heure, courbe et houle suivent la même horloge. Pause et
   reprise depuis le rail d'icônes du HUD (et toujours depuis le panneau du bas).
+
+## Points noirs scintillants sur le CTV (mobile)
+
+- **Cause** : précision du tampon de profondeur, pas les ombres. Le plan
+  proche de la caméra restait à 0,1 m pour un plan lointain à 1 800 m ; à la
+  distance de l'orbite mobile (172 m), un pas de profondeur valait alors
+  environ 1,8 cm. Or les décors du CTV sont posés à quelques millimètres de la
+  coque (livrée jaune à 7 mm du bleu, marquages, vitrages, embase du mât) :
+  sous ce seuil, la carte graphique ne sait plus lequel est devant, et le
+  gagnant change d'une image à l'autre quand le navire monte avec la marée et
+  que la caméra tourne.
+- **Écartés par mesure** : ombres (rendre les ombres du CTV par la face arrière
+  ne change rien), normales, faces doubles, texture d'occlusion et mipmaps. Le
+  correctif de profondeur seul ramène le scintillement au niveau du simple
+  déplacement de la caméra ; ces autres pistes, inchangées, ne laissent donc
+  rien à corriger.
+- **Correctif** : à chaque image, le plan proche est porté à la moitié de la
+  distance qui sépare la caméra de ce qui est dessiné de plus proche (boîtes de
+  la fondation, du CTV et de la pince, surface de la mer houle comprise),
+  arrondi à une puissance de deux et jamais sous 0,1 m. Rien ne peut donc être
+  coupé ; en vue rapprochée il retombe à 0,1 m comme avant. À l'orbite il vaut
+  32 m sur mobile et 16 m sur PC : le pas de profondeur à 172 m passe de
+  1,8 cm à 0,06 mm.
+- **Inchangés** : matériaux, couleurs, ombres, antialiasing, résolution, mer,
+  GLB. Seule la profondeur stockée change, et elle n'intervient que pour
+  départager des surfaces superposées.
+- **Mesuré** (émulation mobile 780×1688, 12 images consécutives, orbite
+  −0,1° et marée +1,2 cm par image) : pixels qui clignotent (aller-retour
+  d'une image à l'autre) 2 796 → 530 sur toute l'image ; ceux qui restent sont
+  le crénelage des rambardes et échelles plus fines qu'un pixel, que
+  l'antialiasing, inchangé, traite comme avant. Fondation seule, mêmes angles :
+  0,03 à 0,2 % de pixels différents, isolés, aux endroits où deux surfaces
+  étaient à égalité de profondeur ; son propre clignotement passe de 234 à
+  115 pixels.
 
 ## Vérification
 
