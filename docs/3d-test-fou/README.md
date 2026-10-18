@@ -125,3 +125,18 @@ Même schéma : AES-256-GCM, PBKDF2-SHA-256 600 000 itérations, même coffre
 reste valable. Application, styles et ressources sont chiffrés ; seul l'écran de
 connexion neutre est public. Les six autres ressources sont reprises octet pour
 octet ; seul le GLB est rechiffré avec un IV neuf.
+
+## Promotion en production (`/3D/`)
+
+La production sert désormais exactement la version TEST. Comparaison fichier
+par fichier entre `public/3D/` et `public/3D/test/` : tout est identique octet
+pour octet (page d'accès, scripts du coffre, ressources chiffrées, décodeurs),
+sauf le runtime chiffré et sa ligne dans `vault.json`. Même coffre (identifiant,
+sel, contrôle), même mot de passe, mêmes ressources.
+
+Le runtime est reconstruit depuis le même source parce qu'il porte son chemin
+de base. Déchiffré en mémoire et comparé à celui du TEST, il ne diffère que par
+`/3D/test/` → `/3D/` (et les noms de fichiers hachés qui en découlent) et par
+l'étiquette « TEST » du HUD, absente en production. Les anciens fichiers de
+production, dont des scripts du moteur servis en clair, sont retirés.
+`/3D/test/`, `/3d/` et `/3d/test/` sont inchangés.
