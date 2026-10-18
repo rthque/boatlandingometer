@@ -60,6 +60,12 @@ Validateur glTF : 0 erreur, 0 avertissement. 3,85 Mo au lieu de 5,69 Mo.
 - Les sommets sont lus par tranches de quelques millisecondes par image : le
   calcul n'interrompt jamais le rendu. En attendant le CTV, son encombrement
   prévu tient sa place dans le cadre.
+- Trait rouge de hauteur absent au lancement. Il apparaît au premier clic ou
+  toucher sur le métal de la fondation, à la cote touchée, puis fonctionne
+  comme avant. Une hauteur choisie dans le HUD (saisie, curseur, courbe,
+  préréglage) l'affiche aussi : la régler sans la voir serait incompréhensible.
+  Masqué, il est simplement placé très loin sous l'acier : aucune variante de
+  shader, rien n'est recompilé. La vue 2D de secours suit la même règle.
 - Time-lapse démarré à l'heure courante, une journée simulée toutes les
   6 secondes ; marée, heure, courbe et houle suivent la même horloge. Pause et
   reprise depuis le rail d'icônes du HUD (et toujours depuis le panneau du bas).
