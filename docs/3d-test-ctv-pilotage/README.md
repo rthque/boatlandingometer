@@ -172,13 +172,15 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
 ## Performance
 
 - Physique en sous-pas de 1/240 s, contacts cherchés une fois par image et
-  seulement près de l'acier. Mesuré par image (physique, contacts, sillage,
-  caméra) : **0,5 ms en mer, 1 ms en appui sur le boat landing** (95 % sous
-  2,3 ms, pire 3,7 ms), sur les 16,7 ms d'une image à 60 i/s.
+  seulement près de l'acier. Mesuré par image sur la version livrée
+  (physique, contacts, sillage, caméra) : **0,6 à 0,8 ms en mer, 1,3 ms en
+  appui sur le boat landing** (95 % sous 2,1 ms, pire 2,7 ms), sur les 16,7 ms
+  d'une image à 60 i/s.
 - Sillage : quatre rubans et au plus 420 taches d'écume, géométrie mise à jour
   sur le processeur (quelques milliers de sommets), un seul passage
   transparent, pas de texture. Mesuré en rendu logiciel, sillage affiché ou
-  masqué : **environ 2 % du temps d'image**.
+  masqué : écart **dans le bruit de mesure** (au plus quelques % du temps
+  d'image).
 - Le banc de contrôle n'a pas de GPU : il ne mesure que la fluidité logicielle.
   **Les 60 images/s sur PC et la fluidité sur un Android milieu de gamme sont à
   confirmer sur appareil.**
@@ -192,7 +194,14 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
   clavier, Maj, mélange clavier/tactile) :
   suite complète **72/72** ; TypeScript sans erreur, aucune nouvelle erreur de
   lint.
-- Application réelle chiffrée, PC et mobile, pilotée uniquement par ses propres
-  commandes (clavier sur PC, manettes tactiles sur mobile) : départ, navigation
-  avec sillage, demi-tour, approche, contact et état « Accosté · stable »,
-  puis sortie de la barre.
+- Hors pilotage, version finale contre `main` : **0 pixel différent** sur
+  8 vues (PC 1280×800 et mobile 780×1688, quatre angles chacune).
+- Application réelle chiffrée, pilotée uniquement par ses propres commandes,
+  houle 0,9 à 1 m : départ, navigation avec sillage, demi-tour, approche,
+  contact, « Accosté · stable » face à l'échelle, vue passerelle, sortie de la
+  barre. PC au clavier (courant 0,1 nd : contact décalé de 0,9 m, consigne,
+  recentrage au propulseur, accosté) ; portrait aux deux manettes séparées
+  (courant 0,5 nd : même recentrage, accosté) ; paysage (accosté au premier
+  contact).
+- Disposition tactile contrôlée sans chevauchement en portrait et en paysage,
+  avec le message d'état le plus long.
