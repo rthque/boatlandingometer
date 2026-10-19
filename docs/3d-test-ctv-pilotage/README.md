@@ -205,3 +205,18 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
   contact).
 - Disposition tactile contrôlée sans chevauchement en portrait et en paysage,
   avec le message d'état le plus long.
+
+## Promotion en production (`/3D/`)
+
+Après la fusion de cette version, la production sert exactement la version
+TEST, selon la même procédure que la promotion précédente. Comparaison fichier
+par fichier entre `public/3D/` et `public/3D/test/` : tout est identique octet
+pour octet (page d'accès, scripts du coffre, ressources chiffrées, décodeurs),
+sauf le runtime chiffré et sa ligne dans `vault.json`. Même coffre
+(identifiant, sel, contrôle), même mot de passe, mêmes ressources.
+
+Le runtime est reconstruit depuis le même source parce qu'il porte son chemin
+de base. Déchiffré en mémoire et comparé à celui du TEST, il ne diffère que par
+`/3D/test/` → `/3D/` (et les noms de fichiers hachés qui en découlent) et par
+l'étiquette « TEST » du HUD, absente en production. `/3D/test/`, `/3d/` et
+`/3d/test/` sont inchangés.
