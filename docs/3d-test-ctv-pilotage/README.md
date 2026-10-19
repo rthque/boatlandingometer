@@ -110,11 +110,14 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
   arrivant décalé (0,9 m et 6° : tenu), et l'étrave pivote sur le point de
   contact pendant que l'arrière travaille dans la houle. Un premier essai avec
   un frottement seulement visqueux laissait l'étrave glisser hors des tubes sous
-  une poussée latérale légère : c'est ce qui a été corrigé. Mesuré : tenu par
-  mer calme à 20 % de poussée et par Hs 0,8 m à 30 % ; sur le vrai boat landing,
-  tenu par Hs 1,5 m à 30 % et 60 % ; au-delà de Hs 1,2 m l'étrave travaille et
-  glisse par moments selon la houle (« Contact · ça glisse »), et à Hs 2 m elle
-  ne tient plus, comme près des limites d'exploitation réelles.
+  une poussée latérale légère : c'est ce qui a été corrigé. Mesuré sur le vrai
+  boat landing, version livrée : « Accosté · stable » par Hs 1,5 m à 30 % et à
+  60 % de poussée, en arrivant décalé de 0,9 m avec 6° de cap, et sous le
+  propulseur d'étrave à 60 % une fois accosté (9 cm de glissement en 17 s) ;
+  arrivée trop rapide à 2 nd : alerte « Choc trop fort », rebond, puis accostage
+  stable sans embardée. Par Hs 2 m l'étrave tient encore à 30 % mais travaille
+  nettement (glissement jusqu'à 0,2 m/s, cap qui dérive de 5° en 17 s) : c'est
+  la limite, comme pour les limites d'exploitation réelles.
 - **Acier ailleurs** : contact dur et peu frottant (jambes, entretoises,
   plateformes) ; le bateau ne traverse rien.
 - **Indicateurs** : distance au boat landing, vitesse d'approche (verte jusqu'à
@@ -168,8 +171,10 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
 
 - Tests de la physique et des commandes (vitesse max, arrêt, pivot,
   inverseur, flottaison sans saccade, courant, accostage tenu, choc et
-  collision, rampes clavier, Maj, mélange clavier/tactile) ; TypeScript sans
-  erreur, aucune nouvelle erreur de lint.
+  collision, face plate de la défense, glissement devant l'axe du boat landing
+  sans pénétration fantôme, rampes clavier, Maj, mélange clavier/tactile) :
+  suite complète **70/70** ; TypeScript sans erreur, aucune nouvelle erreur de
+  lint.
 - Application réelle chiffrée, PC et mobile, pilotée uniquement par ses propres
   commandes (clavier sur PC, manettes tactiles sur mobile) : départ, navigation
   avec sillage, demi-tour, approche, contact et état « Accosté · stable »,
