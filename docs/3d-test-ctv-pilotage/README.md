@@ -91,11 +91,18 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
   et d'autres sur les étraves, les flancs, l'arrière et la superstructure.
 - La défense d'étrave est un caoutchouc large à **face plate** : ses 17 sphères
   (rayon 40 cm, tous les 20 cm) se chevauchent et ne laissent que des creux
-  d'environ 1 cm. La première version, à sphères simplement jointives, laissait
-  des creux de 25 cm : un tube du boat landing ou l'échelle s'y logeait, la
-  poussée appuyait sur un flanc incliné et rejetait l'étrave de côté (coup de
-  lacet de 11°/s, rebond, fausse alerte « Choc trop fort » à 0,5 nd). Corrigé
-  et couvert par un test.
+  d'environ 1 cm (les premières, simplement jointives, laissaient des creux de
+  25 cm où un tube pouvait se loger).
+- **Défaut corrigé avant livraison** : en accostant à 0,5 nd avec 1 m de
+  décalage, le CTV recevait un coup de lacet de 11°/s, rebondissait de
+  plusieurs mètres et affichait « Choc trop fort ». Rejoué sous-pas par
+  sous-pas, la cause était une pénétration fictive de 66 cm : pour une sphère
+  située au milieu des deux tubes, l'acier le plus proche saute du bord
+  intérieur d'un tube à celui de l'autre, et le garde-fou anti-traversée
+  gardait l'ancienne normale en l'appliquant au nouveau point. Il ne garde
+  désormais l'ancien plan (point et normale ensemble) que si la sphère le
+  traverse encore réellement. Un test reproduit le cas (1 240 kN de force
+  fantôme avant, 0 après).
 - **Défense d'étrave** : caoutchouc raide amorti, **frottement statique**
   (μ 0,9) : chaque point de contact est retenu là où il a touché jusqu'à μ × la
   force d'appui, puis glisse au-delà. Le bateau reste donc plaqué avec un peu
