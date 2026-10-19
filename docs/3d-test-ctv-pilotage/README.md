@@ -89,6 +89,13 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
 - Les contacts sont cherchés sur **l'acier réel de la fondation** (le même index
   de collision que la caméra), avec une rangée de sphères sur la défense d'étrave
   et d'autres sur les étraves, les flancs, l'arrière et la superstructure.
+- La défense d'étrave est un caoutchouc large à **face plate** : ses 17 sphères
+  (rayon 40 cm, tous les 20 cm) se chevauchent et ne laissent que des creux
+  d'environ 1 cm. La première version, à sphères simplement jointives, laissait
+  des creux de 25 cm : un tube du boat landing ou l'échelle s'y logeait, la
+  poussée appuyait sur un flanc incliné et rejetait l'étrave de côté (coup de
+  lacet de 11°/s, rebond, fausse alerte « Choc trop fort » à 0,5 nd). Corrigé
+  et couvert par un test.
 - **Défense d'étrave** : caoutchouc raide amorti, **frottement statique**
   (μ 0,9) : chaque point de contact est retenu là où il a touché jusqu'à μ × la
   force d'appui, puis glisse au-delà. Le bateau reste donc plaqué avec un peu
