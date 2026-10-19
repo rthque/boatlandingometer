@@ -89,12 +89,18 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
 - Les contacts sont cherchés sur **l'acier réel de la fondation** (le même index
   de collision que la caméra), avec une rangée de sphères sur la défense d'étrave
   et d'autres sur les étraves, les flancs, l'arrière et la superstructure.
-- **Défense d'étrave** : caoutchouc raide amorti, frottement 0,9 sur les tubes :
-  le bateau reste plaqué avec un peu de poussée, l'étrave pivote sur le point de
-  contact pendant que l'arrière travaille dans la houle. Mesuré sur la
-  physique seule : tenu par mer calme à 20 % de poussée, par Hs 0,8 m à 30 % ;
-  au-delà de Hs 1,2 m l'étrave glisse par moments même à forte poussée, ce qui
-  est le comportement attendu près des limites d'exploitation.
+- **Défense d'étrave** : caoutchouc raide amorti, **frottement statique**
+  (μ 0,9) : chaque point de contact est retenu là où il a touché jusqu'à μ × la
+  force d'appui, puis glisse au-delà. Le bateau reste donc plaqué avec un peu
+  de poussée, même sous la poussée latérale du propulseur d'étrave ou en
+  arrivant décalé (0,9 m et 6° : tenu), et l'étrave pivote sur le point de
+  contact pendant que l'arrière travaille dans la houle. Un premier essai avec
+  un frottement seulement visqueux laissait l'étrave glisser hors des tubes sous
+  une poussée latérale légère : c'est ce qui a été corrigé. Mesuré : tenu par
+  mer calme à 20 % de poussée et par Hs 0,8 m à 30 % ; sur le vrai boat landing,
+  tenu par Hs 1,5 m à 30 % et 60 % ; au-delà de Hs 1,2 m l'étrave travaille et
+  glisse par moments selon la houle (« Contact · ça glisse »), et à Hs 2 m elle
+  ne tient plus, comme près des limites d'exploitation réelles.
 - **Acier ailleurs** : contact dur et peu frottant (jambes, entretoises,
   plateformes) ; le bateau ne traverse rien.
 - **Indicateurs** : distance au boat landing, vitesse d'approche (verte jusqu'à
