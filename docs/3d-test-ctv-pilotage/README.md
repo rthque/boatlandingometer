@@ -76,8 +76,11 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
   roulis suivent cette surface avec leur propre inertie et amortissement :
   aucune saccade (variation de tangage d'une image à l'autre mesurée sous
   0,001°). Assiette relevée et légère montée en déjaugeant.
-- **Houle et courant** : la pente de la houle pousse le bateau, la dérive de
-  houle le décale dans le sens des vagues ; un **léger courant de marée** (au
+- **Houle et courant** : la houle est celle de la prévision à l'heure affichée
+  (celle du time-lapse au moment où l'on prend la barre). Au-delà des 7 jours de
+  prévision, ou houle désactivée, la mer est le simple clapot neutre de l'app et
+  le bateau flotte presque à plat. La pente de la houle pousse le bateau, la
+  dérive de houle le décale dans le sens des vagues ; un **léger courant de marée** (au
   plus 0,6 nœud, portant à l'ENE au montant et à l'OSO au descendant) entraîne
   la coque, le sillage et l'écume.
 
@@ -123,7 +126,8 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
   objectif plus large (55°), cap suivi avec un léger retard ; on la tourne au
   doigt ou à la souris, elle revient derrière le bateau 2,5 s après.
 - **Vue passerelle** (V) : œil à 1,7 m au-dessus du pont de la timonerie, aux
-  vitres avant, qui suit le tangage et le roulis.
+  vitres avant, qui suit le tangage et le roulis ; on y voit le pont avant, le
+  portillon de transfert et l'échelle du boat landing droit devant.
 - La caméra ne traverse ni l'acier ni la surface de l'eau.
 
 ## Performance
