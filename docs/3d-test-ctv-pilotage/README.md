@@ -54,7 +54,10 @@ double tap = neutre. Elles sont **liées** par défaut (une seule main suffit po
 aller tout droit) et se délient d'un bouton pour manœuvrer moteur par moteur.
 Au centre : deux boutons d'**étrave** (◀ ▶, à maintenir) et une **barre**
 horizontale à ressort. Un doigt sur la scène tourne la caméra, deux doigts
-zooment. Disposition vérifiée en portrait et en paysage.
+zooment. Disposition vérifiée en portrait et en paysage : sur un téléphone
+couché, le panneau de bord se place à droite de la manette bâbord (dans une
+première version, la manette en couvrait le bas dès que le message d'état
+prenait deux lignes).
 
 ## Physique
 
