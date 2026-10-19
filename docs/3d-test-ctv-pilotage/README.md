@@ -134,6 +134,11 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
   tout autre choc.
 - Un décalage léger se rattrape comme à bord : relâcher l'appui et faire
   glisser l'étrave le long des tubes au propulseur d'étrave, puis repousser.
+- « Accosté · stable » ne clignote pas : une vague qui décharge la défense un
+  instant ne le défait pas, il ne retombe qu'après près d'une seconde de
+  conditions non tenues ; et il se perd dès qu'on recule (le compteur était
+  d'abord sans plafond : après une minute à quai, l'état restait « accosté »
+  plus de 10 s après avoir quitté les tubes).
 
 ## Sillage
 
@@ -182,7 +187,7 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
   collision, accosté seulement face à l'échelle, face plate de la défense,
   glissement devant l'axe du boat landing sans pénétration fantôme, rampes
   clavier, Maj, mélange clavier/tactile) :
-  suite complète **71/71** ; TypeScript sans erreur, aucune nouvelle erreur de
+  suite complète **72/72** ; TypeScript sans erreur, aucune nouvelle erreur de
   lint.
 - Application réelle chiffrée, PC et mobile, pilotée uniquement par ses propres
   commandes (clavier sur PC, manettes tactiles sur mobile) : départ, navigation
