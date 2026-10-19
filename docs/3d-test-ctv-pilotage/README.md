@@ -123,9 +123,17 @@ validé (module `lib/ctv-helm.ts`, testé seul) :
 - **Indicateurs** : distance au boat landing, vitesse d'approche (verte jusqu'à
   0,6 nd, orange au-delà, rouge au-delà de 1 nd près des tubes), décalage
   latéral, puis « Contact · tenez l'appui » / « ça glisse, poussez plus »,
-  **« Accosté · stable »** après 3 s de contact aligné sans glissement, et une
-  alerte **« Choc trop fort »** si le premier contact dépasse 0,5 m/s (≈ 1 nd)
-  ou **« Collision avec la fondation »** pour tout autre choc.
+  **« Accosté · stable »** après 3 s de contact sans glissement **face à
+  l'échelle** : étrave à moins de 0,6 m de l'axe (les deux tubes sous la
+  défense) et à moins de 10° du carré. Sinon le contact reste orange et dit
+  quoi corriger : « décalé de 1,5 m, recentrez sur l'échelle » ou « de travers
+  de 15°, redressez l'arrière ». Une première version acceptait 20° sans
+  condition de décalage : on pouvait être « accosté » sur un seul tube, le
+  portillon loin de l'échelle. Alertes **« Choc trop fort »** si le premier
+  contact dépasse 0,5 m/s (≈ 1 nd) et **« Collision avec la fondation »** pour
+  tout autre choc.
+- Un décalage léger se rattrape comme à bord : relâcher l'appui et faire
+  glisser l'étrave le long des tubes au propulseur d'étrave, puis repousser.
 
 ## Sillage
 
@@ -171,9 +179,10 @@ les vagues sans flotter ni s'enfoncer ; exclu du reflet de l'eau.
 
 - Tests de la physique et des commandes (vitesse max, arrêt, pivot,
   inverseur, flottaison sans saccade, courant, accostage tenu, choc et
-  collision, face plate de la défense, glissement devant l'axe du boat landing
-  sans pénétration fantôme, rampes clavier, Maj, mélange clavier/tactile) :
-  suite complète **70/70** ; TypeScript sans erreur, aucune nouvelle erreur de
+  collision, accosté seulement face à l'échelle, face plate de la défense,
+  glissement devant l'axe du boat landing sans pénétration fantôme, rampes
+  clavier, Maj, mélange clavier/tactile) :
+  suite complète **71/71** ; TypeScript sans erreur, aucune nouvelle erreur de
   lint.
 - Application réelle chiffrée, PC et mobile, pilotée uniquement par ses propres
   commandes (clavier sur PC, manettes tactiles sur mobile) : départ, navigation
