@@ -57,9 +57,10 @@ function Index() {
   // Off by default: it is an explanation, not part of the reading, and a crew
   // opening the app to check a window should see only what they came for.
   const [showSky, setShowSky] = useState(false);
-  // Off until asked for: like the sky it is a second reading laid over the
-  // first, and it only exists for the week the wave model covers.
-  const [showWaves, setShowWaves] = useState(false);
+  // On by default, unlike the sky: the sky explains the tide, the waves change
+  // the answer — the time the water really stays below a height. With no
+  // forecast for the day there is nothing to draw and the chart is the tide's.
+  const [showWaves, setShowWaves] = useState(true);
   const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);

@@ -630,9 +630,16 @@ and to the vessel's own limits, which this app does not know.
 
 ### The wave band
 
-The **Waves on chart** switch at the foot of the forecast panel turns it on. On, the chart gets
-a band around the tide curve from `tide − crest` to `tide + crest`, hour by
-hour, with its upper edge stroked: the highest the water is estimated to reach.
+It is **on by default**, and the **Waves on chart** switch at the foot of the
+forecast panel turns it off. Unlike the sky, which explains the tide, the waves
+change the answer — how long the water really stays below a height — so they
+are part of the reading, not an aside; the About text assumes this, so change
+both together. With no forecast for the day (past the week, or the service
+down) there is nothing to draw and the chart is the tide's alone.
+
+On, the chart gets a band around the tide curve from `tide − crest` to
+`tide + crest`, hour by hour, with its upper edge stroked: the highest the
+water is estimated to reach.
 `crestAbove(hs) = hs × 1.86 × 0.5`, i.e. **half** of Hmax.
 
 **Half, not the whole wave — this is the part to get right.** A wave's height is

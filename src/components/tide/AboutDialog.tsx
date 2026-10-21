@@ -76,12 +76,13 @@ export function AboutDialog() {
             so you can pick a level and watch which days give it to you, and when.
           </p>
           <p className="text-muted-foreground">
-            The <em>Waves on chart</em> switch in the forecast panel draws the forecast sea around
-            the tide: a band from half the biggest expected wave below the tide to half of it above.
-            Its upper edge is the highest the water is estimated to reach at each hour —{" "}
-            <em>half</em>, not the whole height, because a wave is measured trough to crest and its
-            trough lies below the tide. It is an estimate of the open sea surface: real crests stand
-            a little higher than troughs fall, and spray and run-up on the legs reach higher still.
+            Over the forecast week the chart draws the forecast sea around the tide (the{" "}
+            <em>Waves on chart</em> switch in the forecast panel turns it off): a band from half the
+            biggest expected wave below the tide to half of it above. Its upper edge is the highest
+            the water is estimated to reach at each hour — <em>half</em>, not the whole height,
+            because a wave is measured trough to crest and its trough lies below the tide. It is an
+            estimate of the open sea surface: real crests stand a little higher than troughs fall,
+            and spray and run-up on the legs reach higher still.
           </p>
           <p className="text-muted-foreground">
             With the band on, the red line is read against that upper edge instead of the tide: its
