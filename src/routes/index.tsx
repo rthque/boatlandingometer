@@ -14,6 +14,9 @@ import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
 import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
 import { ForecastPanel } from "@/components/tide/ForecastPanel";
+import { WaveBandFill, WaveCrest } from "@/components/tide/WaveBand";
+import { useForecast } from "@/hooks/use-forecast";
+import { crestAbove, hsAtHour } from "@/lib/forecast";
 import { Controls } from "@/components/tide/Controls";
 import { BackgroundLayer } from "@/components/tide/BackgroundLayer";
 import { AxisGrid } from "@/components/tide/AxisGrid";
@@ -54,6 +57,9 @@ function Index() {
   // Off by default: it is an explanation, not part of the reading, and a crew
   // opening the app to check a window should see only what they came for.
   const [showSky, setShowSky] = useState(false);
+  // Off until asked for: like the sky it is a second reading laid over the
+  // first, and it only exists for the week the wave model covers.
+  const [showWaves, setShowWaves] = useState(false);
   const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);
@@ -331,6 +337,19 @@ function Index() {
   // mode show the phase turning over while the dates run.
   const skyHour = clockDriven ? animT : nowT;
 
+  const { day: forecastDay } = useForecast(selectedDate);
+  const waveSeries = useMemo(() => {
+    const series = forecastDay?.waveHsByHour;
+    return series && series.some((v) => v !== null) ? series : null;
+  }, [forecastDay]);
+  const waveOn = showWaves && waveSeries !== null;
+  /** Highest estimated water at hour t with the waves on, or null without them. */
+  const crestAt = (t: number): number | null => {
+    if (!waveOn || !waveSeries) return null;
+    const hs = hsAtHour(waveSeries, t);
+    return hs === null ? null : tideHeight(t) + crestAbove(hs);
+  };
+
   const yTicks = useMemo(() => {
     const step = view === "FOU" ? 5 : view === "IRL" ? 2 : 1;
     const ticks: number[] = [];
@@ -358,7 +377,11 @@ function Index() {
             extreme, whether the day has three or four of them. */}
         <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
           <ExtremesList extremes={visibleExtremes} />
-          <ForecastPanel selectedDate={selectedDate} />
+          <ForecastPanel
+            selectedDate={selectedDate}
+            showWaves={showWaves}
+            setShowWaves={setShowWaves}
+          />
         </div>
         <ViewSwitcher view={view} setView={setView} />
         <Controls
@@ -477,6 +500,10 @@ function Index() {
 
             <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} />
 
+            {waveOn && waveSeries && (
+              <WaveBandFill geom={geom} tideHeight={tideHeight} series={waveSeries} />
+            )}
+
             <TideCurve
               geom={geom}
               seaPath={seaPath}
@@ -484,6 +511,10 @@ function Index() {
               visibleExtremes={visibleExtremes}
               dayPhoto={dayPhotoScene}
             />
+
+            {waveOn && waveSeries && (
+              <WaveCrest geom={geom} tideHeight={tideHeight} series={waveSeries} />
+            )}
 
             {showWC59 && targetHeight !== null && (
               <Wc59Overlay
@@ -512,10 +543,15 @@ function Index() {
             )}
 
             {showMarker && markerH !== null && (
-              <NowMarker geom={geom} markerT={markerT} markerH={markerH} />
+              <NowMarker
+                geom={geom}
+                markerT={markerT}
+                markerH={markerH}
+                crestH={crestAt(markerT)}
+              />
             )}
 
-            {hover && <HoverTooltip geom={geom} hover={hover} />}
+            {hover && <HoverTooltip geom={geom} hover={hover} crestH={crestAt(hover.t)} />}
           </svg>
           <SunTimes geom={geom} sunriseH={sunriseH} sunsetH={sunsetH} />
         </div>

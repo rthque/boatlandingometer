@@ -61,7 +61,16 @@ function AlertMark({ title }: { title: string }) {
  * It renders nothing at all while the first request is in flight, so the panel
  * appears once rather than flickering through a skeleton on every load.
  */
-export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
+export function ForecastPanel({
+  selectedDate,
+  showWaves,
+  setShowWaves,
+}: {
+  selectedDate: Date;
+  /** Whether the forecast waves are drawn on the chart. */
+  showWaves: boolean;
+  setShowWaves: (fn: (v: boolean) => boolean) => void;
+}) {
   const { day, outOfRange, isLoading, isError } = useForecast(selectedDate);
 
   if (isLoading) return null;
@@ -114,7 +123,34 @@ export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
           }
         >
           {hsIsHigh(hs) && <AlertMark title={`Peak Hs is at or over ${HS_ALERT_M} m`} />}
-          <WavesIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          {/* The row's own icon is the switch. It lives here rather than in the
+              control stack because this is where the numbers it draws are,
+              and because it then cannot exist without them: no forecast for
+              the day, no row, no button — exactly when there is no band to
+              draw. The after: inset grows the hit area to a finger's width
+              without moving anything in the row. */}
+          <button
+            type="button"
+            aria-pressed={showWaves}
+            aria-label={
+              showWaves
+                ? "Hide the forecast waves on the chart"
+                : "Show the forecast waves on the chart"
+            }
+            title={
+              showWaves
+                ? "Hide the forecast waves on the chart"
+                : "Show the forecast waves on the chart — the highest the water reaches, hour by hour"
+            }
+            onClick={() => setShowWaves((v) => !v)}
+            className={`relative flex size-6 shrink-0 items-center justify-center rounded border transition-colors after:absolute after:-inset-1.5 after:content-[''] ${
+              showWaves
+                ? "border-transparent bg-[var(--wave-crest)] text-[var(--wave-crest-ink)]"
+                : "border-border text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            <WavesIcon className="size-3.5" />
+          </button>
           <span>Hs {shown(hs)} m</span>
           {hmax !== null && <span className="text-muted-foreground">max ~{shown(hmax)} m</span>}
         </div>

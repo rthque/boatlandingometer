@@ -97,6 +97,45 @@ export const FORECAST_DAYS = 7;
  */
 const HMAX_OVER_HS = 1.86;
 
+/**
+ * How far above the still water the crest of a wave stands, as a fraction of
+ * that wave's height. 0.5 is linear wave theory.
+ *
+ * NOT 1. A wave's height is measured trough to crest, and the trough is below
+ * the tide level, not at it — so the water climbs to the tide plus half the
+ * wave and falls to the tide minus half. Adding the full height to the tide is
+ * the intuitive move and it doubles the answer.
+ *
+ * Real crests stand somewhat higher than troughs fall (steep waves are peaked
+ * on top and flat underneath), so this is an estimate of the free surface and
+ * not a ceiling; spray and run-up on the legs reach higher still. It is applied
+ * to Hmax, which already leans the other way — 1.86 is the three-hour figure,
+ * and an hour holds fewer waves, so the biggest one in it is slightly smaller.
+ */
+export const CREST_OVER_H = 0.5;
+
+/** Height of the highest crest above the tide, from the hour's Hs, metres. */
+export const crestAbove = (hsM: number): number => hsM * HMAX_OVER_HS * CREST_OVER_H;
+
+/**
+ * Hs at a fractional local hour, from a day's 24 hourly values.
+ *
+ * Linear between the two hours either side. If either is missing the answer is
+ * null rather than the neighbour's value: a gap in the band says "no forecast
+ * for this hour", which is true, where bridging it would draw a sea state the
+ * model never gave. Past 23:00 the 23:00 value is held — the next day's
+ * midnight belongs to another day's series.
+ */
+export function hsAtHour(series: readonly (number | null)[], t: number): number | null {
+  const h0 = Math.max(0, Math.min(23, Math.floor(t)));
+  const h1 = Math.min(23, h0 + 1);
+  const a = series[h0] ?? null;
+  const b = series[h1] ?? null;
+  if (a === null || b === null) return null;
+  const f = Math.max(0, Math.min(1, t - h0));
+  return a + (b - a) * f;
+}
+
 export type DayForecast = {
   /** Local calendar day, yyyy-MM-dd. */
   date: string;
@@ -106,6 +145,12 @@ export type DayForecast = {
   waveHmaxM: number | null;
   /** Wave period at that same worst hour, seconds. */
   wavePeriodS: number | null;
+  /**
+   * Hs for every local hour of the day, index = hour, null where the model gave
+   * nothing. The whole day, not just the work window: the band on the chart is
+   * drawn across all 24 hours the chart shows.
+   */
+  waveHsByHour: (number | null)[];
   /** Local hour of the peak Hs, 0–23. */
   waveHourH: number | null;
   /** Strongest sustained wind at 10 m inside the work window, m/s. */
@@ -244,6 +289,14 @@ export async function fetchForecast(signal?: AbortSignal): Promise<DayForecast[]
     if (inWindow(s) && s.value !== null) windowHours.add(`${s.date}T${s.hour}`);
   }
 
+  const hsByDay = new Map<string, (number | null)[]>();
+  for (const s of hs) {
+    if (s.hour < 0 || s.hour > 23) continue;
+    const row = hsByDay.get(s.date) ?? Array<number | null>(24).fill(null);
+    row[s.hour] = s.value;
+    hsByDay.set(s.date, row);
+  }
+
   return dates.map((date) => {
     const hsDay = hsPeak.get(date) ?? null;
     const windDay = windPeak.get(date) ?? null;
@@ -261,6 +314,7 @@ export async function fetchForecast(signal?: AbortSignal): Promise<DayForecast[]
       waveHsM,
       waveHmaxM: waveHsM === null ? null : waveHsM * HMAX_OVER_HS,
       wavePeriodS: atHour(period, date, waveHourH),
+      waveHsByHour: hsByDay.get(date) ?? Array<number | null>(24).fill(null),
       waveHourH,
       windMs: windDay?.value ?? null,
       // The gust peaks on its own hour, not necessarily the sustained wind's.

@@ -75,6 +75,14 @@ export function AboutDialog() {
             climbing and falling, or the days themselves with the water held at the height you set —
             so you can pick a level and watch which days give it to you, and when.
           </p>
+          <p className="text-muted-foreground">
+            The waves icon in the forecast panel draws the forecast sea around the tide: a band from
+            half the biggest expected wave below the tide to half of it above. Its upper edge is the
+            highest the water is estimated to reach at each hour — <em>half</em>, not the whole
+            height, because a wave is measured trough to crest and its trough lies below the tide.
+            It is an estimate of the open sea surface: real crests stand a little higher than
+            troughs fall, and spray and run-up on the legs reach higher still.
+          </p>
         </div>
 
         {/* Every claim here was measured from the same ephemeris the chart

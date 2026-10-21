@@ -628,6 +628,59 @@ number — it has to be the first thing in the row, not a footnote to it.
 The mark flags a forecast. It does not make the call: that belongs to the crew
 and to the vessel's own limits, which this app does not know.
 
+### The wave band
+
+The waves icon in the forecast panel's wave row is a switch. On, the chart gets
+a band around the tide curve from `tide − crest` to `tide + crest`, hour by
+hour, with its upper edge stroked: the highest the water is estimated to reach.
+`crestAbove(hs) = hs × 1.86 × 0.5`, i.e. **half** of Hmax.
+
+**Half, not the whole wave — this is the part to get right.** A wave's height is
+trough to crest, and the trough sits below the tide level, not on it. So the
+surface climbs to the tide plus half the wave and drops to the tide minus half.
+Adding the full Hmax to the tide is the intuitive reading, it was the first
+suggestion for this feature, and it doubles the answer. `CREST_OVER_H` is 0.5,
+linear wave theory, and the comment on it says what it is not: real crests stand
+somewhat higher than troughs fall, and run-up and spray on the legs reach higher
+still. It is applied to the three-hour Hmax, which leans the other way, so the
+two approximations partly offset — but the line is an estimate of the free
+surface, not a ceiling, and the About panel says so.
+
+It is a band rather than one line above the curve because a single line invites
+reading it as where the water _sits_. Drawn in two layers like the sky: the fill
+under the tide curve, so the measured tide stays on top, and the crest over it.
+
+Details worth keeping:
+
+- **It needs the hourly series.** The panel only ever needed the window's peak,
+  so `DayForecast` now also carries `waveHsByHour` — 24 values, the whole day,
+  because the chart shows all 24 hours. `hsAtHour` interpolates linearly and
+  returns null if either neighbouring hour is missing; the band then breaks
+  rather than bridging, because a gap saying "no forecast here" is true and a
+  bridge would draw a sea state the model never gave.
+- **The switch lives in the wave row, not the control stack.** That is where the
+  numbers it draws are, it costs the stack nothing, and it cannot exist without
+  them: no forecast for the day (past the week, or the service down) means no
+  row and so no button — exactly when there is no band. The choice is kept, so
+  scanning back into the forecast window brings the band back. Its 24 px target
+  is grown to a finger by an `after:` inset that moves nothing in the row.
+- **The number at a given hour** comes from the hover tooltip on desktop
+  ("waves ≈ x m") and, where there is no hover, from a second chip on the now
+  marker above the tide chip — which also rides the time-lapse clock.
+- `index.tsx` calls `useForecast` itself for the series. Same react-query key as
+  the panel, so it is a cache read, not a second request.
+
+Verified with a mocked sea building to Hs 1.4 m at 14:00: crest − tide = 0.93 ×
+Hs to the centimetre at 09:00, 14:00 and 20:00, and at the peak hour the band's
+full height (2.60 m) is the panel's own "max ~2.6 m". Two missing hours split
+the band into two runs. 60 fps at 4 days/s with it on.
+
+**Not done, deliberately:** the red height line's crossing times and durations
+are still computed against the tide alone. With the band on, the crest line
+crosses that height earlier and leaves it later, so the labelled durations are
+optimistic for wave-sensitive work. Recomputing them against the crest would
+change what existing numbers mean, so it has not been done without being asked.
+
 `FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference, and the gap
 between them is the whole point. Tides stay on Dieppe because that is the
 harmonic station; the structure is at 50°10'46.9"N 1°10'21.1"E — **29 km NNE of
