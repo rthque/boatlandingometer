@@ -1,3 +1,4 @@
+import { useT } from "@/hooks/use-lang";
 import { fmtTime, type ExtremePoint } from "@/lib/tide-math";
 
 // The list of the day's high/low waters (time, height and, for high waters, the
@@ -5,6 +6,7 @@ import { fmtTime, type ExtremePoint } from "@/lib/tide-math";
 // top-left column with the forecast panel, which has to sit directly under it
 // however many extremes the day has.
 export function ExtremesList({ extremes }: { extremes: ExtremePoint[] }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-0.5">
       {extremes.map((e, i) => (
@@ -23,14 +25,14 @@ export function ExtremesList({ extremes }: { extremes: ExtremePoint[] }) {
                 : "text-emerald-700 dark:text-emerald-400"
             }
           >
-            {e.high ? "▲ HW" : "▼ LW"}
+            {e.high ? t.highWater : t.lowWater}
           </span>
           <span>{fmtTime(e.t)}</span>
-          <span className="text-muted-foreground">{e.h.toFixed(2)}m</span>
+          <span className="text-muted-foreground">{t.chipHeight(e.h)}</span>
           {e.high && e.coef !== null && (
             <span
               className="ml-0.5 rounded bg-sky-600/15 px-1 font-semibold text-sky-700 dark:bg-sky-400/20 dark:text-sky-200"
-              title="Tidal coefficient"
+              title={t.coefTitle}
             >
               {e.coef}
             </span>

@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -19,8 +17,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
 import type { CoefDayButtonComponent } from "@/components/tide/CoefDayButton";
-import { fmtSpeed, SPEED_POS_MAX, type AnimMode, type AnimState } from "@/hooks/use-time-lapse";
+import { SPEED_POS_MAX, type AnimMode, type AnimState } from "@/hooks/use-time-lapse";
 import type { Theme } from "@/hooks/use-theme";
+import { useLang, useT } from "@/hooks/use-lang";
+import type { Lang } from "@/lib/i18n";
 
 type Props = {
   selectedDate: Date;
@@ -49,19 +49,48 @@ type Props = {
   toggleTheme: () => void;
 };
 
-/** The two things the time-lapse can run. Order is the order on screen. */
-const MODES = [
-  {
-    mode: "clock" as const,
-    label: "Hours",
-    hint: "Run the hours of a day — the water climbs and falls",
-  },
-  {
-    mode: "days" as const,
-    label: "Days",
-    hint: "Run the days — the water stays at the height you set",
-  },
+/** The two languages, each named in itself. Order is the order on screen. */
+const LANGS: { lang: Lang; short: string; name: string; hint: string }[] = [
+  { lang: "en", short: "EN", name: "English", hint: "Show the app in English" },
+  { lang: "fr", short: "FR", name: "Français", hint: "Afficher l'application en français" },
 ];
+
+/**
+ * EN | FR. Both shown, the current one filled — the same segmented shape as
+ * Hours | Days below — so it says at a glance which language this is and that
+ * the other one is a tap away. Each is labelled in its own language: someone
+ * who cannot read the current one still has to find the way out.
+ */
+function LangSwitch() {
+  const { lang, setLang } = useLang();
+  const t = useT();
+  return (
+    <div
+      role="group"
+      aria-label={t.language}
+      className="flex h-8 shrink-0 overflow-hidden rounded-md border border-border bg-background/90 text-xs font-semibold backdrop-blur-sm"
+    >
+      {LANGS.map((l) => (
+        <button
+          key={l.lang}
+          type="button"
+          lang={l.lang}
+          aria-label={l.name}
+          aria-pressed={lang === l.lang}
+          title={l.hint}
+          onClick={() => setLang(l.lang)}
+          className={`px-2 leading-none transition-colors ${
+            lang === l.lang
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent"
+          }`}
+        >
+          {l.short}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // The top-right control cluster: day navigation + date picker, "jump to today",
 // the tether-line preset, the WC59 / theme / about row and the time-lapse
@@ -93,6 +122,12 @@ export function Controls({
   toggleTheme,
 }: Props) {
   const night = theme === "night";
+  const t = useT();
+  /** The two things the time-lapse can run. Order is the order on screen. */
+  const modes = [
+    { mode: "clock" as const, label: t.modeClock, hint: t.modeClockHint },
+    { mode: "days" as const, label: t.modeDays, hint: t.modeDaysHint },
+  ];
   return (
     <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
       <div className="flex items-center gap-1">
@@ -100,7 +135,7 @@ export function Controls({
           variant="outline"
           size="icon"
           className="size-8 bg-background/90 backdrop-blur-sm"
-          aria-label="Previous day"
+          aria-label={t.prevDay}
           disabled={shiftDay(selectedDate, -1) === null}
           onClick={() => {
             const d = shiftDay(selectedDate, -1);
@@ -123,7 +158,7 @@ export function Controls({
               className="gap-1.5 bg-background/90 backdrop-blur-sm"
             >
               <CalendarIcon className="size-3.5" />
-              {format(selectedDate, "MMM d, yyyy", { locale: enUS })}
+              {t.dateButton(selectedDate)}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
@@ -142,7 +177,8 @@ export function Controls({
               endMonth={DATE_MAX}
               disabled={(date) => date < DATE_MIN || date > DATE_MAX}
               captionLayout="dropdown"
-              locale={enUS}
+              locale={t.calendarLocale}
+              formatters={t.monthDropdown ? { formatMonthDropdown: t.monthDropdown } : undefined}
               components={{ DayButton: coefDayButton }}
             />
           </PopoverContent>
@@ -151,7 +187,7 @@ export function Controls({
           variant="outline"
           size="icon"
           className="size-8 bg-background/90 backdrop-blur-sm"
-          aria-label="Next day"
+          aria-label={t.nextDay}
           disabled={shiftDay(selectedDate, 1) === null}
           onClick={() => {
             const d = shiftDay(selectedDate, 1);
@@ -161,11 +197,14 @@ export function Controls({
           <ChevronRightIcon className="size-4" />
         </Button>
       </div>
-      {/* The build tag rides here rather than floating over the plot: this row
-          is the one with width to spare, and in the flow it cannot cover
-          anything at any viewport. Nothing in the root build — see BuildTag. */}
+      {/* The build tag and the language switch ride here rather than floating
+          over the plot: this row is the one with width to spare — it sits
+          below the view switcher and above the tide column, so it meets
+          neither — and in the flow nothing in it can cover anything at any
+          viewport. No build tag in the root build — see BuildTag. */}
       <div className="flex items-center gap-1">
         <BuildTag />
+        <LangSwitch />
         <Button
           variant="outline"
           size="sm"
@@ -176,7 +215,7 @@ export function Controls({
             setSelectedDate(clamped);
           }}
         >
-          Jump to today
+          {t.jumpToToday}
         </Button>
       </div>
       <Button
@@ -185,7 +224,7 @@ export function Controls({
         className="bg-background/90 backdrop-blur-sm"
         onClick={() => setTargetHeight(2.2)}
       >
-        2.2m tether clamp works
+        {t.tetherPreset}
       </Button>
       {/* WC59, the day/night toggle and the about panel share a line. The two
           icons are narrow enough to ride alongside WC59 without reaching the
@@ -204,8 +243,8 @@ export function Controls({
           variant="outline"
           size="icon"
           className="size-8 bg-background/90 backdrop-blur-sm"
-          aria-label={night ? "Switch to day view" : "Switch to night view"}
-          title={night ? "Day view" : "Night view"}
+          aria-label={t.themeLabel(night)}
+          title={t.themeTitle(night)}
           onClick={toggleTheme}
         >
           {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
@@ -214,8 +253,8 @@ export function Controls({
           variant={showSky ? "default" : "outline"}
           size="icon"
           className={`size-8 ${showSky ? "" : "bg-background/90 backdrop-blur-sm"}`}
-          aria-label={showSky ? "Hide the sun and moon" : "Show the sun and moon"}
-          title={showSky ? "Hide the sun and moon" : "Show the sun and moon"}
+          aria-label={t.skyLabel(showSky)}
+          title={t.skyLabel(showSky)}
           onClick={() => setShowSky((v) => !v)}
         >
           <SunMoonIcon className="size-4" />
@@ -229,7 +268,7 @@ export function Controls({
           className="bg-background/90 backdrop-blur-sm"
           onClick={startAnim}
         >
-          <PlayIcon className="size-4" /> Time-lapse
+          <PlayIcon className="size-4" /> {t.timeLapse}
         </Button>
       ) : (
         <>
@@ -241,11 +280,11 @@ export function Controls({
             >
               {animState === "playing" ? (
                 <>
-                  <PauseIcon className="size-4" /> Pause
+                  <PauseIcon className="size-4" /> {t.pause}
                 </>
               ) : (
                 <>
-                  <PlayIcon className="size-4" /> Resume
+                  <PlayIcon className="size-4" /> {t.resume}
                 </>
               )}
             </Button>
@@ -255,7 +294,7 @@ export function Controls({
               className="bg-background/90 backdrop-blur-sm"
               onClick={stopAnim}
             >
-              <SquareIcon className="size-4" /> Stop
+              <SquareIcon className="size-4" /> {t.stop}
             </Button>
           </div>
           {/* Fixed width so the panel does not twitch as the readout changes
@@ -266,7 +305,7 @@ export function Controls({
                   row of its own: it is what the number beside it means, and the
                   stack pays for every row it grows by. */}
               <div className="flex shrink-0 overflow-hidden rounded border border-border">
-                {MODES.map(({ mode, label, hint }) => (
+                {modes.map(({ mode, label, hint }) => (
                   <button
                     key={mode}
                     type="button"
@@ -283,7 +322,7 @@ export function Controls({
                   </button>
                 ))}
               </div>
-              <span className="truncate font-medium tabular-nums">{fmtSpeed(secPerDay)}</span>
+              <span className="truncate font-medium tabular-nums">{t.speed(secPerDay)}</span>
             </div>
             {/* The root is given a height and the thumb is grown past shadcn's
                 16px. Radix takes a pointer down anywhere on the root and its
@@ -296,7 +335,7 @@ export function Controls({
               min={0}
               max={SPEED_POS_MAX}
               step={1}
-              aria-label="Time-lapse speed"
+              aria-label={t.speedLabel}
               className="h-9 [&_[role=slider]]:size-5"
             />
           </div>

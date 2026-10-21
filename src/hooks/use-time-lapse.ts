@@ -59,19 +59,6 @@ export function posToSecPerDay(pos: number, mode: AnimMode = "clock"): number {
 }
 
 /**
- * How the chosen speed is written out.
- *
- * It flips units at one second per day, because past that "0.25 s/day" is a
- * number you have to invert in your head to picture, and "4.0 days/s" is the
- * thing you are actually watching.
- */
-export function fmtSpeed(secPerDay: number): string {
-  if (secPerDay >= 1)
-    return `${secPerDay < 10 ? secPerDay.toFixed(1) : secPerDay.toFixed(0)} s/day`;
-  return `${(1 / secPerDay).toFixed(1)} days/s`;
-}
-
-/**
  * Longest frame the clock will honour, in seconds of wall time.
  *
  * requestAnimationFrame stops in a hidden tab, so the first frame after coming

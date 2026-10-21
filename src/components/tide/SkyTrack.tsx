@@ -1,12 +1,13 @@
 import { useMemo } from "react";
+import { useT } from "@/hooks/use-lang";
 import type { PlotGeom } from "@/lib/geom";
 import {
   ALT_FULL_SCALE,
   altitudeAt,
   moonLitPath,
   moonLook,
-  moonPhaseName,
-  rangeHint,
+  moonPhase,
+  rangeTrend,
   skyTrack,
   type SkyPoint,
 } from "@/lib/celestial";
@@ -180,6 +181,7 @@ export function SkyTracks({ geom, horizonY, date, lat, lon }: Props) {
 export function SkyBodies({ geom, horizonY, date, hour, lat, lon }: Props) {
   const yOfAlt = useBand(geom, horizonY);
   const look = useMemo(() => moonLook(date, hour), [date, hour]);
+  const t = useT();
   if (!yOfAlt) return null;
   const { xOfT } = geom;
 
@@ -191,7 +193,7 @@ export function SkyBodies({ geom, horizonY, date, hour, lat, lon }: Props) {
     <g clipPath="url(#plotClip)" pointerEvents="none">
       {sunAlt > 0 && (
         <g transform={`translate(${x}, ${yOfAlt(sunAlt)})`} style={MOVING}>
-          <title>{`Sun — ${sunAlt.toFixed(0)}° above the horizon`}</title>
+          <title>{t.sunTitle(sunAlt)}</title>
           {/* Three passes and a core. The sun has no edge, so it gets no
               outline: the halo is what makes it read as light, not a sticker. */}
           <circle r={SUN_R * 2.3} fill="var(--sky-sun)" opacity={0.1} />
@@ -205,9 +207,7 @@ export function SkyBodies({ geom, horizonY, date, hour, lat, lon }: Props) {
           the one between us and the sun — so it is the one on top. */}
       {moonAlt > 0 && (
         <g transform={`translate(${x}, ${yOfAlt(moonAlt)})`} style={MOVING}>
-          <title>
-            {`${moonPhaseName(look)}, ${(look.fraction * 100).toFixed(0)}% lit — ${rangeHint(look)}`}
-          </title>
+          <title>{t.moonTitle(moonPhase(look), look.fraction, rangeTrend(look))}</title>
           {/* The unlit disc first, faintly: without it a thin crescent reads as
               a stray mark rather than a sphere with its night side to us. */}
           <circle r={MOON_R} fill="var(--sky-moon-dark)" opacity={0.55} />

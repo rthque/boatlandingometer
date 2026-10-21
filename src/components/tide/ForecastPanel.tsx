@@ -1,17 +1,13 @@
 import { WavesIcon, WindIcon } from "lucide-react";
 import { useForecast } from "@/hooks/use-forecast";
+import { useT } from "@/hooks/use-lang";
 import {
-  compass,
   FORECAST_DAYS,
   FORECAST_SITE,
-  HS_ALERT_M,
   hsIsHigh,
-  shown,
-  WIND_ALERT_MS,
   windIsHigh,
   WORK_END_H,
   WORK_START_H,
-  workWindowLabel,
 } from "@/lib/forecast";
 
 const surface = "rounded text-xs bg-background/90 backdrop-blur-sm border border-border";
@@ -21,9 +17,6 @@ const chip = `${surface} px-2 py-0.5`;
     two padding utilities in one class string are resolved by stylesheet order,
     not by the order they are written in. */
 const panel = `${surface} px-2 py-1`;
-
-/** "14:00", from an hour index. */
-const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
 /**
  * Leads a row whose peak is at or over its threshold.
@@ -72,21 +65,20 @@ export function ForecastPanel({
   setShowWaves: (fn: (v: boolean) => boolean) => void;
 }) {
   const { day, outOfRange, isLoading, isError } = useForecast(selectedDate);
+  const t = useT();
 
   if (isLoading) return null;
 
   if (isError) {
     return (
-      <div className={`${chip} text-muted-foreground`} title="Could not reach the forecast service">
-        Forecast unavailable
+      <div className={`${chip} text-muted-foreground`} title={t.fcUnavailableTitle}>
+        {t.fcUnavailable}
       </div>
     );
   }
 
   if (outOfRange) {
-    return (
-      <div className={`${chip} text-muted-foreground`}>Forecast covers {FORECAST_DAYS} days</div>
-    );
+    return <div className={`${chip} text-muted-foreground`}>{t.fcCovers(FORECAST_DAYS)}</div>;
   }
 
   if (!day) return null;
@@ -94,65 +86,60 @@ export function ForecastPanel({
   const { waveHsM: hs, waveHmaxM: hmax, windMs: wind, gustMs: gust } = day;
   if (hs === null && wind === null) return null;
 
-  const window = workWindowLabel();
+  const window = t.fcWindow;
   const fullHours = WORK_END_H - WORK_START_H + 1;
   const partial =
     day.hoursCovered > 0 && day.hoursCovered < fullHours
-      ? ` Only ${day.hoursCovered} of ${fullHours} hours came back, so the peak may be understated.`
+      ? t.fcPartial(day.hoursCovered, fullHours)
       : "";
 
   return (
     <div className={`${panel} flex flex-col gap-0.5`}>
       <div
         className="text-[10px] leading-tight text-muted-foreground"
-        title={`Highest value of each figure between ${window} local time — not the 24 h maximum, which a night swell can set hours before anyone is on the water.${partial}`}
+        title={t.fcPeakTitle(window, partial)}
       >
-        Peak {window}
+        {t.fcPeak(window)}
       </div>
 
       {hs !== null && (
         <div
           className="flex items-center gap-1.5 font-medium"
-          title={
-            `Significant wave height ${shown(hs)} m, the worst hour of ${window}` +
-            (day.waveHourH !== null ? ` (${hourLabel(day.waveHourH)})` : "") +
-            (day.wavePeriodS !== null ? `, period ${day.wavePeriodS.toFixed(0)} s` : "") +
-            `. Max is the highest individual wave, estimated as 1.86 × Hs — a statistic of the sea state, not a modelled wave.` +
-            (hsIsHigh(hs) ? ` Marked: the peak is at or over ${HS_ALERT_M} m.` : "") +
-            partial
-          }
+          title={t.fcHsTitle({
+            hs,
+            window,
+            hour: day.waveHourH !== null ? t.fcHour(day.waveHourH) : null,
+            periodS: day.wavePeriodS,
+            high: hsIsHigh(hs),
+            partial,
+          })}
         >
-          {hsIsHigh(hs) && <AlertMark title={`Peak Hs is at or over ${HS_ALERT_M} m`} />}
+          {hsIsHigh(hs) && <AlertMark title={t.fcHsAlert} />}
           {/* Tinted while the band is drawn, so the row reads as its legend. */}
           <WavesIcon
             className={`size-3.5 shrink-0 ${showWaves ? "text-[var(--wave-crest)]" : "text-muted-foreground"}`}
           />
-          <span>Hs {shown(hs)} m</span>
-          {hmax !== null && <span className="text-muted-foreground">max ~{shown(hmax)} m</span>}
+          <span>{t.fcHs(hs)}</span>
+          {hmax !== null && <span className="text-muted-foreground">{t.fcHmax(hmax)}</span>}
         </div>
       )}
 
       {wind !== null && (
         <div
           className="flex items-center gap-1.5 font-medium"
-          title={
-            `Strongest sustained wind at 10 m between ${window}` +
-            (day.windHourH !== null ? ` (${hourLabel(day.windHourH)})` : "") +
-            (gust !== null ? `, strongest gust ${shown(gust)} m/s` : "") +
-            `. Direction is the one blowing at the peak-wind hour.` +
-            (windIsHigh(wind)
-              ? ` Marked: the peak is at or over ${WIND_ALERT_MS} m/s. Gusts do not raise the mark.`
-              : "") +
-            partial
-          }
+          title={t.fcWindTitle({
+            window,
+            hour: day.windHourH !== null ? t.fcHour(day.windHourH) : null,
+            gust,
+            high: windIsHigh(wind),
+            partial,
+          })}
         >
-          {windIsHigh(wind) && (
-            <AlertMark title={`Peak sustained wind is at or over ${WIND_ALERT_MS} m/s`} />
-          )}
+          {windIsHigh(wind) && <AlertMark title={t.fcWindAlert} />}
           <WindIcon className="size-3.5 shrink-0 text-muted-foreground" />
-          {day.windFromDeg !== null && <span>{compass(day.windFromDeg)}</span>}
-          <span>{shown(wind)} m/s</span>
-          {gust !== null && <span className="text-muted-foreground">gust {shown(gust)}</span>}
+          {day.windFromDeg !== null && <span>{t.fcCompass(day.windFromDeg)}</span>}
+          <span>{t.fcWind(wind)}</span>
+          {gust !== null && <span className="text-muted-foreground">{t.fcGust(gust)}</span>}
         </div>
       )}
 
@@ -169,11 +156,7 @@ export function ForecastPanel({
             type="button"
             role="switch"
             aria-checked={showWaves}
-            title={
-              showWaves
-                ? "Hide the forecast waves on the chart"
-                : "Draw the forecast waves on the chart — the highest the water reaches, hour by hour"
-            }
+            title={t.fcSwitchTitle(showWaves)}
             onClick={() => setShowWaves((v) => !v)}
             className="relative -mx-1 flex w-[calc(100%+0.5rem)] cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[11px] font-medium leading-tight hover:bg-accent after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
           >
@@ -191,17 +174,14 @@ export function ForecastPanel({
                 }`}
               />
             </span>
-            Waves on chart
+            {t.fcSwitch}
           </button>
         </div>
       )}
 
       {!FORECAST_SITE.exact && (
-        <div
-          className="text-[10px] leading-tight text-muted-foreground"
-          title="The forecast point is an approximate offshore position, not the structure itself. Tides are unaffected — they are computed for Dieppe."
-        >
-          approx. position
+        <div className="text-[10px] leading-tight text-muted-foreground" title={t.fcApproxTitle}>
+          {t.fcApprox}
         </div>
       )}
     </div>

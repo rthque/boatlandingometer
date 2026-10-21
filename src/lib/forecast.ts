@@ -171,11 +171,8 @@ export function compass(deg: number): string {
   return points[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
 }
 
-/** "08:00–18:00", for labels and tooltips — one place so they cannot drift. */
-export function workWindowLabel(): string {
-  const pad = (h: number) => `${String(h).padStart(2, "0")}:00`;
-  return `${pad(WORK_START_H)}–${pad(WORK_END_H)}`;
-}
+// The window's label ("08:00–18:00", "08h–18h") is the dictionary's, in
+// lib/i18n.ts, built from WORK_START_H and WORK_END_H so it cannot drift.
 
 // Open-Meteo returns hourly blocks as parallel arrays: time[] plus one array
 // per variable. Nothing here trusts that shape — a missing or short array
