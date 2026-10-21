@@ -8,7 +8,10 @@ type Props = {
   draggingLine: boolean;
   setDraggingLine: (v: boolean) => void;
   crossings: number[];
-  tideHeight: (t: number) => number;
+  /** The level the line is read against — the tide, or the wave crest. */
+  levelAt: (t: number) => number;
+  /** The crossings are against the wave crest: the duration chips say so. */
+  waveAdjusted: boolean;
   sunriseH: number | null;
   sunsetH: number | null;
 };
@@ -16,6 +19,7 @@ type Props = {
 // The draggable reference-height line: a full-width horizontal line the user can
 // drag up/down, annotated with the times the tide crosses it (yellow chips) and,
 // for each daytime stretch below it, how long the tide stays low (red chips).
+// With the waves on, "the tide" is the crest of the forecast waves instead.
 export function HeightLine({
   geom,
   targetHeight,
@@ -23,7 +27,8 @@ export function HeightLine({
   draggingLine,
   setDraggingLine,
   crossings,
-  tideHeight,
+  levelAt,
+  waveAdjusted,
   sunriseH,
   sunsetH,
 }: Props) {
@@ -147,7 +152,7 @@ export function HeightLine({
           const a = bounds[i];
           const b = bounds[i + 1];
           const mid = (a + b) / 2;
-          if (tideHeight(mid) < targetHeight) {
+          if (levelAt(mid) < targetHeight) {
             const t1 = Math.max(a, dayLo);
             const t2 = Math.min(b, dayHi);
             if (t2 > t1) segs.push({ t1, t2 });
@@ -158,8 +163,14 @@ export function HeightLine({
           const x2 = xOfT(s.t2);
           const cx = (x1 + x2) / 2;
           const dur = fmtDuration(s.t2 - s.t1);
-          const chipW = Math.min(82, Math.max(56, dur.length * 8 + 16));
+          // Room for the wave mark: a duration measured against the crest is
+          // a different number from the one crews have been reading, and it
+          // must not pass for it.
+          const markW = waveAdjusted ? 13 : 0;
+          const chipW = Math.min(82, Math.max(56, dur.length * 8 + 16)) + markW;
           const chipH = 16;
+          const markX = cx - chipW / 2 + 5;
+          const markY = yLine + 6 + chipH / 2;
           return (
             <g key={`seg${i}`} pointerEvents="none">
               <line
@@ -178,9 +189,20 @@ export function HeightLine({
                 height={chipH}
                 rx={3}
                 fill="oklch(0.55 0.18 25)"
+                stroke={waveAdjusted ? "var(--wave-crest)" : undefined}
+                strokeWidth={waveAdjusted ? 1.5 : undefined}
               />
+              {waveAdjusted && (
+                <path
+                  d={`M ${markX} ${markY + 1} q 2.5 -4 5 0 t 5 0`}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth={1.6}
+                  strokeLinecap="round"
+                />
+              )}
               <text
-                x={cx}
+                x={cx + markW / 2}
                 y={yLine + 6 + chipH / 2 + 4}
                 textAnchor="middle"
                 fontSize="11"

@@ -630,7 +630,7 @@ and to the vessel's own limits, which this app does not know.
 
 ### The wave band
 
-The waves icon in the forecast panel's wave row is a switch. On, the chart gets
+The **Waves on chart** switch at the foot of the forecast panel turns it on. On, the chart gets
 a band around the tide curve from `tide − crest` to `tide + crest`, hour by
 hour, with its upper edge stroked: the highest the water is estimated to reach.
 `crestAbove(hs) = hs × 1.86 × 0.5`, i.e. **half** of Hmax.
@@ -658,12 +658,21 @@ Details worth keeping:
   returns null if either neighbouring hour is missing; the band then breaks
   rather than bridging, because a gap saying "no forecast here" is true and a
   bridge would draw a sea state the model never gave.
-- **The switch lives in the wave row, not the control stack.** That is where the
-  numbers it draws are, it costs the stack nothing, and it cannot exist without
-  them: no forecast for the day (past the week, or the service down) means no
-  row and so no button — exactly when there is no band. The choice is kept, so
-  scanning back into the forecast window brings the band back. Its 24 px target
-  is grown to a finger by an `after:` inset that moves nothing in the row.
+- **The switch lives in the forecast panel, not the control stack.** That is
+  where the numbers it draws are, it costs the stack nothing, and it cannot
+  exist without them: no forecast for the day (past the week, or the service
+  down) means no wave row and so no switch — exactly when there is no band. The
+  choice is kept, so scanning back into the forecast window brings the band
+  back.
+- **It is a switch with words, because an icon was not enough.** It started
+  as the wave row's own icon, made clickable — and nobody could tell, because
+  every icon on that panel is a label. A track-and-thumb with "Waves on chart"
+  beside it says both that it can be pressed and what pressing it does, in
+  either state, without a tooltip, which a phone does not have. It sits under
+  a rule so it reads as a control rather than a fourth figure; it costs the
+  panel one row and no width (163 px at every viewport measured). The wave
+  row's icon turns the crest colour while the band is on, so the row reads as
+  its legend. An `after:` inset grows the target to 26 px.
 - **The number at a given hour** comes from the hover tooltip on desktop
   ("waves ≈ x m") and, where there is no hover, from a second chip on the now
   marker above the tide chip — which also rides the time-lapse clock.
@@ -675,11 +684,31 @@ Hs to the centimetre at 09:00, 14:00 and 20:00, and at the peak hour the band's
 full height (2.60 m) is the panel's own "max ~2.6 m". Two missing hours split
 the band into two runs. 60 fps at 4 days/s with it on.
 
-**Not done, deliberately:** the red height line's crossing times and durations
-are still computed against the tide alone. With the band on, the crest line
-crosses that height earlier and leaves it later, so the labelled durations are
-optimistic for wave-sensitive work. Recomputing them against the crest would
-change what existing numbers mean, so it has not been done without being asked.
+**With the band on, the red line is read against the crest.** Its crossing
+times, its daytime durations and the stretches it underlines are computed
+against `tide + crest` (`levelAt` in `index.tsx`), not the tide — so they say
+when the biggest waves clear the height, which is shorter, and the true answer
+for wave-sensitive work. This was asked for: it changes what a number crews
+already read means, so the duration chips that are crest-based say so — a
+small wave inside the chip and a ring in `--wave-crest`. A chip without them is
+the tide's.
+
+Two rules hold it together:
+
+- **Only on a fully covered day.** `waveAdjusted` needs all 24 hourly values. A
+  level that is the crest in some hours and the bare tide in others jumps where
+  the forecast stops, and the jump reads as a crossing nobody could meet. With
+  a gap the band still draws (broken), but the line falls back to the tide and
+  its chips lose the mark.
+- **The line itself still follows the tide** in the clock time-lapse.
+  `targetHeight` is the height being tested, not the water; only what it is
+  compared against changes.
+
+Verified with mocked forecasts: at every crossing the hover reads the crest at
+exactly the line's height; every crest-based stretch lies inside a tide one;
+turning the band off restores the tide's chips text for text; a day with two
+missing hours keeps the tide's chips unmarked. With the band off, the chart's
+SVG markup is identical to the build before this existed.
 
 `FORECAST_SITE` in `lib/forecast.ts` is **not** the tide reference, and the gap
 between them is the whole point. Tides stay on Dieppe because that is the
@@ -869,6 +898,16 @@ do everything a session on a laptop can.
   the sky shows through the lattice. They are generated from the white-matted
   originals in `assets/*-source.png` by `npm run schema` — edit the sources, not
   the outputs. `irl.png` is a real photo and is left alone.
+- **The sign on the FOU platform reads `FOU`** — repainted in
+  `assets/fou-source.png`; the render came with `A04` (it is in git history
+  before the repaint). The letters were matched to A04 rather than chosen: the
+  same flat grey `(67,68,66)` on brown `(172,115,73)`, the same 1 px black
+  contour, cap height (rows 2–148), baseline and stroke weight (stems 11–12 px,
+  bars 16–18 px), in FreeSans, the best of three sans fits to A04. F, O and U
+  are wider letters than A, 0 and 4 — at A04's proportions FOU is 229 px on a
+  219 px sign — so it is condensed to fit and its stems grown back to A04's
+  weight. The rail that crosses the sign is drawn over the letters, as before.
+  Only pixels inside the sign changed, in the source and in `fou.png`.
 - `src/lib/views.ts` defines the FOU / BL / IRL background schemas and the WC59
   vessel overlay, with the pixel geometry that maps water height to screen
   position. Changing an image means re-deriving those numbers.

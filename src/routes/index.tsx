@@ -246,15 +246,47 @@ function Index() {
     setHover({ x: xOfT(t), t, h });
   };
 
-  // Times where the tide curve crosses targetHeight.
+  const { day: forecastDay } = useForecast(selectedDate);
+  const waveSeries = useMemo(() => {
+    const series = forecastDay?.waveHsByHour;
+    return series && series.some((v) => v !== null) ? series : null;
+  }, [forecastDay]);
+  const waveOn = showWaves && waveSeries !== null;
+  /** Highest estimated water at hour t with the waves on, or null without them. */
+  const crestAt = (t: number): number | null => {
+    if (!waveOn || !waveSeries) return null;
+    const hs = hsAtHour(waveSeries, t);
+    return hs === null ? null : tideHeight(t) + crestAbove(hs);
+  };
+
+  /**
+   * What the red line is read against: the tide, or with the waves on, the
+   * crest — so its crossing times and durations say when the biggest waves
+   * clear that height, not when the still water does. Those durations are
+   * shorter, and shorter is the true answer for wave-sensitive work.
+   *
+   * Only when the forecast covers every hour of the day. A level that is the
+   * crest in some hours and the bare tide in others jumps where the forecast
+   * stops, and the jump would read as a crossing nobody could meet. With a
+   * gap the line stays on the tide, and its chips lose the wave mark that
+   * says otherwise.
+   */
+  const waveAdjusted = waveOn && waveSeries !== null && waveSeries.every((v) => v !== null);
+  const levelAt = useMemo(() => {
+    if (!waveAdjusted || !waveSeries) return tideHeight;
+    return (t: number) => tideHeight(t) + crestAbove(hsAtHour(waveSeries, t) ?? 0);
+  }, [waveAdjusted, waveSeries, tideHeight]);
+
+  // Times where the red line's level (the tide, or the crest with the waves
+  // on) crosses targetHeight.
   const crossings = useMemo(() => {
     if (targetHeight === null) return [];
     const steps = 2880; // 30s resolution
     const xs: number[] = [];
-    let prev = tideHeight(0) - targetHeight;
+    let prev = levelAt(0) - targetHeight;
     for (let i = 1; i <= steps; i++) {
       const t = (i / steps) * 24;
-      const curr = tideHeight(t) - targetHeight;
+      const curr = levelAt(t) - targetHeight;
       if (prev === 0 || prev < 0 !== curr < 0) {
         const tPrev = ((i - 1) / steps) * 24;
         const u = prev === curr ? 0 : prev / (prev - curr);
@@ -263,7 +295,7 @@ function Index() {
       prev = curr;
     }
     return xs;
-  }, [targetHeight, tideHeight]);
+  }, [targetHeight, levelAt]);
 
   const isToday = useMemo(() => {
     const now = new Date();
@@ -336,19 +368,6 @@ function Index() {
   // on that date" is still true and useful — and it is what makes the day-scan
   // mode show the phase turning over while the dates run.
   const skyHour = clockDriven ? animT : nowT;
-
-  const { day: forecastDay } = useForecast(selectedDate);
-  const waveSeries = useMemo(() => {
-    const series = forecastDay?.waveHsByHour;
-    return series && series.some((v) => v !== null) ? series : null;
-  }, [forecastDay]);
-  const waveOn = showWaves && waveSeries !== null;
-  /** Highest estimated water at hour t with the waves on, or null without them. */
-  const crestAt = (t: number): number | null => {
-    if (!waveOn || !waveSeries) return null;
-    const hs = hsAtHour(waveSeries, t);
-    return hs === null ? null : tideHeight(t) + crestAbove(hs);
-  };
 
   const yTicks = useMemo(() => {
     const step = view === "FOU" ? 5 : view === "IRL" ? 2 : 1;
@@ -536,7 +555,8 @@ function Index() {
                 draggingLine={draggingLine}
                 setDraggingLine={setDraggingLine}
                 crossings={crossings}
-                tideHeight={tideHeight}
+                levelAt={levelAt}
+                waveAdjusted={waveAdjusted}
                 sunriseH={sunriseH}
                 sunsetH={sunsetH}
               />
