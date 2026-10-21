@@ -14,6 +14,9 @@ import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
 import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
 import { ForecastPanel } from "@/components/tide/ForecastPanel";
+import { WaveBandFill, WaveCrest } from "@/components/tide/WaveBand";
+import { useForecast } from "@/hooks/use-forecast";
+import { crestAbove, hsAtHour } from "@/lib/forecast";
 import { Controls } from "@/components/tide/Controls";
 import { BackgroundLayer } from "@/components/tide/BackgroundLayer";
 import { AxisGrid } from "@/components/tide/AxisGrid";
@@ -54,6 +57,10 @@ function Index() {
   // Off by default: it is an explanation, not part of the reading, and a crew
   // opening the app to check a window should see only what they came for.
   const [showSky, setShowSky] = useState(false);
+  // On by default, unlike the sky: the sky explains the tide, the waves change
+  // the answer — the time the water really stays below a height. With no
+  // forecast for the day there is nothing to draw and the chart is the tide's.
+  const [showWaves, setShowWaves] = useState(true);
   const [draggingLine, setDraggingLine] = useState(false);
 
   const { allExtremes } = useTideExtremes(selectedDate);
@@ -240,15 +247,47 @@ function Index() {
     setHover({ x: xOfT(t), t, h });
   };
 
-  // Times where the tide curve crosses targetHeight.
+  const { day: forecastDay } = useForecast(selectedDate);
+  const waveSeries = useMemo(() => {
+    const series = forecastDay?.waveHsByHour;
+    return series && series.some((v) => v !== null) ? series : null;
+  }, [forecastDay]);
+  const waveOn = showWaves && waveSeries !== null;
+  /** Highest estimated water at hour t with the waves on, or null without them. */
+  const crestAt = (t: number): number | null => {
+    if (!waveOn || !waveSeries) return null;
+    const hs = hsAtHour(waveSeries, t);
+    return hs === null ? null : tideHeight(t) + crestAbove(hs);
+  };
+
+  /**
+   * What the red line is read against: the tide, or with the waves on, the
+   * crest — so its crossing times and durations say when the biggest waves
+   * clear that height, not when the still water does. Those durations are
+   * shorter, and shorter is the true answer for wave-sensitive work.
+   *
+   * Only when the forecast covers every hour of the day. A level that is the
+   * crest in some hours and the bare tide in others jumps where the forecast
+   * stops, and the jump would read as a crossing nobody could meet. With a
+   * gap the line stays on the tide, and its chips lose the wave mark that
+   * says otherwise.
+   */
+  const waveAdjusted = waveOn && waveSeries !== null && waveSeries.every((v) => v !== null);
+  const levelAt = useMemo(() => {
+    if (!waveAdjusted || !waveSeries) return tideHeight;
+    return (t: number) => tideHeight(t) + crestAbove(hsAtHour(waveSeries, t) ?? 0);
+  }, [waveAdjusted, waveSeries, tideHeight]);
+
+  // Times where the red line's level (the tide, or the crest with the waves
+  // on) crosses targetHeight.
   const crossings = useMemo(() => {
     if (targetHeight === null) return [];
     const steps = 2880; // 30s resolution
     const xs: number[] = [];
-    let prev = tideHeight(0) - targetHeight;
+    let prev = levelAt(0) - targetHeight;
     for (let i = 1; i <= steps; i++) {
       const t = (i / steps) * 24;
-      const curr = tideHeight(t) - targetHeight;
+      const curr = levelAt(t) - targetHeight;
       if (prev === 0 || prev < 0 !== curr < 0) {
         const tPrev = ((i - 1) / steps) * 24;
         const u = prev === curr ? 0 : prev / (prev - curr);
@@ -257,7 +296,7 @@ function Index() {
       prev = curr;
     }
     return xs;
-  }, [targetHeight, tideHeight]);
+  }, [targetHeight, levelAt]);
 
   const isToday = useMemo(() => {
     const now = new Date();
@@ -358,7 +397,11 @@ function Index() {
             extreme, whether the day has three or four of them. */}
         <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
           <ExtremesList extremes={visibleExtremes} />
-          <ForecastPanel selectedDate={selectedDate} />
+          <ForecastPanel
+            selectedDate={selectedDate}
+            showWaves={showWaves}
+            setShowWaves={setShowWaves}
+          />
         </div>
         <ViewSwitcher view={view} setView={setView} />
         <Controls
@@ -477,6 +520,10 @@ function Index() {
 
             <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} />
 
+            {waveOn && waveSeries && (
+              <WaveBandFill geom={geom} tideHeight={tideHeight} series={waveSeries} />
+            )}
+
             <TideCurve
               geom={geom}
               seaPath={seaPath}
@@ -484,6 +531,10 @@ function Index() {
               visibleExtremes={visibleExtremes}
               dayPhoto={dayPhotoScene}
             />
+
+            {waveOn && waveSeries && (
+              <WaveCrest geom={geom} tideHeight={tideHeight} series={waveSeries} />
+            )}
 
             {showWC59 && targetHeight !== null && (
               <Wc59Overlay
@@ -505,17 +556,23 @@ function Index() {
                 draggingLine={draggingLine}
                 setDraggingLine={setDraggingLine}
                 crossings={crossings}
-                tideHeight={tideHeight}
+                levelAt={levelAt}
+                waveAdjusted={waveAdjusted}
                 sunriseH={sunriseH}
                 sunsetH={sunsetH}
               />
             )}
 
             {showMarker && markerH !== null && (
-              <NowMarker geom={geom} markerT={markerT} markerH={markerH} />
+              <NowMarker
+                geom={geom}
+                markerT={markerT}
+                markerH={markerH}
+                crestH={crestAt(markerT)}
+              />
             )}
 
-            {hover && <HoverTooltip geom={geom} hover={hover} />}
+            {hover && <HoverTooltip geom={geom} hover={hover} crestH={crestAt(hover.t)} />}
           </svg>
           <SunTimes geom={geom} sunriseH={sunriseH} sunsetH={sunsetH} />
         </div>

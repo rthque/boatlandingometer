@@ -61,7 +61,16 @@ function AlertMark({ title }: { title: string }) {
  * It renders nothing at all while the first request is in flight, so the panel
  * appears once rather than flickering through a skeleton on every load.
  */
-export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
+export function ForecastPanel({
+  selectedDate,
+  showWaves,
+  setShowWaves,
+}: {
+  selectedDate: Date;
+  /** Whether the forecast waves are drawn on the chart. */
+  showWaves: boolean;
+  setShowWaves: (fn: (v: boolean) => boolean) => void;
+}) {
   const { day, outOfRange, isLoading, isError } = useForecast(selectedDate);
 
   if (isLoading) return null;
@@ -114,7 +123,10 @@ export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
           }
         >
           {hsIsHigh(hs) && <AlertMark title={`Peak Hs is at or over ${HS_ALERT_M} m`} />}
-          <WavesIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          {/* Tinted while the band is drawn, so the row reads as its legend. */}
+          <WavesIcon
+            className={`size-3.5 shrink-0 ${showWaves ? "text-[var(--wave-crest)]" : "text-muted-foreground"}`}
+          />
           <span>Hs {shown(hs)} m</span>
           {hmax !== null && <span className="text-muted-foreground">max ~{shown(hmax)} m</span>}
         </div>
@@ -141,6 +153,46 @@ export function ForecastPanel({ selectedDate }: { selectedDate: Date }) {
           {day.windFromDeg !== null && <span>{compass(day.windFromDeg)}</span>}
           <span>{shown(wind)} m/s</span>
           {gust !== null && <span className="text-muted-foreground">gust {shown(gust)}</span>}
+        </div>
+      )}
+
+      {/* The switch for the band. It was the wave row's icon first, which
+          nobody could tell from a label: every icon on this panel is one.
+          A switch with words says both that it can be pressed and what
+          pressing it does, in either state, without a tooltip — which a
+          phone does not have. It sits under a rule so it reads as a control
+          and not as a fourth figure, and it is only here when there are
+          waves to draw. The after: inset grows the target to a finger. */}
+      {hs !== null && (
+        <div className="mt-0.5 border-t border-border pt-1">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showWaves}
+            title={
+              showWaves
+                ? "Hide the forecast waves on the chart"
+                : "Draw the forecast waves on the chart — the highest the water reaches, hour by hour"
+            }
+            onClick={() => setShowWaves((v) => !v)}
+            className="relative -mx-1 flex w-[calc(100%+0.5rem)] cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[11px] font-medium leading-tight hover:bg-accent after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
+          >
+            <span
+              aria-hidden
+              className={`relative inline-flex h-3.5 w-6 shrink-0 items-center rounded-full border transition-colors ${
+                showWaves ? "border-transparent bg-[var(--wave-crest)]" : "border-border bg-muted"
+              }`}
+            >
+              <span
+                className={`absolute left-0 size-2.5 rounded-full shadow-sm transition-transform ${
+                  showWaves
+                    ? "translate-x-[11px] bg-[var(--wave-crest-ink)]"
+                    : "translate-x-px bg-muted-foreground"
+                }`}
+              />
+            </span>
+            Waves on chart
+          </button>
         </div>
       )}
 
