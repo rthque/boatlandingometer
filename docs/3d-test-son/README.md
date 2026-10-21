@@ -93,3 +93,15 @@ modulateur de moins. Onglet masqué : le son est suspendu.
 
 Reste à juger à l'oreille sur un vrai appareil : timbre des moteurs, équilibre
 des niveaux et rendu sur un haut-parleur de téléphone.
+
+## Promotion en production (`/3D/`)
+
+Après validation de cette version, la production sert exactement la version
+TEST, selon la même procédure que les promotions précédentes. Comparaison
+fichier par fichier entre `public/3D/` et `public/3D/test/` : tout est
+identique octet pour octet, sauf le runtime chiffré et sa ligne dans
+`vault.json`. Même coffre, même mot de passe, mêmes ressources. Déchiffré en
+mémoire, le runtime de production ne diffère de celui du TEST que par
+`/3D/test/` → `/3D/` (et les noms de fichiers hachés qui en découlent) et par
+l'étiquette « TEST » du HUD, absente en production. `/3D/test/`, `/3d/` et
+`/3d/test/` sont inchangés.
