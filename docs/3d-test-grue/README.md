@@ -76,3 +76,15 @@ de la caméra.
 - **Modèle** : 4,20 Mo au lieu de 3,85 Mo. Le modèle compte 345 800
   triangles au lieu de 383 800 ; le fichier grossit parce qu'il est recompressé
   sans le filtre de normales d'origine.
+
+## Promotion en production (`/3D/`)
+
+Après validation, la production sert exactement cette version TEST, selon la
+même procédure que les promotions précédentes. Comparaison fichier par fichier
+entre `public/3D/` et `public/3D/test/` : tout est identique octet pour octet,
+fondation avec la grue comprise, sauf le runtime chiffré et sa ligne dans
+`vault.json`. Même coffre, même mot de passe, mêmes ressources. Déchiffré en
+mémoire, le runtime de production ne diffère de celui du TEST que par
+`/3D/test/` → `/3D/` (et les noms de fichiers hachés qui en découlent) et par
+l'étiquette « TEST » du HUD, absente en production. `/3D/test/`, `/3d/` et
+`/3d/test/` sont inchangés.
