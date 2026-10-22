@@ -17,7 +17,7 @@ import { ExtremesList } from "@/components/tide/ExtremesList";
 import { ForecastPanel } from "@/components/tide/ForecastPanel";
 import { WaveBandFill, WaveCrest } from "@/components/tide/WaveBand";
 import { useForecast } from "@/hooks/use-forecast";
-import { crestAbove, hsAtHour } from "@/lib/forecast";
+import { crestAbove, hsAtHour, hsIsHigh, windIsHigh } from "@/lib/forecast";
 import { Controls } from "@/components/tide/Controls";
 import { BackgroundLayer } from "@/components/tide/BackgroundLayer";
 import { AxisGrid } from "@/components/tide/AxisGrid";
@@ -260,6 +260,11 @@ function TideApp() {
   };
 
   const { day: forecastDay } = useForecast(selectedDate);
+  /** A 🛑 on the panel: it is then ~35 px wider than on an ordinary day. */
+  const flagged =
+    !!forecastDay &&
+    ((forecastDay.waveHsM !== null && hsIsHigh(forecastDay.waveHsM)) ||
+      (forecastDay.windMs !== null && windIsHigh(forecastDay.windMs)));
   const waveSeries = useMemo(() => {
     const series = forecastDay?.waveHsByHour;
     return series && series.some((v) => v !== null) ? series : null;
@@ -408,7 +413,14 @@ function TideApp() {
         {/* One column so the forecast always sits directly under the last
             extreme, whether the day has three or four of them. */}
         <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
-          <ExtremesList extremes={visibleExtremes} />
+          {/* The tide rows stretch to the forecast panel, so the two line up —
+              except where that would run them into the control stack: on a
+              🛑 day, when the panel is ~198 px, and on phones narrower than
+              370 px, where even an ordinary panel (up to ~175 px) leaves the
+              speed panel no room. There they keep their own width instead. */}
+          <div className={flagged ? "self-start" : "max-[370px]:self-start"}>
+            <ExtremesList extremes={visibleExtremes} />
+          </div>
           <ForecastPanel
             selectedDate={selectedDate}
             showWaves={showWaves}

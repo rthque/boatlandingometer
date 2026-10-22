@@ -53,7 +53,7 @@ const en = {
    * its own; English keeps shadcn's, exactly as it always was.
    */
   monthDropdown: null as ((d: Date) => string) | null,
-  jumpToToday: "Jump to today",
+  today: "Today",
   tetherPreset: "2.2m tether clamp works",
   themeLabel: (night: boolean): string => (night ? "Switch to day view" : "Switch to night view"),
   themeTitle: (night: boolean): string => (night ? "Day view" : "Night view"),
@@ -206,7 +206,7 @@ const fr: Strings = {
   dateButton: (d) => format(d, "d MMM yyyy", { locale: frDayPicker }),
   calendarLocale: frDayPicker,
   monthDropdown: (d) => d.toLocaleString("fr-FR", { month: "short" }),
-  jumpToToday: "Aujourd'hui",
+  today: "Aujourd'hui",
   tetherPreset: "Travaux collier tether 2,2m",
   themeLabel: (night) => (night ? "Passer en vue de jour" : "Passer en vue de nuit"),
   themeTitle: (night) => (night ? "Vue de jour" : "Vue de nuit"),

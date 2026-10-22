@@ -34,8 +34,8 @@ export function BuildBadge() {
 /**
  * The word itself, in the flow of the control stack rather than over it.
  *
- * Sits next to "Jump to today", so it takes its own space in a row that had
- * room to spare and can never cover anything. It is the accessible half of the
+ * Sits next to "Today", so it takes its own space in a row that had room to
+ * spare and can never cover anything. It is the accessible half of the
  * signal too — the ring is decorative and hidden from assistive tech.
  */
 export function BuildTag() {

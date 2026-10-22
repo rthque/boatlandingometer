@@ -362,7 +362,7 @@ It uses `DIEPPE`, not `FORECAST_SITE`, so the sun's track starts and ends
 exactly on the existing sunrise/sunset chips; the 29 km between them is under a
 minute of sunrise. It is off for IRL, which brings its own sky.
 
-**Hidden by default**, shown by the sun-and-moon button in the WC59 row. It is
+**Hidden by default**, shown by the sun-and-moon button beside WC59. It is
 an explanation rather than part of the reading, and someone opening the app to
 check a window should see only what they came for. The About panel's wording
 assumes this — it tells you the button _draws_ them — so change both together.
@@ -463,47 +463,70 @@ given phone. If this ever looks like "the deploy didn't work", that is why.
 
 ## Control stack
 
-`Controls.tsx` is the top-right column. It is right-anchored and the view
-switcher is centred, so on a phone the two meet in the middle: every row that
-grows sideways eats into that gap, and every row that exists at all pushes the
-stack further down the screen. Both budgets are tight, which is why the rows
-are grouped rather than one control per line:
+`Controls.tsx` is the top-right column, in three groups, top to bottom, each a
+step further from the reading itself — and a wider gap (8 px against 4) between
+groups is what makes them read as three things rather than one column:
 
 ```
-[<]  [Sep 23, 2026]  [>]
-      [EN|FR] [Jump to today]
-     [2.2m tether clamp works]
-     [WC59] [☾] [☀☾] [ⓘ]
-             [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
-                                        [Hours|Days]  12 s/day ]
-                                        [ —●———————————— ]
+        [<]  [Oct 22, 2026]  [>]      WHEN   — the moment you are looking at
+     [TEST] [Today] [▶ Time-lapse]           (playing: [Today] [⏸ Pause] [⏹ Stop]
+                                              and the speed panel right under)
+
+        [2.2m tether clamp works]      WHAT   — what is drawn on the chart
+                   [WC59] [☀☾]
+
+            [EN|FR]  [☾]  [ⓘ]         APP    — set once and left alone
 ```
 
-WC59 with its three icon buttons is 167px wide, which still clears the
-switcher: by 72px at 390 and 57px at 375, the tightest case. Putting them together is also what buys the room for the speed
-slider: the theme toggle and the ⓘ each used to own a row, and the stack now
-ends at the same height as before even with the slider open.
+It replaced a stack ordered by when each button was added — date, then
+"Jump to today" beside the language switch, the preset, then WC59, day/night,
+sun-and-moon and ⓘ in one row, the time-lapse at the foot. Things that were
+wrong with that, and are the reasons for this order:
 
-The `EN|FR` switch rides in the "Jump to today" row, beside the `TEST` tag on
-the /test/ build, because that row is the only one with room: it sits below
-the view switcher (which ends at y 34) and above the tide column (which starts
-at y 96), so it can grow sideways without meeting either. Every other row
-shares its height with a tide row on a phone.
+- **Today and the time-lapse were far apart, though both move you through
+  time.** They now share the row under the date. It is also the one row with
+  width to spare on a phone — below the view switcher (which ends at y 34) and
+  above the tide column (which starts at y 96), it meets neither — so the TEST
+  tag rides there too, and Pause / Stop take Time-lapse's place in it.
+- **The speed panel opened at the foot of the stack**, away from the button
+  that opened it. It now opens right under the transport; the two groups below
+  make way. A control that appears somewhere other than where you pressed is a
+  control you have to look for.
+- **Two moon icons sat side by side doing different things** — day/night and
+  the sun-and-moon layer. Day/night is an app setting and lives with the
+  language and ⓘ; the layer lives with WC59, the other thing that adds to the
+  drawing, and like it fills when it is on.
+- **"Jump to today" is now "Today"**, the word every calendar uses for it.
 
-**A known overlap, older than the French and not fixed yet.** On a day with 🛑
-marks the forecast panel widens to ~198 px, and because the left column is a
-plain `flex-col` its tide rows stretch to match. At 375 px the WC59 row then
-touches the tide rows by a few pixels, and while the time-lapse runs its speed
-panel covers the right-hand end of the forecast panel (the gust). It is the
-same in English on `main` before the language switch existed; French, being
-narrower in both places, has strictly fewer of these.
+The stack is no taller than it was: five rows idle, five plus the speed panel
+playing, as before.
+
+### Nothing may sit on anything
+
+The widest row below y 96 is the 2.2 m preset (158 px); WC59 with the sky
+button is about 100. On a phone the speed panel is the tightest: it now opens
+beside the tide rows, so it is 176 px below 380 px of viewport (192 above),
+with 4 px to spare around "10.0 days/s" beside Hours | Days.
+
+The tide rows used to stretch to the forecast panel, which on a 🛑 day is
+~198 px wide, and that is what ran them into the stack. They still stretch on
+an ordinary day, so the two line up as they always did, but on a 🛑 day, and
+on phones narrower than 370 px, they keep their own width (`flagged` in
+`index.tsx`).
+
+Measured, in both languages, idle, playing, paused and at the fast end of
+Days, on a calm, a breezy (as wide as the panel gets without a 🛑) and a 🛑
+day, at 1440x756, 390x844, 375x667 and 360x740, with and without the TEST
+tag: **no control touches the view switcher, a tide row or the forecast
+panel**, and no readout is truncated. `main` before this had up to 33 such
+overlaps on a 🛑 day at 360 px, and 6 even on a calm one.
 
 ## About panel
 
 `AboutDialog.tsx` is the ⓘ in the control stack: a short statement of what
 the app is for, in English or French (see **Language**), plus the incident clip
-that explains why the window matters. It shares a row with WC59 and the day/night toggle (see **Control
-stack** below).
+that explains why the window matters. It closes the app row, after the
+language switch and the day/night toggle (see **Control stack** above).
 
 The clip is `src/assets/splash-zone-incident.mp4` (368x640, 33 s, 2.8 MB —
 lighter than `fou.png`), imported directly and played by a plain `<video>`. It
@@ -935,7 +958,7 @@ Two guard rails, both because the root is what people rely on:
 `VITE_BUILD_LABEL` is what marks a build as not-the-live-site: the Vite plugin
 adds `<meta name="robots" content="noindex, nofollow">` and prefixes the title,
 `BuildBadge` draws an amber ring round the viewport, and `BuildTag` puts the
-word itself in the control stack next to "Jump to today". Unset — which the
+word itself in the control stack next to "Today". Unset — which the
 root build always leaves it — none of that exists in the output.
 
 The tag is **in the flow, not over it**, and that is the second attempt. The
