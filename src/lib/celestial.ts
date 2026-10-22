@@ -101,13 +101,26 @@ export function moonLook(date: Date, h: number): MoonLook {
   return { phase: i.phase, fraction: i.fraction, waxing: !!i.waxing };
 }
 
-export function moonPhaseName({ fraction, waxing }: MoonLook): string {
-  if (fraction < 0.02) return "New moon";
-  if (fraction > 0.98) return "Full moon";
-  if (Math.abs(fraction - 0.5) < 0.06) return waxing ? "First quarter" : "Last quarter";
-  if (fraction < 0.5) return waxing ? "Waxing crescent" : "Waning crescent";
-  return waxing ? "Waxing gibbous" : "Waning gibbous";
+export type MoonPhase =
+  | "new"
+  | "full"
+  | "firstQuarter"
+  | "lastQuarter"
+  | "waxingCrescent"
+  | "waningCrescent"
+  | "waxingGibbous"
+  | "waningGibbous";
+
+/** Which of the eight named phases this is. The name itself is the UI's to word. */
+export function moonPhase({ fraction, waxing }: MoonLook): MoonPhase {
+  if (fraction < 0.02) return "new";
+  if (fraction > 0.98) return "full";
+  if (Math.abs(fraction - 0.5) < 0.06) return waxing ? "firstQuarter" : "lastQuarter";
+  if (fraction < 0.5) return waxing ? "waxingCrescent" : "waningCrescent";
+  return waxing ? "waxingGibbous" : "waningGibbous";
 }
+
+export type RangeTrend = "aligned" | "square" | "building" | "easing";
 
 /**
  * What the phase says about the range of the tides, which is the whole reason
@@ -119,13 +132,11 @@ export function moonPhaseName({ fraction, waxing }: MoonLook): string {
  * cancel (neaps). Nothing here is a prediction — the coefficient chips on the
  * extremes are the measured thing; this only names why they move.
  */
-export function rangeHint({ phase }: MoonLook): string {
+export function rangeTrend({ phase }: MoonLook): RangeTrend {
   const toAligned = Math.min(phase, Math.abs(phase - 0.5), 1 - phase); // 0 at new/full
-  if (toAligned < 0.06) return "sun and moon aligned — spring tides, the biggest range";
-  if (toAligned > 0.19) return "sun and moon square — neap tides, the smallest range";
-  return toAligned < 0.125
-    ? "approaching alignment — range building"
-    : "approaching square — range easing";
+  if (toAligned < 0.06) return "aligned";
+  if (toAligned > 0.19) return "square";
+  return toAligned < 0.125 ? "building" : "easing";
 }
 
 /**

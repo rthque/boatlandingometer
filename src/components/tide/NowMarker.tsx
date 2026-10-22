@@ -1,3 +1,4 @@
+import { useT } from "@/hooks/use-lang";
 import type { PlotGeom } from "@/lib/geom";
 import { fmtTime } from "@/lib/tide-math";
 
@@ -12,6 +13,7 @@ type Props = {
 // The vertical "now" marker — the real current time, or the time-lapse clock
 // while the animation runs — with the water height and time chips.
 export function NowMarker({ geom, markerT, markerH, crestH = null }: Props) {
+  const t = useT();
   const { PAD_T, plotHeight, totalHeight, xOfT, yOfH } = geom;
   const x = xOfT(markerT);
   const y = yOfH(markerH);
@@ -33,7 +35,7 @@ export function NowMarker({ geom, markerT, markerH, crestH = null }: Props) {
       />
       {yCrest !== null && crestH !== null && (
         <g>
-          <title>{`Highest water estimated with the forecast waves: ${crestH.toFixed(2)} m`}</title>
+          <title>{t.crestTitle(crestH)}</title>
           <line x1={x} x2={x} y1={yCrest} y2={y} stroke="var(--wave-crest)" strokeWidth={2} />
           <circle
             cx={x}
@@ -52,14 +54,14 @@ export function NowMarker({ geom, markerT, markerH, crestH = null }: Props) {
             fontWeight={700}
             fill="var(--wave-crest-ink)"
           >
-            ≈{crestH.toFixed(2)}m
+            {t.chipCrest(crestH)}
           </text>
         </g>
       )}
       <circle cx={x} cy={y} r={7} fill="oklch(0.55 0.22 25)" stroke="white" strokeWidth={2.5} />
       <rect x={x - 28} y={y - 28} width={56} height={18} rx={4} fill="oklch(0.55 0.22 25)" />
       <text x={x} y={y - 16} textAnchor="middle" fontSize="11" fontWeight={700} fill="white">
-        {markerH.toFixed(2)}m
+        {t.chipHeight(markerH)}
       </text>
       <rect
         x={x - 24}

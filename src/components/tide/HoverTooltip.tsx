@@ -1,3 +1,4 @@
+import { useT } from "@/hooks/use-lang";
 import type { PlotGeom } from "@/lib/geom";
 import { fmtTime } from "@/lib/tide-math";
 
@@ -11,6 +12,7 @@ type Props = {
 // Mouse-hover crosshair (vertical + horizontal dashed lines and a dot) with a
 // tooltip showing the time and water height at the pointer.
 export function HoverTooltip({ geom, hover, crestH = null }: Props) {
+  const t = useT();
   const { PAD_L, PAD_T, plotWidth, plotHeight, yOfH } = geom;
   const tipW = 130;
   const tipH = crestH === null ? 44 : 62;
@@ -57,11 +59,11 @@ export function HoverTooltip({ geom, hover, crestH = null }: Props) {
         {fmtTime(hover.t)}
       </text>
       <text x={left + 10} y={top + 35} fontSize="13" fontWeight={600} fill="white">
-        {hover.h.toFixed(2)} m
+        {t.tipHeight(hover.h)}
       </text>
       {crestH !== null && (
         <text x={left + 10} y={top + 53} fontSize="12" fill="var(--wave-crest-on-dark)">
-          waves ≈ {crestH.toFixed(2)} m
+          {t.tipWaves(crestH)}
         </text>
       )}
     </g>

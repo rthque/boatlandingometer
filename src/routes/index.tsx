@@ -8,6 +8,7 @@ import { useTideExtremes, useCoefByDay } from "@/hooks/use-tide-data";
 import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
 import { useTheme } from "@/hooks/use-theme";
+import { LangContext, useLangState } from "@/hooks/use-lang";
 import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
 import { SkyBodies, SkyTracks } from "@/components/tide/SkyTrack";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
@@ -31,7 +32,18 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+/** The language is held above the app, so every panel — portals included — reads it. */
 function Index() {
+  const [lang, setLang] = useLangState();
+  const value = useMemo(() => ({ lang, setLang }), [lang, setLang]);
+  return (
+    <LangContext.Provider value={value}>
+      <TideApp />
+    </LangContext.Provider>
+  );
+}
+
+function TideApp() {
   const [view, setView] = useState<ViewId>("FOU");
   const viewConfig = VIEWS[view];
   const [theme, , toggleTheme] = useTheme();

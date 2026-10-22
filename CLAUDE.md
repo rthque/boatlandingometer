@@ -471,7 +471,7 @@ are grouped rather than one control per line:
 
 ```
 [<]  [Sep 23, 2026]  [>]
-              [Jump to today]
+      [EN|FR] [Jump to today]
      [2.2m tether clamp works]
      [WC59] [☾] [☀☾] [ⓘ]
              [▶ Time-lapse]      -> [⏸ Pause] [⏹ Stop]
@@ -484,11 +484,25 @@ switcher: by 72px at 390 and 57px at 375, the tightest case. Putting them togeth
 slider: the theme toggle and the ⓘ each used to own a row, and the stack now
 ends at the same height as before even with the slider open.
 
+The `EN|FR` switch rides in the "Jump to today" row, beside the `TEST` tag on
+the /test/ build, because that row is the only one with room: it sits below
+the view switcher (which ends at y 34) and above the tide column (which starts
+at y 96), so it can grow sideways without meeting either. Every other row
+shares its height with a tide row on a phone.
+
+**A known overlap, older than the French and not fixed yet.** On a day with 🛑
+marks the forecast panel widens to ~198 px, and because the left column is a
+plain `flex-col` its tide rows stretch to match. At 375 px the WC59 row then
+touches the tide rows by a few pixels, and while the time-lapse runs its speed
+panel covers the right-hand end of the forecast panel (the gust). It is the
+same in English on `main` before the language switch existed; French, being
+narrower in both places, has strictly fewer of these.
+
 ## About panel
 
-`AboutDialog.tsx` is the ⓘ in the control stack: a short English statement of
-what the app is for, plus the incident clip that explains why the window
-matters. It shares a row with WC59 and the day/night toggle (see **Control
+`AboutDialog.tsx` is the ⓘ in the control stack: a short statement of what
+the app is for, in English or French (see **Language**), plus the incident clip
+that explains why the window matters. It shares a row with WC59 and the day/night toggle (see **Control
 stack** below).
 
 The clip is `src/assets/splash-zone-incident.mp4` (368x640, 33 s, 2.8 MB —
@@ -536,6 +550,60 @@ are what carry that. Note also what a disclaimer cannot do — it is not a
 contract, and under French law liability for personal injury caused by one's own
 fault cannot be signed away by a notice. The text reduces reliance; it does not
 replace legal advice.
+
+## Language
+
+The `EN|FR` switch turns every word the app writes into French and back. All of
+it lives in `src/lib/i18n.ts` — one object per language, `fr` typed as
+`typeof en`, so a string added to one and forgotten in the other is a compile
+error rather than a half-translated screen. Components read it through
+`useT()`; `useLangState()` in `index.tsx` holds the choice and provides it.
+
+Decisions worth keeping:
+
+- **English is the app as it always was, element for element.** Checked by
+  diffing the rendered DOM of the whole page and of the About panel against
+  `main` with the switch taken out: identical. If you touch a string, keep the
+  English side byte-for-byte unless you mean to change the English.
+- **English until someone picks French, then French on that device.** Stored
+  under `blo-lang` and read synchronously, so a French choice paints French on
+  the first frame. It does **not** follow the browser's language the way the
+  theme follows the OS: the app has always opened in English, and a screen
+  changing language by itself is a surprise nobody asked for. If that is ever
+  wanted, it is a one-line change in `useLangState`'s initialiser.
+- **The way back is labelled in English.** Each button names its own
+  language, so someone who cannot read French still finds the way out.
+- **French numbers take a decimal comma** — heights, Hs, wind, speeds. The 🛑
+  test still runs on `shown()`, before the comma, so it cannot drift.
+- **French tide tables' words:** PM / BM for pleine mer / basse mer, the
+  compass with O for ouest, "raf." for rafale, a non-breaking space before
+  every colon and before %.
+- **The About panel is two JSX bodies**, not dictionary strings: its sentences
+  are wrapped around `<strong>`s, and a sentence cut at its emphasis stops being
+  translatable as a sentence. Keep the two in step. The terms of use are a
+  faithful translation, not an adaptation — the SHOM sentence and "toute
+  décision opérationnelle vous appartient" carry the weight the **Terms of use**
+  section describes, in both.
+- **Field words stay English in French** — jacket, boat landing, splash zone,
+  tether line, CTV — because that is what is said on site.
+- **Three fittings were measured, not guessed.** shadcn's Calendar words its
+  month dropdown in the _browser's_ language, not the locale it is given, so
+  French passes its own formatter; English keeps shadcn's. "Arrêt", not
+  "Arrêter": on a 375 px phone the longer word pushed Pause onto the tide
+  column. "j/s", not "jours/s": "10,0 jours/s" overflowed the speed readout at
+  the fast end of Days.
+
+Not translated, on purpose: times and durations ("03h35", "2h59") and axis
+labels ("5m", "10h") already read the same in French; FOU / BL / IRL and WC59
+are names; the `23m`, `10m` and "Tether line clamp" marks are printed in the
+drawings themselves; and the page's static `<meta>` description stays English,
+because crawlers read it before any script runs.
+
+Verified in a browser on the production build, in both languages, at 1440x756,
+390x844 and 375x667, idle, playing, paused and at the fast end of Days, with and
+without the TEST tag: no English word left on any French surface (main screen,
+hover, sun and moon titles, calendar, time-lapse, About), and no control the
+French layout puts on anything the English one does not.
 
 ## Forecast panel
 
