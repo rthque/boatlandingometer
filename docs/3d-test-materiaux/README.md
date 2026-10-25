@@ -160,7 +160,7 @@ le reste de la chaîne est en place et mesuré :
   normale. Les mipmaps moyennent les normales comme des vecteurs, puis les
   renormalisent : au loin, le relief s'aplatit au lieu de scintiller.
 - **Chargement** : sans transcodeur, donc sans worker imbriqué dans le worker
-  de rendu. Filtrage trilinéaire et anisotropie jusqu'à 8.
+  de rendu. Filtrage trilinéaire et anisotropie 4×, suffisante contre le moiré de la maille à incidence rasante et deux fois moins coûteuse que 8×.
 - **Densité métrique réelle** : tuile de 0,25 m pour la peinture et le
   galvanisé ; maille de 38 mm pour le GRP, posée à plat et alignée sur les
   axes des plateformes.
