@@ -1,11 +1,16 @@
 # 3D TEST — matériaux de la fondation d'après le plan de traitement de surface
 
 Version TEST (`/3D/test/`) uniquement. La production `/3D/` n'est pas touchée.
-Même coffre (identifiant, sel, contrôle), même mot de passe. Changent dans le
-coffre : le modèle de la fondation (rechiffré avec un IV neuf, géométrie
-identique, plus un attribut de zone par sommet) et une ressource chiffrée
-nouvelle, le volume d'exposition qui place l'usure. Le runtime est rescellé
-parce qu'il porte le code et la liste des ressources.
+Même coffre (identifiant, sel, contrôle), même mot de passe. Ce qui change
+dans le coffre :
+
+- le modèle de la fondation, rechiffré avec un IV neuf : géométrie identique,
+  plus un attribut de zone par sommet ;
+- quatre ressources chiffrées nouvelles : le volume d'exposition qui place
+  l'usure, et les trois tuiles de détail générées par le code.
+
+Le runtime est rescellé, parce qu'il porte le code et la liste des
+ressources.
 
 Les références privées (plan, photos) ne sont pas dans le dépôt. Aucune image,
 texture photo, ni valeur tirée d'un logo ou d'une inscription n'y entre.
@@ -151,29 +156,44 @@ Sous LAT −1 m, aucune usure : c'est l'eau de l'app qui s'en charge.
 
 ## Détail fin
 
-**Les textures CC0 ne sont pas livrées dans cette version.** Le réseau de
-l'environnement de travail refuse les hôtes d'ambientCG et de Poly Haven. Tout
-le reste de la chaîne est en place et mesuré :
+**Tuiles générées par le code, sans aucune image tierce** (choix validé : les
+hôtes CC0, ambientCG et Poly Haven, sont refusés par le réseau de
+l'environnement de travail). Trois tuiles de 256 × 256 texels, environ 1 mm
+par texel :
 
-- **Format** : tuiles RGBA en KTX2, avec toute la chaîne de mipmaps et une
+- **peinture** : peau d'orange, ondulations de 2 à 4 mm sur une tuile de
+  0,25 m ;
+- **galvanisé** : cristaux de zinc d'environ 6 mm sur une tuile de 0,25 m ;
+- **GRP** : la maille carrée de 38 mm, avec des barreaux de 6 mm de large au
+  sommet et un grain antidérapant, 4 mailles sur une tuile de 0,152 m. La
+  maille est posée à plat et alignée sur les axes des plateformes.
+
+Fonctionnement :
+
+- **Format** : KTX2 en RGBA8, avec toute la chaîne de mipmaps et une
   supercompression Zstandard. R porte l'albédo, G la rugosité, B et A la
   normale. Les mipmaps moyennent les normales comme des vecteurs, puis les
-  renormalisent : au loin, le relief s'aplatit au lieu de scintiller.
-- **Chargement** : sans transcodeur, donc sans worker imbriqué dans le worker
-  de rendu. Filtrage trilinéaire et anisotropie 4×, suffisante contre le moiré de la maille à incidence rasante et deux fois moins coûteuse que 8×.
-- **Densité métrique réelle** : tuile de 0,25 m pour la peinture et le
-  galvanisé ; maille de 38 mm pour le GRP, posée à plat et alignée sur les
-  axes des plateformes.
-- **Portée** : le détail n'est calculé qu'à moins de 22 m de l'œil. Au-delà, le
-  caillebotis prend sa couleur moyenne, barreaux et vides confondus.
-- **Palier « appareil léger »** : couleur et usure, sans détail. Il est choisi
-  au démarrage si l'appareil annonce 4 cœurs ou moins, 3 Go de mémoire ou
-  moins, ou des textures limitées à moins de 4096 px. Il est aussi pris pour
-  la session si l'image reste sous 45 i/s alors que la résolution est déjà à
-  son plancher. Le mode sans échec n'a jamais de détail ni d'usure.
-
-Le moteur ne demande les textures que si le coffre les contient. Sans elles,
-le rendu est celui du palier léger : couleur et usure.
+  renormalisent : au loin, le relief s'aplatit au lieu de scintiller. Les
+  tuiles sont chiffrées dans le coffre comme le reste.
+- **Chargement** : lecture directe du KTX2, sans transcodeur Basis. Il n'y a
+  donc ni worker imbriqué dans le worker de rendu, ni fichier en clair publié.
+  Filtrage trilinéaire et anisotropie 4× : c'est suffisant contre le moiré de
+  la maille à incidence rasante, et deux fois moins coûteux que 8×.
+- **Portée courte** : le détail est plein jusqu'à 4 m de l'œil et disparaît à
+  9 m. Sur téléphone, c'est 2,5 m et 6 m. Au-delà, le caillebotis prend sa
+  couleur moyenne, barreaux et vides confondus.
+- **Palier « appareil léger »** : couleur et usure, sans détail.
+  - Il est choisi au démarrage si l'appareil annonce 4 cœurs ou moins, 3 Go
+    de mémoire ou moins, ou des textures limitées à moins de 4096 px.
+  - Sur téléphone, il est pris pour la session dès la première mesure sous
+    48 i/s, avant toute baisse de résolution.
+  - Ailleurs, il est pris si l'image reste sous 45 i/s alors que la
+    résolution est déjà à son plancher.
+  - Le mode sans échec n'a jamais de détail ni d'usure.
+- **Variantes compilées** : le code de l'usure et celui du détail ne sont dans
+  le shader que lorsqu'ils servent. Mesuré : présents mais sautés, ils
+  coûtaient encore à eux seuls environ un cinquième d'un gros plan. Passer au
+  palier léger recompile une fois les matériaux de la fondation.
 
 ## Lumière, gestion des couleurs, tone mapping
 
