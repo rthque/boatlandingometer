@@ -188,4 +188,69 @@ le rendu est celui du palier léger : couleur et usure.
 
 ## Preuves
 
+### a) Conformité au plan, automatique
+
+**Tests sur le modèle chiffré : 11 nouveaux, suite complète 94/94.** Pour
+chaque ligne du tableau, ils vérifient que les pièces concernées portent le
+bon système, donc la bonne couleur et la bonne finition, à la bonne hauteur :
+
+- aucun sommet sans classe ;
+- sous LAT −1 m, seulement trois systèmes : le gris RAL 7035 sur l'époxy, le
+  jaune RAL 1003 exclusivement dans l'emprise du boat landing (3.2.4), et le
+  caoutchouc ;
+- la jambe qui traverse la frontière est grise juste dessous, jaune juste
+  dessus ;
+- les garde-corps des ponts sont galvanisés (2.2.2) ;
+- la face supérieure de la bride de la pièce de transition est en Zn/Al
+  (4.2.1), sa face externe dans le système 2.2.1 (note 2) ;
+- les points d'ancrage sont en RAL 3020 (3.2.5) ;
+- le caillebotis est aux niveaux des ponts, la zone rouge sur la plateforme de
+  la grue, les bandes noires sur les goussets ;
+- le shader : frontière, tone mapping propre à la fondation, ligne d'eau
+  dessinée par-dessus ;
+- le volume d'exposition ;
+- la lecture des tuiles KTX2.
+
+**Lecture au rendu GPU.** Sur 96 points réels du modèle, répartis sur 12
+lignes du plan, le shader rendu a été relu : système, rugosité, métallicité et
+couleur de base. Tous sont conformes, avec un ΔE ≤ 0,5 dû à la quantification
+8 bits. Les points vont de −25,7 m (pieux) à +36,7 m (bride).
+
+### b) ΔE2000 sous lumière neutre
+
+Patch plan du vrai matériau, une seule lumière blanche à 45°, vu de face
+(géométrie CIE 45°:0°), rien d'autre dans la scène. Le reflet spéculaire de la
+peinture brillante est compris.
+
+| RAL | Matériau seul | Avec le tone mapping de la fondation | Avant (teinte CAO, ACES) |
+| --- | --- | --- | --- |
+| 1003 | **1,35** | **2,81** | 13,3 |
+| 7035 | **0,44** | **1,55** | 35,1 |
+| 3020 | **1,83** | **2,03** | 17,4 |
+
+Cible : moins de 3, tenue partout. Contre d'autres sources publiées des mêmes
+références, l'écart va de 1,8 à 3,7 : c'est l'ordre de grandeur de
+l'incertitude sur la valeur « officielle » elle-même.
+
+### c) Planches rendu / photos
+
+Envoyées à part, elles ne sont pas dans le dépôt.
+
+### d) Performances
+
 À compléter.
+
+### e) Non-régression
+
+**CTV, eau et ciel : identiques au pixel.** Les deux versions sont rendues avec
+le même moteur, le même instant figé et les mêmes caméras, sur quatre vues :
+ensemble avec CTV et mer, CTV de près, mer seule, boat landing.
+
+- Fondation masquée : **0 pixel différent** sur les quatre vues.
+- Fondation visible : **0 pixel différent hors de l'emprise de la fondation**.
+  L'emprise couvre la fondation elle-même, ses reflets dans l'eau et ce
+  qu'elle cache.
+
+**HUD :** à compléter.
+
+**Scintillement :** à compléter.
