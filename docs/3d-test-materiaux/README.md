@@ -107,8 +107,11 @@ corrigé.
 6. **Zone rouge du caillebotis.** Le plan ne la mentionne pas. Son emplacement
    vient de la vue de dessus de la plateforme de la grue : ce sont les deux
    panneaux de la zone de dépose dessinés dans la CAO.
-7. **Couleurs des caillebotis.** Estimées sur deux photos sans référence
-   colorimétrique : incertitude de l'ordre de 5 ΔE.
+7. **Couleurs des caillebotis.** Estimées sur des photos sans référence
+   colorimétrique : incertitude de l'ordre de 5 ΔE. Le rouge est recalé sur le
+   beige de la même photo, canal par canal, pour annuler la balance des blancs
+   de l'appareil. Une première estimation, plus claire, rendait la zone de
+   dépose rose saumon sur la planche.
 8. **Noir des bandes de signalisation.** Le plan ne le spécifie pas : c'est un
    noir physique (réflectance 2,5 %), pas un RAL.
 9. **Galvanisé et Zn/Al.** Ces revêtements n'ont pas de RAL. Ce sont des valeurs
@@ -254,7 +257,24 @@ l'incertitude sur la valeur « officielle » elle-même.
 
 ### c) Planches rendu / photos
 
-Envoyées à part, elles ne sont pas dans le dépôt.
+Quatre photos du site, chacune à côté du rendu pris depuis le point de vue
+recalé (position, visée et focale estimées sur la photo). Elles sont envoyées
+à part : les photos sont privées et ne sont pas dans le dépôt. Les
+inscriptions incrustées et les panneaux sont floutés sur la planche elle-même.
+
+Ce qu'elles montrent :
+
+- **Couleurs.** Le jaune RAL 1003, le beige du caillebotis et le rouge de la
+  zone de dépose se lisent comme sur les photos. Les écarts de clarté viennent
+  de l'éclairage de la scène, qui n'a pas changé, et de l'exposition de
+  l'appareil photo, qui n'est pas calibrée.
+- **Usure.** Les photos montrent un état plus sale que le rendu : guano épais
+  sur le sommet du boat landing, taches sombres sur le caillebotis. L'usure
+  reste sobre, comme demandé ; ses intensités se règlent dans le shader si tu
+  veux la pousser.
+- **Recalage.** La photo du sommet du boat landing couvert de guano ne permet
+  pas d'identifier la pièce exacte dans la CAO. Le rendu montre la composition
+  la plus proche, depuis le haut du boat landing.
 
 ### d) Performances
 
