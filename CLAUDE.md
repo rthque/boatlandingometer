@@ -1,3 +1,92 @@
+# Boatlandingometer — règles du projet 3D (à lire d'abord)
+
+Cette section vaut pour tout travail sur la 3D. La suite du fichier (en
+anglais) décrit le site principal 2D.
+
+## Architecture en bref
+
+- **Site principal** : app statique Vite + React à la racine du domaine
+  (voir plus bas). Publiée par `.github/workflows/deploy.yml` à chaque push
+  sur `main`.
+- **`/3D/`** : la 3D en production. **`/3D/test/`** : le banc d'essai, où
+  arrive toute nouveauté. Tous deux sont des fichiers statiques dans
+  `public/3D/` et `public/3D/test/`, copiés tels quels dans `dist/`.
+- **`/3d/` et `/3d/test/`** (minuscules) : simples redirections vers
+  `/3D/` et `/3D/test/`.
+- **Build statique chiffré** : une page d'accès publique demande le mot de
+  passe ; `protected/vault.json` décrit le coffre (identifiant, sel, contrôle,
+  itérations PBKDF2) et pointe vers le runtime chiffré ; le runtime porte le
+  code et la liste des ressources chiffrées (modèles, images, textures,
+  audio). AES-256-GCM, PBKDF2-SHA-256.
+- **Le code source de l'app 3D n'est pas dans ce dépôt.** Seul le build
+  scellé y entre.
+
+## Règles intangibles
+
+1. Travailler sur `/3D/test/` uniquement, sauf demande explicite de
+   promotion test → prod.
+2. Une tâche = une branche partant de `main` à jour = une PR.
+3. Ne jamais fusionner : c'est Quentin ou son superviseur qui fusionne.
+4. Ne jamais toucher au site principal, au workflow ni aux redirections
+   `/3d/` sans demande explicite.
+5. Rien en clair dans le dépôt : ni modèle, ni image, ni texture, ni audio,
+   ni source 3D. Tout passe par le coffre.
+6. Même coffre (identifiant, sel, contrôle) et même mot de passe d'une
+   version à l'autre.
+7. Le mot de passe n'est jamais écrit dans le dépôt, les commits, les logs,
+   les docs ni les réponses. Il est gardé dans un fichier privé temporaire
+   (hors dépôt, droits 600) pour toute une série de tâches, passé aux outils
+   par fichier ou descripteur, puis détruit (`shred`) à la fin de la série.
+8. Les références privées (plans, photos, captures fournies) ne sont jamais
+   commitées, ni les noms, numéros, coordonnées ou logos qu'elles contiennent.
+   Ce dépôt est public : aucun nom réel de parc, de fondation ou de navire,
+   aucune coordonnée, aucun nom de fichier chiffré dans les docs.
+
+## Definition of done d'une PR
+
+- Diff limité aux chemins autorisés (`public/3D/test/**` et `docs/<tâche>/`,
+  plus `public/3D/**` pour une promotion).
+- Tests et lint au vert (`npm run lint` : 0 erreur ; `npm run build` OK et
+  `dist/3D` identique à `public/3D`).
+- Build scellé vérifié : coffre inchangé hors entrée `runtime`, aucun
+  fichier en clair, connexion par mot de passe OK, aucune erreur console.
+- Non-régression proportionnée au risque : une capture pour une petite
+  retouche ; pour tout changement de rendu, comparaison au pixel près
+  (avec plancher de bruit `main` contre `main`) et perfs avant/après.
+- Note dans `docs/<tâche>/README.md`, en texte seul, sans « à compléter ».
+- Résumé final court en français, avec le lien de la PR.
+
+## Promotion test → prod
+
+1. Partir de `main` à jour, contenant la version TEST validée.
+2. Construire la variante production du même source (base `/3D/`, sans
+   étiquette TEST), avec le même coffre.
+3. Dans `public/3D/protected/` : retirer l'ancien runtime (et toute
+   ressource remplacée), copier depuis `public/3D/test/` les ressources
+   chiffrées nouvelles, ajouter le nouveau runtime ; dans `vault.json`, seule
+   l'entrée `runtime` change.
+4. Vérifier fichier par fichier : `public/3D/` identique à `public/3D/test/`
+   sauf le runtime et sa ligne dans le vault. Déchiffrer les deux runtimes en
+   mémoire : seules différences admises, le chemin `/3D/test/` → `/3D/` (et
+   les noms hachés qui en découlent) et l'étiquette TEST du HUD.
+5. Mot de passe accepté sur `/3D/` ; rendu à instant figé identique au pixel
+   entre `/3D/` et `/3D/test/` (PC et mobile) ; étiquette TEST absente en prod.
+6. Parcours fonctionnel sur `/3D/` si la version touche à l'interaction.
+7. Rien en clair, `npm run build` OK, redirections inchangées ; courte note
+   de promotion dans la `docs/` de la tâche ; PR « À fusionner par Quentin ».
+
+## Économie
+
+- Plan court avant tout gros chantier ; poser les questions bloquantes tôt.
+- Après une interruption ou un compactage, ne pas refaire une preuve déjà
+  obtenue : reprendre là où elle s'est arrêtée.
+- Mesures de perf : un seul tour final, sauf écart douteux à confirmer.
+- Le banc local (rendu logiciel, sans GPU) peut dépasser le délai de 3 s du
+  premier rendu et retomber en 2D, `main` compris : allonger ce délai dans le
+  banc seulement, jamais dans l'app.
+
+---
+
 # Boatlandingometer
 
 Tide graph for Dieppe, drawn against the jacket structure and boat landing of an
