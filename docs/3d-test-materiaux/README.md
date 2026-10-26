@@ -165,7 +165,9 @@ l'environnement de travail). Trois tuiles de 256 × 256 texels, environ 1 mm
 par texel :
 
 - **peinture** : peau d'orange, ondulations de 2 à 4 mm sur une tuile de
-  0,25 m ;
+  0,25 m. Son relief est atténué à 40 % de celui des autres tuiles : sur les
+  photos, le PU brillant paraît lisse même de près, et à pleine force il
+  ressemblait à du métal martelé ;
 - **galvanisé** : cristaux de zinc d'environ 6 mm sur une tuile de 0,25 m ;
 - **GRP** : la maille carrée de 38 mm, avec des barreaux de 6 mm de large au
   sommet et un grain antidérapant, 4 mailles sur une tuile de 0,152 m. La
@@ -187,12 +189,19 @@ Fonctionnement :
   couleur moyenne, barreaux et vides confondus.
 - **Palier « appareil léger »** : couleur et usure, sans détail.
   - Il est choisi au démarrage si l'appareil annonce 4 cœurs ou moins, 3 Go
-    de mémoire ou moins, ou des textures limitées à moins de 4096 px.
+    de mémoire ou moins, ou des textures limitées à moins de 4096 px. Un
+    appareil qui démarre à ce palier ne décode pas les tuiles et n'en crée
+    pas les textures : le palier ne remonte jamais. Il les télécharge quand
+    même, car le coffre est déchiffré en entier à l'ouverture.
   - Sur téléphone, il est pris pour la session dès la première mesure sous
     48 i/s, avant toute baisse de résolution.
   - Ailleurs, il est pris si l'image reste sous 45 i/s alors que la
     résolution est déjà à son plancher.
   - Le mode sans échec n'a jamais de détail ni d'usure.
+- **Sur téléphone**, le guano et les coulures sont dessinés à leur couverture
+  moyenne, sans leur bruit fin : une lecture de texture de moins par pixel, et
+  à la taille d'un écran de téléphone, les taches se confondaient déjà avec
+  leur moyenne.
 - **Variantes compilées** : le code de l'usure et celui du détail ne sont dans
   le shader que lorsqu'ils servent. Mesuré : présents mais sautés, ils
   coûtaient encore à eux seuls environ un cinquième d'un gros plan. Passer au
@@ -213,7 +222,7 @@ Fonctionnement :
 
 ### a) Conformité au plan, automatique
 
-**Tests sur le modèle chiffré : 11 nouveaux, suite complète 94/94.** Pour
+**Tests sur le modèle chiffré : 11 nouveaux, suite complète 94/94 au vert.** Pour
 chaque ligne du tableau, ils vérifient que les pièces concernées portent le
 bon système, donc la bonne couleur et la bonne finition, à la bonne hauteur :
 
@@ -278,7 +287,74 @@ Ce qu'elles montrent :
 
 ### d) Performances
 
-À compléter.
+Mesurées sur le build de production du moteur, dans Chromium avec un rendu
+**logiciel** (SwiftShader, 4 cœurs, sans GPU). Chaque chiffre est le temps
+d'une image complète, GPU compris (lecture d'un pixel pour synchroniser) :
+médiane et p95 sur 30 images, moyenne de deux tours alternés avant/après.
+Trois caméras fixes : la vue d'ensemble (celle de l'ouverture), le gros plan
+du pont et le boat landing.
+
+Les valeurs absolues n'ont pas de sens hors de ce banc : un rendu logiciel est
+des dizaines de fois plus lent qu'un vrai GPU. **Ce qui compte, c'est le
+surcoût relatif.**
+
+**PC, 1280 × 800** (ms, médiane / p95)
+
+| Version | Vue d'ensemble | Gros plan du pont | Boat landing |
+| --- | --- | --- | --- |
+| Avant | 1022 / 1130 | 1843 / 2012 | 1390 / 1488 |
+| Palier léger | 1121 / 1198 (+10 % / +6 %) | 2344 / 2444 (+27 % / +21 %) | 1596 / 1694 (+15 % / +14 %) |
+| Complet | 1181 / 1311 (+16 % / +16 %) | 2689 / 2914 (+46 % / +45 %) | 1673 / 1764 (+20 % / +18 %) |
+
+**Téléphone bridé, 412 × 915 à 2×, CPU ralenti 4×, agent utilisateur de
+téléphone** (ms, médiane / p95)
+
+| Version | Vue d'ensemble | Gros plan du pont | Boat landing |
+| --- | --- | --- | --- |
+| Avant | 1542 / 1637 | 2551 / 2637 | 2609 / 2711 |
+| Palier léger | 1684 / 1773 (+9 % / +8 %) | 3099 / 3223 (+21 % / +22 %) | 3014 / 3207 (+16 % / +18 %) |
+| Complet | 1711 / 1833 (+11 % / +12 %) | 3240 / 3387 (+27 % / +28 %) | 3109 / 3235 (+19 % / +19 %) |
+
+**Ce que l'allègement a gagné en gros plan du pont, sur téléphone :** de +31 %
+à +21 % au palier léger, et de +45 % à +27 % au palier complet. Les leviers :
+détail limité à 2,5–6 m, guano et coulures sans bruit fin, variantes
+compilées, anisotropie 4×, tuiles de 256 px.
+
+**Ramené au budget de +2 ms.** Il ne peut pas être vérifié ici, faute de GPU :
+le surcoût relatif est la mesure fiable. Pour un téléphone qui rend la scène
+d'origine en 8 ms, la vue d'ensemble coûte environ +0,7 ms au palier léger et
++0,9 ms au palier complet, donc dans le budget. Le gros plan du pont coûte
+environ +1,7 ms au palier léger et +2,2 ms au palier complet, donc à la
+limite. Un téléphone qui passe sous 48 i/s abandonne le détail avant de
+baisser la résolution ; le palier léger est alors celui qui s'applique.
+**À valider sur un vrai téléphone.**
+
+**Mémoire GPU** (textures + géométrie, ajout au total) :
+
+| | Textures | Géométrie | Total | Budget |
+| --- | --- | --- | --- | --- |
+| Palier léger | +1,52 Mo | +2,33 Mo | **+3,85 Mo** | 8 Mo |
+| Complet | +2,52 Mo | +2,33 Mo | **+4,85 Mo** | 8 Mo |
+
+La géométrie ajoutée est l'attribut de classe, quatre octets par sommet. Les
+textures sont le volume d'exposition, les deux bruits et, au palier complet,
+les trois tuiles.
+
+**Draw calls : 99 avant, 99 après.** La classe est un attribut des maillages
+existants, pas un maillage de plus.
+
+**Téléchargement** (fichiers chiffrés) :
+
+| Ressource | Ajout |
+| --- | --- |
+| Modèle (attribut de classe) | +54 864 octets |
+| Runtime | +51 543 octets |
+| Volume d'exposition | +89 235 octets |
+| Trois tuiles de détail | +362 213 octets |
+| **Total** | **+0,56 Mo** |
+
+Tous les paliers téléchargent le même total, car le coffre est déchiffré en
+entier à l'ouverture. Le palier léger ne décode simplement pas les tuiles.
 
 ### e) Non-régression
 
@@ -291,6 +367,34 @@ ensemble avec CTV et mer, CTV de près, mer seule, boat landing.
   L'emprise couvre la fondation elle-même, ses reflets dans l'eau et ce
   qu'elle cache.
 
-**HUD :** à compléter.
+**HUD : identique au pixel.** Le `/3D/test/` de `main` et la version scellée
+de cette PR, déverrouillés avec le même mot de passe, au même instant figé, en
+mouvement réduit, HUD ouvert, en 3D sur PC (1024 × 640) et sur téléphone
+(Pixel 7). Le canevas 3D est masqué pour isoler le HUD : **0 pixel
+différent**, pour un plancher de bruit de 0 (`main` contre `main`). Avec le
+canevas, seule la fondation diffère.
 
-**Scintillement :** à compléter.
+Le rendu logiciel du banc ne sort pas toujours la première image dans les 3 s
+que l'app accorde avant de se replier en 2D, `main` compris. Pour ce contrôle,
+le banc allonge ce délai, à l'identique pour les deux versions ; l'app
+elle-même n'est pas modifiée. Le HUD 2D, mesuré lors d'un repli, est lui
+aussi identique au pixel.
+
+**Scintillement.** Séquences de 12 images en orbite lente, mer figée, mesurées
+sur les pixels de la fondation : la différence seconde de luminance d'une
+image à l'autre, nulle pour un mouvement lisse, forte pour un motif qui
+« saute ». Part des pixels au-dessus de 48/255 :
+
+| Version | Vue d'ensemble | Gros plan du pont |
+| --- | --- | --- |
+| Avant | 0,293 % | 0,585 % |
+| Palier léger | 0,181 % | 0,835 % |
+| Complet | 0,181 % | 0,836 % |
+| Couleurs seules, sans usure ni détail | 0,182 % | 0,813 % |
+
+L'usure et le détail n'ajoutent presque rien : +0,02 point en gros plan. Les
+masques sont estompés selon la taille du pixel, et les mipmaps des tuiles
+aplatissent le relief au loin. La hausse en gros plan existe déjà avec les
+couleurs seules : ce sont les arêtes de la géométrie, plus contrastées avec
+les couleurs du plan (bandes jaune et noir, rouge sur beige). Ce crénelage
+d'arêtes existait avant, et le moteur n'y est pas touché.
