@@ -46,9 +46,9 @@ base. Une salissure sombre « réelle » (L\* 34) ressortait presque noire à
 travers l'eau (L\* 10, vert). La teinte de base a donc été réglée par mesure,
 pour que le rendu à travers l'eau retrouve la capture « yes » :
 
-| | L\* | a\* | b\* |
-| --- | --- | --- | --- |
-| Capture « yes » | 28 | −2 | 13 |
+|                                   | L\*     | a\*    | b\*     |
+| --------------------------------- | ------- | ------ | ------- |
+| Capture « yes »                   | 28      | −2     | 13      |
 | Rendu, de la surface vers le fond | 27 → 20 | −5 à 0 | 16 → 13 |
 
 ## 3. Pad eyes
@@ -74,20 +74,20 @@ gamut, à L\* et teinte inchangées.
 
 Au-dessus de la bande de marnage :
 
-| Pièces | Couleur | Raison |
-| --- | --- | --- |
-| Garde-corps des plateformes et leurs ferrures (307 pièces) | Galvanisé | Plan 2.2.2 |
-| Points d'ancrage marqués en rouge dans la CAO, embouts de poteaux (28) | RAL 3020 | Plan 3.2.5, photos |
-| Face supérieure de la bride de la pièce de transition (1) | Zn/Al | Plan 4.2.1 |
-| Panneaux de caillebotis (27) | Beige | Photos |
-| Zone de dépose de la grue (5) | GRP rouge | Photos, capture annotée |
-| Chemins de câbles (113) | Gris très foncé | Photos, capture annotée |
-| Bandes de signalisation et bandes d'échelle (99 marques) | Noir | Photos |
-| Élastomères : défenses, flexibles (232) | Caoutchouc noir | Matériau |
-| Porte d'accès (3) | RAL 1003 éclairci | Photos, capture annotée |
-| Signalétique (19) | Matériau CAO conservé | Hors plan |
-| Équipements orange (27) | Matériau CAO conservé | Hors plan |
-| Intérieur de la pièce de transition (68) | Matériau CAO conservé | Hors plan, vu de dessus seulement |
+| Pièces                                                                 | Couleur               | Raison                            |
+| ---------------------------------------------------------------------- | --------------------- | --------------------------------- |
+| Garde-corps des plateformes et leurs ferrures (307 pièces)             | Galvanisé             | Plan 2.2.2                        |
+| Points d'ancrage marqués en rouge dans la CAO, embouts de poteaux (28) | RAL 3020              | Plan 3.2.5, photos                |
+| Face supérieure de la bride de la pièce de transition (1)              | Zn/Al                 | Plan 4.2.1                        |
+| Panneaux de caillebotis (27)                                           | Beige                 | Photos                            |
+| Zone de dépose de la grue (5)                                          | GRP rouge             | Photos, capture annotée           |
+| Chemins de câbles (113)                                                | Gris très foncé       | Photos, capture annotée           |
+| Bandes de signalisation et bandes d'échelle (99 marques)               | Noir                  | Photos                            |
+| Élastomères : défenses, flexibles (232)                                | Caoutchouc noir       | Matériau                          |
+| Porte d'accès (3)                                                      | RAL 1003 éclairci     | Photos, capture annotée           |
+| Signalétique (19)                                                      | Matériau CAO conservé | Hors plan                         |
+| Équipements orange (27)                                                | Matériau CAO conservé | Hors plan                         |
+| Intérieur de la pièce de transition (68)                               | Matériau CAO conservé | Hors plan, vu de dessus seulement |
 
 Sous la bande de marnage, c'est la salissure marine qu'on voit sur toutes les
 pièces (voir 2).
@@ -99,4 +99,55 @@ restent galvanisées, comme avant.
 
 ## Preuves
 
-PERF_PLACEHOLDER
+**a) Conformité, test automatique.**
+
+- **Tests unitaires : 98/98.** Quatre nouveaux tests couvrent les quatre points ;
+  deux tests existants sont mis à jour : classes de l'acier et zone de dépose.
+  - **Chemins de câbles** : sur le pont seulement, autour de la pièce de
+    transition et à travers la zone de dépose, presque noirs, non métalliques.
+    Les garde-corps restent galvanisés.
+  - **Partie immergée** : le RAL 7035 reste le système du plan. La salissure
+    est nulle au-dessus de la mi-marée, complète du LAT vers le bas, monotone
+    entre les deux. Elle est plus sombre en profondeur, mate, et présente dans
+    tous les paliers.
+  - **Pad eyes** : en RAL 1003 sur les quatre pointes, et le RAL 3020 seulement
+    là où la CAO marque les points d'ancrage.
+  - **Porte** : seule, L\* +6 exactement, même teinte, même finition.
+- **Relecture GPU du shader rendu : 144 points, 18 lignes, tous conformes,
+  ΔE ≤ 0,5.** Nouvelles lignes : chemins de câbles, porte, pad eyes, troisième
+  panneau de la zone de dépose. Pour la partie immergée et la zone de marnage,
+  la couleur réellement vue est comparée au modèle de salissure à la hauteur
+  du point.
+
+**b) Planche avant / après** sur les quatre zones, à côté des captures jointes.
+Elle est envoyée à part : les captures sont privées.
+
+**c) Non-régression ailleurs**, sur quatre vues générales rendues avec le même
+moteur au même instant :
+
+- fondation masquée (CTV, mer, ciel) : **0 pixel différent** sur 4 × 540 000 ;
+- fondation visible : 82 011 pixels différents. Tous sont dans une zone retouchée
+  ou dans le reflet de la fondation sur l'eau, sauf **2**. Ce sont deux pixels
+  d'anticrénelage à 2 px d'une zone retouchée, à ±1 et ±2 niveaux sur 255.
+
+**d) Performances.** Le seul code ajouté est le bloc de la salissure. Les
+nouvelles classes ne changent que des valeurs d'uniformes, sur les mêmes
+branches. Le surcoût a donc été mesuré dans une même page : le shader avec et
+sans ce bloc, rendus en alternance par lots de six images, six fois,
+aux trois caméras habituelles, sur un rendu logiciel. Écart des médianes :
+
+|                                 | Vue d'ensemble | Gros plan du pont | Boat landing |
+| ------------------------------- | -------------- | ----------------- | ------------ |
+| PC, palier complet              | −0,6 %         | +5,4 %            | +2,8 %       |
+| PC, palier léger                | −4,7 %         | −0,7 %            | +5,6 %       |
+| Téléphone bridé, palier complet | +2,6 %         | +2,6 %            | +2,0 %       |
+| Téléphone bridé, palier léger   | +3,9 %         | +3,8 %            | −0,2 %       |
+
+**Moyenne : +1,9 %.** Les écarts vont de −4,7 % à +5,6 %, et le gros plan du
+pont ne contient pas un seul fragment sous la bande de marnage. C'est le bruit
+de ce banc (environ ±4 %), qui ne permet pas de trancher à ±3 % vue par vue.
+Pour rester aussi léger que possible, la salissure ne lit aucune texture : sa
+variation se fait par pièce. Rien au-dessus de +5,5 m ne l'évalue. Mémoire GPU
+et draw calls sont inchangés : textures 25,35 Mo, géométrie 16,09 Mo, 99 draw
+calls. Le téléchargement grossit de 540 octets pour le modèle et de 1 284 octets
+pour le runtime.
