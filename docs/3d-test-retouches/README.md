@@ -151,3 +151,21 @@ variation se fait par pièce. Rien au-dessus de +5,5 m ne l'évalue. Mémoire GP
 et draw calls sont inchangés : textures 25,35 Mo, géométrie 16,09 Mo, 99 draw
 calls. Le téléchargement grossit de 540 octets pour le modèle et de 1 284 octets
 pour le runtime.
+
+## Promotion en production
+
+Validée par Quentin sur `/3D/test/`, puis promue selon la procédure de
+`CLAUDE.md` (PR #20). La promotion emporte aussi le build indépendant de son
+dossier : `public/3D/` est une copie de `public/3D/test/`, sans reconstruction
+ni rechiffrement.
+
+- `public/3D/` est identique octet pour octet à `public/3D/test/`.
+- Même coffre que l'ancienne production (identifiant, sel, contrôle,
+  itérations) : seule l'entrée `runtime` change.
+- `npm run build` OK, `dist/3D` identique à `public/3D`, et les redirections
+  `/3d/` et `/3d/test/` sont inchangées.
+- La page d'accès se charge sans erreur sur `/3D/`, `/3D/test/` et via `/3d/`.
+- La connexion par mot de passe, l'étiquette TEST (décidée par l'adresse) et
+  le rendu au pixel près entre les deux dossiers ont été vérifiés sur ce même
+  build, par la promotion à blanc de la PR #20. Le mot de passe avait été
+  détruit à la fin de la série, et les fichiers sont identiques à ceux validés.
