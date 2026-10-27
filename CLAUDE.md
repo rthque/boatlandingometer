@@ -58,22 +58,26 @@ anglais) décrit le site principal 2D.
 
 ## Promotion test → prod
 
+Le build scellé ne dépend pas de son dossier : chemins relatifs, et étiquette
+TEST décidée à l'exécution par l'adresse (dossier `test/`). Une promotion est
+donc une **copie**, sans mot de passe ni rechiffrement.
+
 1. Partir de `main` à jour, contenant la version TEST validée.
-2. Construire la variante production du même source (base `/3D/`, sans
-   étiquette TEST), avec le même coffre.
-3. Dans `public/3D/protected/` : retirer l'ancien runtime (et toute
-   ressource remplacée), copier depuis `public/3D/test/` les ressources
-   chiffrées nouvelles, ajouter le nouveau runtime ; dans `vault.json`, seule
-   l'entrée `runtime` change.
-4. Vérifier fichier par fichier : `public/3D/` identique à `public/3D/test/`
-   sauf le runtime et sa ligne dans le vault. Déchiffrer les deux runtimes en
-   mémoire : seules différences admises, le chemin `/3D/test/` → `/3D/` (et
-   les noms hachés qui en découlent) et l'étiquette TEST du HUD.
-5. Mot de passe accepté sur `/3D/` ; rendu à instant figé identique au pixel
-   entre `/3D/` et `/3D/test/` (PC et mobile) ; étiquette TEST absente en prod.
-6. Parcours fonctionnel sur `/3D/` si la version touche à l'interaction.
-7. Rien en clair, `npm run build` OK, redirections inchangées ; courte note
-   de promotion dans la `docs/` de la tâche ; PR « À fusionner par Quentin ».
+2. Remplacer `public/3D/` par une copie de `public/3D/test/`, en gardant le
+   dossier `test/` lui-même :
+   `cd public/3D && find . -mindepth 1 -maxdepth 1 ! -name test -exec rm -rf {} + && cp -r test/. .`
+3. Vérifier que `public/3D/` est identique octet pour octet à `public/3D/test/`
+   (`diff -rq --exclude=test public/3D public/3D/test`).
+4. Mot de passe accepté sur `/3D/` ; étiquette TEST absente sur `/3D/`,
+   présente sur `/3D/test/` ; rendu à instant figé identique au pixel entre les
+   deux, hors étiquette (PC et mobile).
+5. Parcours fonctionnel sur `/3D/` si la version touche à l'interaction.
+6. `npm run build` OK, redirections inchangées ; courte note de promotion dans
+   la `docs/` de la tâche ; PR « À fusionner par Quentin ».
+
+La première promotion qui suit cette règle doit partir d'un `/3D/test/`
+construit en chemins relatifs. Les builds plus anciens (base `/3D/test/` en dur)
+demandaient une reconstruction pour `/3D/`.
 
 ## Économie
 
