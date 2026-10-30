@@ -56,13 +56,13 @@ modèle.
 
 Couleurs, hors plan de traitement de surface :
 
-| Pièces | Couleur | Finition |
-| --- | --- | --- |
-| Corps, trappes, oreilles | Blanc, L\* 88 | Peinture, rugosité 0,4 |
-| Dessus | Gris-beige sali, L\* 66, avec des marbrures de crasse et du guano sur toute la surface | Mat, rugosité 0,8 |
-| Tubes de guidage | Rose, L\* 66, a\* 48 | Rugosité 0,45 |
-| Une oreille | RAL 1003, comme sur les photos | PU brillant |
-| Joints | Caoutchouc noir | Mat |
+| Pièces                   | Couleur                                                                                | Finition               |
+| ------------------------ | -------------------------------------------------------------------------------------- | ---------------------- |
+| Corps, trappes, oreilles | Blanc, L\* 88                                                                          | Peinture, rugosité 0,4 |
+| Dessus                   | Gris-beige sali, L\* 66, avec des marbrures de crasse et du guano sur toute la surface | Mat, rugosité 0,8      |
+| Tubes de guidage         | Rose, L\* 66, a\* 48                                                                   | Rugosité 0,45          |
+| Une oreille              | RAL 1003, comme sur les photos                                                         | PU brillant            |
+| Joints                   | Caoutchouc noir                                                                        | Mat                    |
 
 **Mesures sur les photos.** Elles servent de référence relative : oreilles
 blanches à L\* 88, dessus 10 points plus sombre, rose à L\* 72, a\* +44.
@@ -109,4 +109,41 @@ sommet existant. Seules les pièces neuves en reçoivent une.
 
 ## Preuves
 
-PREUVES_PLACEHOLDER
+- **Tests unitaires : 101/101.**
+  - Trois tests nouveaux :
+    - plus rien à l'intérieur de la tête entre le dernier niveau et la bride,
+      ni au-dessus de la bride, alors que la bride Zn/Al et l'intérieur bas sont
+      conservés ;
+    - le capot pose sur la bride et monte de 1,50 m ; sa paroi est juste à
+      l'extérieur de l'anneau et son rebord est en saillie ; tiré à la verticale
+      sur toute la surface de la tête, chaque rayon touche d'abord le capot ;
+    - les couleurs et les classes de chaque partie.
+  - Trois tests mis à jour : hauteur du modèle, face supérieure de la bride
+    sous le capot, exposition (le ciel est ouvert au-dessus du capot,
+    l'intérieur de la tête est fermé).
+- **Relecture GPU du shader rendu : 160 points, 20 lignes, tous conformes,
+  ΔE ≤ 0,5**, dont les lignes du corps et du dessus du capot.
+- **Planche avant / après / photos** sur trois vues, plus la tête de la pièce de
+  transition : envoyée à part, car les photos sont privées.
+- **Non-régression**, sur quatre vues générales au même instant :
+  - fondation masquée (CTV, mer, ciel) : **0 pixel différent** ;
+  - fondation visible : **0 pixel différent hors de la tête de la pièce de
+    transition** (au-dessus de 32,5 m et à moins de 4,5 m de l'axe, là où
+    l'exposition a été reprise) et de son reflet.
+- **Performances**, sur un rendu logiciel (médiane et p95, un tour) :
+
+  |                 | Vue d'ensemble | Gros plan du pont | Boat landing |
+  | --------------- | -------------- | ----------------- | ------------ |
+  | PC              | −15 % / −17 %  | −1 % / 0 %        | +1 % / −5 %  |
+  | Téléphone bridé | −7 % / −11 %   | 0 % / +1 %        | +1 % / −2 %  |
+
+  La vue d'ensemble gagne les 84 000 triangles retirés. Les deux autres vues
+  restent dans le bruit de mesure.
+
+- **Mémoire GPU** : géométrie 16,09 → 12,60 Mo ; textures inchangées.
+- **Draw calls** : 99 → 107, pour les maillages du capot.
+- **Téléchargement** : 1,0 Mo de moins (modèle −1 005 504 octets, runtime
+  +495, exposition −161).
+- **Build scellé** : coffre inchangé hors entrée `runtime`, aucun fichier en
+  clair, connexion par mot de passe OK, aucune erreur dans la console.
+  `npm run build` OK, `dist/3D` identique à `public/3D`.
