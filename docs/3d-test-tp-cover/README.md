@@ -147,3 +147,23 @@ sommet existant. Seules les pièces neuves en reçoivent une.
 - **Build scellé** : coffre inchangé hors entrée `runtime`, aucun fichier en
   clair, connexion par mot de passe OK, aucune erreur dans la console.
   `npm run build` OK, `dist/3D` identique à `public/3D`.
+
+## Promotion en production
+
+Validée par Quentin sur `/3D/test/`, puis promue selon la procédure de
+`CLAUDE.md` : `public/3D/` est une copie de `public/3D/test/`, sans
+reconstruction ni rechiffrement.
+
+- `public/3D/` est identique octet pour octet à `public/3D/test/`.
+- Même coffre que l'ancienne production (identifiant, sel, contrôle,
+  itérations) : seule l'entrée `runtime` change. Les fichiers en clair (page
+  d'accès, chargeur) sont inchangés ; trois ressources chiffrées sont
+  remplacées : le modèle, le volume d'exposition et le runtime.
+- `npm run build` OK, `dist/3D` identique à `public/3D`, `npm run lint` sans
+  erreur, et les redirections `/3d/` et `/3d/test/` sont inchangées.
+- La page d'accès se charge sans erreur sur `/3D/`, `/3D/test/` et via `/3d/`.
+- La connexion par mot de passe a été vérifiée sur ces mêmes fichiers dans
+  `/3D/test/`, avant la fusion de la PR #22. Le code qui décide des chemins et
+  de l'étiquette TEST n'a pas changé depuis la promotion précédente, où il a été
+  vérifié dans les deux dossiers. Le mot de passe avait été détruit à la fin de
+  la série : la connexion sur `/3D/` n'est pas revérifiée ici.
