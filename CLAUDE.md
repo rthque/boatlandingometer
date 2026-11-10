@@ -136,6 +136,52 @@ Vérifications :
 Après fusion, Quentin remplace `BLM3D_PASSWORD` par la nouvelle valeur et
 supprime `BLM3D_PASSWORD_NEW` ; les fichiers privés sont détruits (`shred`).
 
+### Depuis GitHub, sans Claude Code (procédure pour Quentin)
+
+Le workflow `.github/workflows/rotate-3d-password.yml` fait la même rotation
+complète, à partir des fichiers chiffrés du dépôt. Il ne pousse jamais sur
+`main` : il prépare une branche, et c'est toi qui fusionnes.
+
+1. **Créer les deux secrets.** Sur GitHub, dans le dépôt : **Settings →
+   Secrets and variables → Actions → New repository secret**. Crée
+   `BLM3D_PASSWORD_OLD` (le mot de passe actuel) et `BLM3D_PASSWORD_NEW` (le
+   nouveau, au moins 14 caractères). Les accents et le `£` sont acceptés ; un
+   espace compte comme un caractère, y compris à la fin.
+2. **Lancer.** Onglet **Actions → « Changer le mot de passe 3D » → Run
+   workflow**, branche `main`, puis le bouton vert **Run workflow**. Une
+   seule fois : attends la fin avant de relancer.
+3. **Attendre la coche verte** (quelques minutes), puis ouvrir le run. Son
+   résumé contient un lien **« Ouvrir la PR »** : clique dessus, puis
+   **Create pull request**.
+4. **Fusionner cette PR.** Avant, vérifie dans l'onglet « Files changed »
+   que seuls `public/3D/protected/` et `public/3D/test/protected/` changent.
+   Fusionne ensuite : le site se republie tout seul.
+5. **Tester** sur `/3D/` et `/3D/test/`, sur PC et téléphone : le nouveau
+   mot de passe ouvre, l'ancien est refusé. Les appareils qui avaient coché
+   « Se souvenir » redemandent le mot de passe une fois.
+6. **Mettre à jour Claude Code** : dans les environnements « boatlandingometer »
+   et « Default », remplacer la valeur de `BLM3D_PASSWORD` par le nouveau mot
+   de passe (et supprimer `BLM3D_PASSWORD_NEW` s'il y est encore).
+7. **Supprimer les deux secrets GitHub** `BLM3D_PASSWORD_OLD` et
+   `BLM3D_PASSWORD_NEW` (Settings → Secrets and variables → Actions → icône
+   corbeille).
+
+**Si ça échoue**, rien n'a été poussé et le site n'a pas changé. Le run est
+rouge, avec un seul message, qui ne montre jamais les mots de passe :
+
+- « Secret manquant » : créer le secret indiqué (étape 1), puis relancer.
+- « Les deux secrets sont identiques » ou « trop court » : corriger
+  `BLM3D_PASSWORD_NEW`, puis relancer.
+- « BLM3D_PASSWORD_OLD est refusé » : ce n'est pas le mot de passe en
+  service (faute de frappe, ou secrets inversés) ; corriger, puis relancer.
+- « Échec inattendu » ou tout autre message : relancer une fois, puis
+  prévenir Claude.
+
+Si la PR est déjà fusionnée et que le nouveau mot de passe n'ouvre pas, ouvre
+cette PR sur GitHub et clique sur **Revert**, puis fusionne la PR créée : l'ancien
+mot de passe redevient valable. Si plusieurs branches `rotation-3d-…`
+existent, ne fusionne que la plus récente et supprime les autres.
+
 ## Économie
 
 - Plan court avant tout gros chantier ; poser les questions bloquantes tôt.
