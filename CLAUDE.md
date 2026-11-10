@@ -32,7 +32,8 @@ anglais) décrit le site principal 2D.
 5. Rien en clair dans le dépôt : ni modèle, ni image, ni texture, ni audio,
    ni source 3D. Tout passe par le coffre.
 6. Même coffre (identifiant, sel, contrôle) et même mot de passe d'une
-   version à l'autre.
+   version à l'autre, sauf rotation demandée (voir « Changer le mot de
+   passe »).
 7. Le mot de passe n'est jamais écrit dans le dépôt, les commits, les logs,
    les docs ni les réponses. Il est gardé dans un fichier privé temporaire
    (hors dépôt, droits 600) pour toute une série de tâches, passé aux outils
@@ -78,6 +79,62 @@ donc une **copie**, sans mot de passe ni rechiffrement.
 La première promotion qui suit cette règle doit partir d'un `/3D/test/`
 construit en chemins relatifs. Les builds plus anciens (base `/3D/test/` en dur)
 demandaient une reconstruction pour `/3D/`.
+
+## Changer le mot de passe
+
+Toujours une **rotation complète**, jamais un simple ré-emballage : les
+anciens coffres restent lisibles dans l'historique public, donc rien de
+l'ancien ne doit resservir. Nouveau coffre (identifiant, sel, contrôle), clé
+dérivée du nouveau mot de passe, runtime et toutes les ressources rechiffrés
+avec des IV et des noms de fichiers neufs ; même nombre d'itérations PBKDF2.
+`/3D/` et `/3D/test/` passent ensemble sur le même nouveau coffre, et chacun
+garde son contenu : une rotation n'est pas une promotion.
+
+Variables de l'environnement « boatlandingometer », jamais affichées :
+`BLM3D_PASSWORD` (actuel) et `BLM3D_PASSWORD_NEW` (nouveau, au moins 14
+caractères).
+
+1. Vérifier sans rien afficher que les deux sont visibles, différentes, et
+   que la nouvelle compte au moins 14 caractères après normalisation NFC.
+2. Les écrire dans deux fichiers privés hors dépôt, droits 600, sans retour
+   à la ligne (`printf %s "$BLM3D_PASSWORD" > fichier`).
+3. Branche depuis `main` à jour ; garder une copie de `public/3D` d'avant.
+4. Lancer l'outil de rotation de la source privée (`scripts/rotate-vault.mjs`)
+   **en une seule commande** sur `public/3D/test` et `public/3D`, mots de passe
+   par descripteurs :
+   `BLO_OLD_SECRET_FILE=/proc/self/fd/3 BLO_NEW_SECRET_FILE=/proc/self/fd/4 node scripts/rotate-vault.mjs public/3D/test public/3D 3<ancien 4<nouveau`.
+   Il refuse un mauvais mot de passe actuel, déchiffre en mémoire seulement,
+   puis rouvre tout avec le nouveau et vérifie que l'ancien est refusé.
+5. Si la page d'accès (`unlock.js`) change, la recopier depuis le gabarit
+   privé dans les deux dossiers.
+
+Le mot de passe vaut **les octets UTF-8 de sa forme NFC, sans rien retirer**
+(ni espace, ni autre caractère), dans l'outil de scellement comme dans
+`unlock.js`. C'est ce qui fait qu'un `£` ou un `é` tapé sur n'importe quel
+clavier, composé ou non, donne la même clé. Ne jamais changer l'un sans
+l'autre.
+
+Vérifications :
+
+- Coffre : identifiant, sel et contrôle neufs, identiques entre `/3D/` et
+  `/3D/test/` ; itérations inchangées ; aucun nom de fichier ni IV repris de
+  l'ancien.
+- Contenu déchiffré identique octet pour octet à celui d'avant (code du
+  runtime et ressources), contrôlé par un script indépendant de l'outil.
+- Dans un navigateur, sur `/3D/` et `/3D/test/`, PC et téléphone (frappe et
+  saisie par clavier virtuel) : nouveau mot de passe accepté, ancien refusé
+  avec le message d'erreur, sans erreur console.
+- « Se souvenir sur cet appareil » : un jeton mémorisé avec l'ancien coffre
+  ramène à l'écran d'accès sans erreur et il est purgé ; mémoriser avec le
+  nouveau fonctionne.
+- Rendu à instant figé identique au pixel avant/après (plancher `main`
+  contre `main`), PC et téléphone.
+- Rien en clair ; aucun des deux mots de passe dans le dépôt (compter les
+  occurrences avec `grep -rcF -f fichier`, sans les afficher) ; `npm run lint`
+  et `npm run build` OK, `dist/3D` identique à `public/3D`.
+
+Après fusion, Quentin remplace `BLM3D_PASSWORD` par la nouvelle valeur et
+supprime `BLM3D_PASSWORD_NEW` ; les fichiers privés sont détruits (`shred`).
 
 ## Économie
 
