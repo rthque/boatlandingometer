@@ -151,8 +151,13 @@ Parcours dans le navigateur, avec les vraies commandes :
   - seconde passe : rotation à −122°, au-dessus de la mer libre, descente
     jusqu'à « dans l'eau » ;
   - troisième passe, panneau réduit par défaut.
-- **PC** : ouverture, contenus, rotation vers le CTV ; panneau déplié puis
-  réduit.
+- **PC** :
+  - ouverture, contenus, rotation vers le CTV ;
+  - seconde passe : rotation à 175° puis descente jusqu'au pont du CTV
+    (« posée sur le CTV », câble 19,8 m) ;
+  - panneau déplié puis réduit.
+- Les captures restent hors du dépôt : ce sont des images du rendu 3D
+  (règle 5).
 - Avant le clic sur « Levage », l'app charge ses 12 fichiers habituels ; le
   clic en ajoute un seul, le module (26,5 Ko).
 - Aucune erreur de page ni de console, en dehors des prévisions, coupées
