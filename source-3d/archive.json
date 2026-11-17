@@ -1,0 +1,15 @@
+{
+ "version": 1,
+ "id": "fdf404802867f2ffa6348a5363cc38b1",
+ "salt": "LsVps6a+52WFLGOYgMySv9CElv4Ypm7P+Xz2cvDmji4=",
+ "iterations": 600000,
+ "check": {
+  "iv": "aABrW+sZBgjJhsC+",
+  "data": "31H1qJ4qMuaVvcireRngOTjdYujZPy3vM0RXNYdWRftTsobUPUsroLJYDrzKqlx8hz2q"
+ },
+ "archive": {
+  "file": "archive.bin",
+  "iv": "QCNG0Ql2vvkLt7gS",
+  "size": 769239
+ }
+}

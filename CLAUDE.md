@@ -18,8 +18,10 @@ anglais) décrit le site principal 2D.
   itérations PBKDF2) et pointe vers le runtime chiffré ; le runtime porte le
   code et la liste des ressources chiffrées (modèles, images, textures,
   audio). AES-256-GCM, PBKDF2-SHA-256.
-- **Le code source de l'app 3D n'est pas dans ce dépôt.** Seul le build
-  scellé y entre.
+- **Le code source de l'app 3D n'est dans ce dépôt que chiffré** :
+  `source-3d/archive.bin`, avec `archive.json` (son coffre propre : même mot de
+  passe et mêmes itérations que le site, identifiant, sel et IV propres) et
+  `restore.mjs`. Ce dossier n'est pas publié : seul `dist/` l'est.
 
 ## Règles intangibles
 
@@ -42,11 +44,16 @@ anglais) décrit le site principal 2D.
    commitées, ni les noms, numéros, coordonnées ou logos qu'elles contiennent.
    Ce dépôt est public : aucun nom réel de parc, de fondation ou de navire,
    aucune coordonnée, aucun nom de fichier chiffré dans les docs.
+9. Chaque PR qui modifie la source privée rafraîchit `source-3d/` (même coffre
+   d'archive, IV neuf), depuis la racine de la source :
+   `BLO_SECRET_FILE=/proc/self/fd/3 node scripts/source-archive.mjs pack <dépôt>/source-3d 3<fichier`.
+   L'archive ne contient ni `node_modules`, ni les ressources déjà chiffrées
+   (`public/protected/`), ni aucune référence privée.
 
 ## Definition of done d'une PR
 
-- Diff limité aux chemins autorisés (`public/3D/test/**` et `docs/<tâche>/`,
-  plus `public/3D/**` pour une promotion).
+- Diff limité aux chemins autorisés (`public/3D/test/**`, `docs/<tâche>/` et
+  `source-3d/`, plus `public/3D/**` pour une promotion).
 - Tests et lint au vert (`npm run lint` : 0 erreur ; `npm run build` OK et
   `dist/3D` identique à `public/3D`).
 - Build scellé vérifié : coffre inchangé hors entrée `runtime`, aucun
@@ -80,6 +87,22 @@ La première promotion qui suit cette règle doit partir d'un `/3D/test/`
 construit en chemins relatifs. Les builds plus anciens (base `/3D/test/` en dur)
 demandaient une reconstruction pour `/3D/`.
 
+## Restaurer la source 3D
+
+Si la source privée n'est plus dans le conteneur, depuis un clone à jour de
+`main` et avec le seul mot de passe (jamais affiché) :
+
+1. `BLO_SECRET_FILE=/proc/self/fd/3 node source-3d/restore.mjs <dossier neuf> 3< <(printf %s "$BLM3D_PASSWORD")`
+   : écrit la source, puis reprend dans `public/protected/` les ressources
+   chiffrées de `/3D/test/`. Un mauvais mot de passe est refusé sans rien
+   écrire.
+2. Dans ce dossier : `git init` et un premier commit, puis
+   `corepack pnpm install --frozen-lockfile` (le projet utilise pnpm ; c'est
+   son équivalent de `npm ci`).
+3. Build scellé : `BLO_TEST_SECRET_FILE=/proc/self/fd/3 node scripts/build-static.mjs --test 3<fichier`
+   ; le contenu déchiffré doit être celui de `/3D/test/`
+   (`bench/compare-runtime.mjs`).
+
 ## Changer le mot de passe
 
 Toujours une **rotation complète**, jamais un simple ré-emballage : les
@@ -88,7 +111,9 @@ l'ancien ne doit resservir. Nouveau coffre (identifiant, sel, contrôle), clé
 dérivée du nouveau mot de passe, runtime et toutes les ressources rechiffrés
 avec des IV et des noms de fichiers neufs ; même nombre d'itérations PBKDF2.
 `/3D/` et `/3D/test/` passent ensemble sur le même nouveau coffre, et chacun
-garde son contenu : une rotation n'est pas une promotion.
+garde son contenu : une rotation n'est pas une promotion. L'archive
+`source-3d/` passe dans la même opération sur son propre nouveau coffre
+(identifiant, sel, contrôle, IV neufs).
 
 Variables de l'environnement « boatlandingometer », jamais affichées :
 `BLM3D_PASSWORD` (actuel) et `BLM3D_PASSWORD_NEW` (nouveau, au moins 14
@@ -102,7 +127,7 @@ caractères).
 4. Lancer l'outil de rotation de la source privée (`scripts/rotate-vault.mjs`)
    **en une seule commande** sur `public/3D/test` et `public/3D`, mots de passe
    par descripteurs :
-   `BLO_OLD_SECRET_FILE=/proc/self/fd/3 BLO_NEW_SECRET_FILE=/proc/self/fd/4 node scripts/rotate-vault.mjs public/3D/test public/3D 3<ancien 4<nouveau`.
+   `BLO_OLD_SECRET_FILE=/proc/self/fd/3 BLO_NEW_SECRET_FILE=/proc/self/fd/4 node scripts/rotate-vault.mjs public/3D/test public/3D --archive source-3d 3<ancien 4<nouveau`.
    Il refuse un mauvais mot de passe actuel, déchiffre en mémoire seulement,
    puis rouvre tout avec le nouveau et vérifie que l'ancien est refusé.
 5. Si la page d'accès (`unlock.js`) change, la recopier depuis le gabarit
@@ -129,6 +154,8 @@ Vérifications :
   nouveau fonctionne.
 - Rendu à instant figé identique au pixel avant/après (plancher `main`
   contre `main`), PC et téléphone.
+- Archive : `restore.mjs` l'ouvre avec le nouveau mot de passe à l'identique
+  et refuse l'ancien.
 - Rien en clair ; aucun des deux mots de passe dans le dépôt (compter les
   occurrences avec `grep -rcF -f fichier`, sans les afficher) ; `npm run lint`
   et `npm run build` OK, `dist/3D` identique à `public/3D`.
@@ -139,7 +166,8 @@ supprime `BLM3D_PASSWORD_NEW` ; les fichiers privés sont détruits (`shred`).
 ### Depuis GitHub, sans Claude Code (procédure pour Quentin)
 
 Le workflow `.github/workflows/rotate-3d-password.yml` fait la même rotation
-complète, à partir des fichiers chiffrés du dépôt. Il ne pousse jamais sur
+complète, archive `source-3d/` comprise, à partir des fichiers chiffrés du
+dépôt. Il ne pousse jamais sur
 `main` : il prépare une branche, et c'est toi qui fusionnes.
 
 1. **Créer les deux secrets.** Sur GitHub, dans le dépôt : **Settings →
@@ -154,7 +182,8 @@ complète, à partir des fichiers chiffrés du dépôt. Il ne pousse jamais sur
    résumé contient un lien **« Ouvrir la PR »** : clique dessus, puis
    **Create pull request**.
 4. **Fusionner cette PR.** Avant, vérifie dans l'onglet « Files changed »
-   que seuls `public/3D/protected/` et `public/3D/test/protected/` changent.
+   que seuls `public/3D/protected/`, `public/3D/test/protected/` et
+   `source-3d/archive.*` changent.
    Fusionne ensuite : le site se republie tout seul.
 5. **Tester** sur `/3D/` et `/3D/test/`, sur PC et téléphone : le nouveau
    mot de passe ouvre, l'ancien est refusé. Les appareils qui avaient coché
@@ -174,6 +203,8 @@ rouge, avec un seul message, qui ne montre jamais les mots de passe :
   `BLM3D_PASSWORD_NEW`, puis relancer.
 - « BLM3D_PASSWORD_OLD est refusé » : ce n'est pas le mot de passe en
   service (faute de frappe, ou secrets inversés) ; corriger, puis relancer.
+- « ouvre le site mais pas l'archive source-3d » : ne pas insister, prévenir
+  Claude.
 - « Échec inattendu » ou tout autre message : relancer une fois, puis
   prévenir Claude.
 
