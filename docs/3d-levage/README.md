@@ -86,10 +86,122 @@ sur la plaque. Ce sont des valeurs plausibles, marquées « à confirmer ».
   du runtime : il n'est ni téléchargé ni déchiffré tant qu'on n'a pas appuyé
   sur « Levage ». Pas de service worker.
 - Le coffre (`vault.json`) ne change que par son entrée `runtime`.
+- `source-3d/restore.mjs` ne reprend plus les modules à la demande : ils sont
+  reconstruits depuis la source à chaque build. Le scellement ignore aussi
+  toute ancienne entrée « paresseuse ».
 - Fermer le module remet la grue repliée, retire tout ce qu'il a ajouté et
   rend la vue d'avant.
+
+## Commandes
+
+- Bouton « Levage » dans le HUD, et dans les actions d'angle à côté de
+  « Prendre la barre » quand le HUD est masqué.
+- Boutons à maintenir, au doigt comme à la souris : tourner à gauche ou à
+  droite, monter ou descendre. Relâcher, quitter la page ou perdre le pointeur
+  arrête toujours la grue.
+- Le panneau donne :
+  - le choix de la charge, la hauteur de levage, un curseur par sac ;
+  - la charge suspendue face à la plaque, la portée, l'alerte de houle ;
+  - l'orientation, le câble, la hauteur du crochet, l'état de la charge
+    (suspendue, posée sur le CTV ou sur la plateforme, dans l'eau) ;
+  - le vide sous la charge, le balancement ;
+  - la plage d'orientation où le pont du CTV est sous le crochet.
+- « ◎ » recadre la vue sur la charge ; « ▾ » réduit le panneau aux quatre
+  commandes et à une ligne d'état. Le panneau est réduit par défaut sur
+  téléphone : déplié, il cachait la charge.
 
 ## Preuves
 
 Ces preuves ont été faites dans le banc local (Chromium, rendu logiciel sans
-GPU).
+GPU), sur le build scellé tel qu'il est commité.
+
+Physique : 8 tests.
+
+- La période d'un petit balancement vaut 2π√(L/g) à 1 % près.
+- Le câble ne s'allonge jamais ; s'il a du mou, la charge tombe jusqu'à ce
+  qu'il se tende.
+- Rotation et treuil restent dans leurs vitesses et leurs limites ; la
+  rotation peut faire des tours complets.
+- Un départ de rotation lance un balancement, qui s'amortit ensuite.
+- Descendue sur un pont mobile, la charge se pose, suit le pont, puis décolle
+  avec sa vitesse (0,5 m/s) et se met à balancer.
+- Avec le vent, la charge dérive sous le vent, d'autant moins qu'elle est
+  lourde ; dans l'eau, le balancement s'éteint.
+- Les cotes des sacs viennent des fiches ; la masse suspendue vaut sacs vides
+  plus contenu, contenu borné de 0 à 400 kg ; la hauteur de levage est bien
+  prise en compte.
+
+Un autre test vérifie le module scellé :
+
+- ressource à la demande, chiffrée à part ;
+- sans aucun import ;
+- absente du runtime chargé d'office.
+
+Suite privée complète : 163 sur 163.
+
+Parcours dans le navigateur, avec les vraies commandes :
+
+- **Téléphone (Pixel 7 émulé)**, en trois passes :
+  - parcours complet : ouverture, choix des contenus, rotation à 175° ;
+  - descente jusqu'au pont du CTV (« posée sur le CTV ») ;
+  - levée : la charge quitte le pont et se balance (0,86 m) ;
+  - 580 L à 400 kg : 0,43 t affichée, et « hors données plaque » quand le
+    balancement porte la portée à 8,3 m ;
+  - fermeture ;
+  - seconde passe : rotation à −122°, au-dessus de la mer libre, descente
+    jusqu'à « dans l'eau » ;
+  - troisième passe, panneau réduit par défaut.
+- **PC** : ouverture, contenus, rotation vers le CTV ; panneau déplié puis
+  réduit.
+- Avant le clic sur « Levage », l'app charge ses 12 fichiers habituels ; le
+  clic en ajoute un seul, le module (26,5 Ko).
+- Aucune erreur de page ni de console, en dehors des prévisions, coupées
+  exprès dans le banc.
+
+Budget du module, compteurs du moteur à caméra identique et mouvement réduit,
+module fermé puis ouvert puis refermé :
+
+| | Fermé | Ouvert | Refermé |
+| --- | --- | --- | --- |
+| PC 1024 × 640, draw calls | 87 | 97 (+10) | 87 |
+| PC, triangles | 718 920 | 719 352 (+432) | 718 920 |
+| Téléphone (mode allégé), draw calls | 89 | 99 (+10) | 89 |
+| Téléphone, triangles | 730 520 | 730 952 (+432) | 730 520 |
+| Textures | 17 | 17 | 17 |
+
+- Téléchargé à l'ouverture : environ 28 Ko, une seule fois. Le budget de 20
+  draw calls et 3 Mo est tenu.
+- Pour cette mesure seulement, une copie de banc neutralise le cadrage
+  automatique. Sans cela, la caméra bouge à l'ouverture et les compteurs
+  mesurent le changement de vue, pas le module.
+
+Socle inchangé, rendu à instant figé, mouvement réduit, prévisions coupées,
+calques HTML masqués :
+
+| Vue | Plancher `main` contre `main` | Module jamais ouvert | Module ouvert puis refermé |
+| --- | --- | --- | --- |
+| PC 1024 × 640 | 0 pixel | 0 pixel | 0 pixel |
+| Téléphone 412 × 839 (mode allégé) | 0 pixel | 0 pixel | 0 pixel |
+
+- Le runtime chargé d'office est identique octet pour octet d'un build à
+  l'autre de ce lot : seul le module à la demande change.
+- Le bouton « Levage » est le seul ajout visible hors 3D.
+
+Mode allégé du téléphone : même rendu au pixel près, et le module s'y ouvre et
+s'y utilise. Le module n'y ajoute pas d'ombre et y utilise moins de segments.
+
+Vérifications d'usage :
+
+- coffre inchangé hors entrée `runtime` ;
+- fichiers ajoutés aléatoires : entropie de 7,99 bits/octet et plus ;
+- `npm run lint` : 0 erreur ; `npm run build` OK, `dist/3D` identique à
+  `public/3D` ;
+- archive `source-3d/` rafraîchie (règle 9), même coffre d'archive. Une
+  restauration depuis l'archive, suivie d'une installation figée et d'un
+  build, redonne le même contenu déchiffré.
+
+## Non vérifié
+
+- Les vitesses réelles de la grue (rotation, treuil) et l'élingage des deux
+  sacs de 240 L : valeurs plausibles, marquées « à confirmer ».
+- La fluidité sur un vrai téléphone et un vrai PC : le banc n'a pas de GPU.
