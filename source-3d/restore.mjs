@@ -133,7 +133,9 @@ async function main() {
     aad("/runtime/application"),
     await readFile(path.join(site, "protected", v.runtime.file)),
   );
-  const vault = JSON.parse(gunzipSync(runtime)).vault;
+  const sealed = JSON.parse(gunzipSync(runtime)).vault;
+  // On-demand modules are rebuilt from the source at each build: only the eager assets come back.
+  const vault = sealed && { ...sealed, assets: sealed.assets.filter((a) => !a.lazy) };
   if (vault?.id !== v.id || !vault.assets.every((a) => FILE.test(a.file)))
     fail("Coffre de /3D/test/ incohérent.");
 
