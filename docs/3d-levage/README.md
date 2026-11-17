@@ -17,9 +17,13 @@ porte-à-faux, au-dessus de la zone de dépose. C'est la « ferry crane ».
   au-dessus de la bride), marquées « à confirmer ».
 - Le réa du modèle est à 8,08 m de l'axe. Le câble pend à 8,00 m, la portée
   de la plaque : 8 cm vers l'intérieur, invisible.
-- La grue n'atteint que l'étrave du CTV amarré : le pont avant est à plus de
-  8 m de l'axe, et le point le plus proche du centre du pont avant est à 3,1 m.
-  Il faut tourner la flèche d'environ 180° depuis sa position repliée.
+- La grue n'atteint que l'avant du pont du CTV amarré : le centre du pont
+  avant est à plus de 8 m de l'axe (le crochet en passe à 3,1 m au plus près).
+  Le pont est sous le crochet pour une orientation de 136° à −147°, en passant
+  par 180° : 77° d'arc, à l'opposé de la position repliée. Le panneau affiche
+  cette plage.
+- Rotation continue : la plaque ne donne aucune butée, et le CTV se trouve
+  justement derrière la position repliée.
 
 ## Plaque de la grue et sacs
 
