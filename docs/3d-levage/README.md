@@ -57,7 +57,7 @@ Sacs, d'après les fiches fabricant :
   l'anneau des sangles. Elle vaut 61 ou 77 cm pour le 240 L et 135 cm pour le
   580 L (même fabricant, même terme).
 - Un curseur par sac règle la masse du contenu, de 0 à 400 kg ; le total
-  suspendu est affiché. Avec quatre sacs pleins au maximum, on reste sous
+  suspendu est affiché. Avec les sacs pleins au maximum, on reste sous
   1 t : 818 kg pour la paire de 240 L, 427 kg pour le 580 L.
 
 Vitesses de rotation (6°/s) et de treuil (0,25 m/s) : elles ne figurent pas
