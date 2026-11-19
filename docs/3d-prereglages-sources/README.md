@@ -95,6 +95,48 @@ faudrait relever le plafond vers 0,7 à 1,1 m/s par vives-eaux.
 Mesure : `bench/tide-current-check.mjs` dans la source privée sur tous les jours de juin 2026 à décembre 2028. La plus
 forte montée de l'eau est de 2,9 m/h, au coefficient 120.
 
+## Correctif : la barre météo au pilotage, au levage et aux cordes
+
+Quentin a signalé qu'en pilotage, la barre météo (boussole, choix de la météo, plein écran) se
+plaçait au milieu de l'écran, sur le CTV.
+
+**Cause.** En mode immersif, la règle `.hud-v9.is-immersive .env-bar` gardait un `top`, et elle est
+plus spécifique que la règle du pilotage, qui posait un `bottom`. Avec les deux à la fois, la barre
+s'étirait sur toute la hauteur de l'écran, et son alignement la centrait verticalement.
+
+**Correctif.**
+
+- **Pilotage** : la barre n'est plus posée par-dessus la vue. Elle est rendue dans la colonne des
+  boutons du pilotage, en haut à droite (`HelmPanel`, `.helm-right`), en version compacte. Les
+  valeurs de mer sont retirées de la barre, puisque la carte de vitesse affiche déjà la houle.
+  - PC : sous les boutons, avec le nom de la météo.
+  - Téléphone en portrait : boutons empilés sous ceux du pilotage, au-dessus des manettes.
+  - Téléphone en paysage : en ligne, à gauche des boutons, au-dessus de la manette de tribord.
+
+  La puce garde le nom de la météo dans son `aria-label` et son `title`.
+- **Levage** : sur un écran bas, comme un téléphone en paysage, le panneau du levage montait jusqu'en
+  haut et recouvrait la barre. Sa hauteur maximale est passée de `100dvh − 24px` à `100dvh − 76px` :
+  il s'arrête à 64 px du haut, comme le panneau des cordes.
+- **Cordes** : aucun changement nécessaire, la barre restait dégagée.
+
+**Vérification.** Le banc privé `bench/env-bar-placement.mjs` mesure la barre dans l'app scellée, en
+pilotage, au levage et aux cordes, sur PC (1280x800), sur téléphone en portrait (412x839) et sur
+téléphone en paysage (839x412). Pour chaque cas, il relève tous les panneaux et boutons visibles
+qu'elle chevauche, et prend une capture avant et après.
+
+| Cas | Avant (`main`) | Après |
+| --- | --- | --- |
+| Pilotage, PC | centrée (50 %, 50 %), sur le CTV | en haut à droite, sous les boutons, 247x40 |
+| Pilotage, portrait | centrée, sur le CTV | en haut à droite, sous les boutons, 76x122 |
+| Pilotage, paysage | centrée, sur le CTV | en haut à droite, à gauche des boutons, 160x38 |
+| Levage, paysage | sous le panneau du levage et ses boutons fermer, réduire et centrer | dégagée |
+| Levage et cordes, autres cas | dégagée | dégagée |
+
+Après correctif, la barre ne chevauche aucun panneau dans les neuf cas : carte de vitesse, boutons,
+Commandes, manettes, panneaux du levage et des cordes. Aucune erreur console. Dans le runtime, seuls
+le code de l'app et le module du levage changent. Les 11 ressources et le module des cordes sont
+identiques à `main`.
+
 ## Preuves
 
 - **Tests** : `tests/heading-weather.test.mjs` vérifie :
@@ -108,7 +150,7 @@ forte montée de l'eau est de 2,9 m/h, au coefficient 120.
 - **Captures** : chaque préréglage recalé dans l'app scellée, sur PC et sur téléphone, avec le
   sélecteur et la fiche des sources. Elles sont prises par le banc privé et ne sont pas commitées.
 - **Contrôles habituels** : suite privée verte, lint public à 0 erreur, build OK, `dist/3D` identique
-  à `public/3D`, coffre inchangé hors entrée `runtime`, ressources déchiffrées identiques à `main`,
+  à `public/3D`, coffre inchangé hors entrée `runtime`, ressources déchiffrées identiques à `main` (seul le module du levage change, voir le correctif),
   archive `source-3d/` rafraîchie (même coffre d'archive, IV neuf).
 
 ## Limites
