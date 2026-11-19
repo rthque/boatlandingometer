@@ -116,5 +116,8 @@ forte montée de l'eau est de 2,9 m/h, au coefficient 120.
 - Le vent, le ciel et la pluie des préréglages ne sont pas sourcés.
 - Les Hs de la source sont des valeurs au site. Le haut-fond voisin, où la centennale dépasse 8 m,
   n'est pas représenté.
+- Par vent de 29 et 33 m/s (tempêtes décennale et centennale), l'écume existante forme de grandes
+  plaques peu réalistes, déjà notées au lot 1a (couverture de Monahan plafonnée à 20 %). Ce lot ne
+  la modifie pas ; ces deux vents sont eux-mêmes à confirmer.
 - La nature de la période de la source (pic ou moyenne) n'est pas précisée. Si c'était une période
   moyenne, la période pic des tempêtes serait plus longue, vers 14 s.
