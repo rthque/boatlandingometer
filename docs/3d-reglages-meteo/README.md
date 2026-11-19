@@ -105,18 +105,49 @@ Prévision Open-Meteo simulée, sur PC (1280 × 800), téléphone (Pixel 7) et i
 - le plein écran, et sur iPhone la fiche d'ajout à l'écran d'accueil ;
 - le mode allégé (`?safe=1`), avec et sans préréglage.
 
-RÉSULTATS_APP
+- Sélecteur : « Actuelle », « Pire des prochaines 24 h » et les 7 préréglages, chacun avec ses valeurs. Sur la prévision simulée (houle montant à 2,4 m dans 28 h), la pire heure retenue est la dernière des 24 h (vendredi 12:00, Hs 2,0 m) : le pic au-delà est bien exclu.
+- Chaque préréglage s'applique, et la puce affiche son nom et ses valeurs. La croix ramène à « actuelle » : la puce et la croix disparaissent.
+- Boussole : « 68° vrai · ENE ».
+- Plein écran : sur PC et Android, la page passe en plein écran. Sur iPhone, sans plein écran comme Safari, la fiche en trois étapes s'ouvre.
+- Mode allégé : rendu `safe-dom-dpr1`, préréglage Tempête appliqué, aucune erreur.
+- Aucune erreur console sur les trois profils.
+
+Le banc tourne sans « réduction des animations » : dans l'app, elle tient la mer à plat, et les préréglages portent justement sur la mer.
 
 ### Budget et fluidité
 
-BUDGET
+Même mer de tempête (Hs 4,5 m, Tp 9,5 s) sur `main` et sur ce lot, trois caméras : la vue de lancement, une vue au ras de l'eau vers l'horizon (6 m) et une vue haute. Mesures par image : appels de dessin et triangles de three.js, temps de script du fil principal (compteurs Chrome). Rendu logiciel sans GPU : les images par seconde sont des planchers, comparables entre elles seulement.
+
+| Vue | Appels | Triangles | Script (ms/image) | Images/s |
+| --- | --- | --- | --- | --- |
+| PC, lancement | 106 → 107 | 870 942 → 884 730 | 7,2 → 4,4 | 0,4 → 0,4 |
+| PC, ras de l'eau | 20 → 20 | 92 264 → 113 384 | 2,1 → 1,9 | 4,2 → 3,0 |
+| PC, haute | 123 → 122 | 738 978 → 759 874 | 5,0 → 5,1 | 0,8 → 0,8 |
+| Téléphone, lancement | 103 → 103 | 738 258 → 750 610 | 6,0 → 4,9 | 0,7 → 0,7 |
+| Téléphone, ras de l'eau | 20 → 20 | 101 992 → 114 344 | 1,7 → 2,1 | 8,2 → 6,6 |
+| Téléphone, haute | 123 → 122 | 748 706 → 760 834 | 4,2 → 4,7 | 1,1 → 1,1 |
+
+- **Processeur** : aucune charge de plus. Les appels de dessin sont les mêmes, et le temps de script reste dans le bruit de la mesure. Les anneaux sont construits une fois.
+- **Géométrie** : la mer gagne de 7 500 à 11 000 sommets et de 14 000 à 21 000 triangles selon la grille. La première version, avec 1 200 points par anneau, en ajoutait 81 000 ; les anneaux sont ramenés à 48 points par côté.
+- **Coût** : la vue au ras de l'eau vers l'horizon est la seule qui ralentit en rendu logiciel, de 4,2 à 3,0 images/s sur PC et de 8,2 à 6,6 sur téléphone. Ce sont les pixels lointains, autrefois peints d'une couleur par le ciel, qui calculent maintenant leur mer. La boucle des vagues par pixel va des plus longues aux plus courtes et s'arrête à la première que le pixel ne résout plus, ce qui a regagné 0,2 à 0,3 image/s.
+- **Vues de lancement et haute** : aucun écart.
+- Sur un vrai GPU, ce coût est celui d'un shader sur une bande d'écran. Le téléphone garde sa baisse automatique de qualité sous 45 images/s.
 
 ### Contrôles habituels
 
-CONTROLES
+- **Suite privée** : 201 tests, tous verts, dont 9 nouveaux (cap, rotation des directions, soleil et lune, houle, anneaux lointains, shader, préréglages, pire des 24 h).
+- **Lint public** : 0 erreur.
+- **Lint de la source privée** : aucune nouvelle erreur.
+- **Build** : OK, et `dist/3D` est identique à `public/3D`.
+- **Coffre** : identifiant, sel, itérations et contrôle inchangés ; seule l'entrée `runtime` change.
+- **Ressources chiffrées** : les 13 ressources déchiffrées sont identiques à celles de `main` ; seul le code change.
+- **Page d'accès** : les balises d'écran d'accueil sont ajoutées, rien d'autre.
+- **Archive `source-3d/`** : rafraîchie (même coffre d'archive, IV neuf, 318 fichiers). Elle se restaure à l'identique.
+- **Mot de passe** : absent du dépôt et des commits.
 
 ## Limites
 
 - Les préréglages sont des ordres de grandeur, tous à confirmer (voir plus haut).
-- La fluidité n'a pas été vérifiée sur un vrai appareil : le banc rend sans GPU.
+- La fluidité n'a pas été vérifiée sur un vrai appareil : le banc rend sans GPU. Seule la vue au ras de l'eau coûte plus cher (voir le budget).
+- Par vent de tempête, l'écume des crêtes (Monahan, plafonnée à 20 % de la surface) forme de larges plaques. C'est le comportement existant, que les préréglages font simplement apparaître.
 - La pente du fond n'est pas tournée (0,26 %, invisible depuis la surface).
