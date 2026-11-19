@@ -88,8 +88,8 @@ Le panneau d'information de la scène le dit, en français et en anglais.
   - Avec les tag lines affichées, les différences restent dans leur emprise.
     Ce sont la corde, le clamp et leur ombre sur les barreaux.
 - **Dans l'app scellée**, avec `main` contre ce lot (plancher à 0 partout) :
-  - PC : la corde de l'échelle intermédiaire se voit en FOU (132 pixels) et
-    au fond de la vue BL (359 pixels). Tether : 0 pixel.
+  - PC : les cordes se voient en FOU (132 pixels), et celle de l'échelle
+    intermédiaire au fond de la vue BL (359 pixels). Tether : 0 pixel.
   - Téléphone : 86 pixels en FOU, 492 en BL, 0 en Tether.
   - Hors 3D, l'interface est identique.
 - **Mode allégé du téléphone** (`?safe=1`, canvas classique sans ombres ni
@@ -139,7 +139,13 @@ Le panneau d'information de la scène le dit, en français et en anglais.
 - **Coffre** : identifiant, sel, itérations et contrôle inchangés ; seule
   l'entrée `runtime` change. Les 13 ressources déchiffrées sont identiques
   octet pour octet ; seul le code change.
-- **Suite privée, lint, build, archive** : SUITE
+- **Suite privée** : 185 tests, tous verts.
+- **Lint de la source privée** : aucune nouvelle erreur.
+- **Lint public** : 0 erreur.
+- **Build** : OK, et `dist/3D` est identique à `public/3D`.
+- **Mot de passe** : absent du dépôt et des commits.
+- **Archive `source-3d/`** : rafraîchie (même coffre d'archive, IV neuf), et
+  elle se restaure à l'identique.
 
 ## Limites
 
