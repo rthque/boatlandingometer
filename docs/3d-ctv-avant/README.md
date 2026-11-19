@@ -115,6 +115,14 @@ Les curseurs restent réglables de 0 à 400 kg.
   à fond : 6,95 t au plus, sangles tenues. Une surcharge forcée (sangles
   raccourcies de 8 cm, dans le banc seulement) les fait lâcher avec le
   message.
+- **Dans l'app scellée, au téléphone :** le bouton « Wingrips » apparaît
+  dans la colonne des actions, grisé tant que le CTV n'est pas accosté, avec
+  son infobulle. La colonne de quatre boutons tient sans chevaucher la carte.
+  L'approche automatique du banc n'a pas abouti : le courant estimé a fait
+  dériver le CTV de côté, et le script ne corrige pas cet écart. Le banc
+  s'est donc arrêté à 16 m. L'engagement et les messages « engagés »,
+  « lâchés » et « relâchés » n'ont pas été vus dans l'app elle-même ; ils
+  ont été vérifiés dans le moteur réel et dans les tests.
 - **Suite privée :** tous les tests passent, y compris ceux du levage
   (masses par défaut).
 - **Socle :** lint sans nouvelle erreur.
