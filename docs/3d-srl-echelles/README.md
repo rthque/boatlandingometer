@@ -75,7 +75,52 @@ Le panneau d'information de la scène le dit, en français et en anglais.
 
 ## Preuves
 
-PREUVES
+- **Captures avant/après des deux échelles**, dans le vrai moteur, aux mêmes
+  caméras, sur PC (1024 × 640) et sur téléphone (Pixel 7). Pour chaque
+  échelle, le bas (clamp et départ de la corde) et le haut (corde et crochet
+  du SRL). Elles sont gardées hors du dépôt.
+- **Reste de la scène identique au pixel**, à instant figé :
+  - Dans le moteur, les tag lines ajoutées sont masquées et la carte d'ombre
+    de la fondation est recalculée sans elles. Résultat : 0 pixel de
+    différence avec `main` dans les 8 vues (les deux échelles de près, une
+    vue d'ensemble, FOU, BL, Tether), sur PC et sur téléphone. Le plancher de
+    bruit, `main` contre `main`, est aussi à 0.
+  - Avec les tag lines affichées, les différences restent dans leur emprise.
+    Ce sont la corde, le clamp et leur ombre sur les barreaux.
+- **Dans l'app scellée**, avec `main` contre ce lot (plancher à 0 partout) :
+  - PC : la corde de l'échelle intermédiaire se voit en FOU (132 pixels) et
+    au fond de la vue BL (359 pixels). Tether : 0 pixel.
+  - Téléphone : 86 pixels en FOU, 492 en BL, 0 en Tether.
+  - Hors 3D, l'interface est identique.
+- **Mode allégé du téléphone** (`?safe=1`, canvas classique sans ombres ni
+  reflets) : rendu normal, aucune erreur console. Les seules différences avec
+  `main` sont les cordes : 3 pixels en FOU, 67 en BL, 0 en Tether. Sans
+  `?safe=1`, le téléphone tourne avec la mer « mobile » ; c'est la mesure
+  ci-dessus.
+- **Budget** (moteur, médiane de 15 images) :
+  - les deux ensembles ajoutés comptent 5 maillages (pièces inox, élastomère,
+    œils de corde, interfaces de barreau, cordes) et 9 152 triangles ;
+  - par image affichée, ombres et reflets compris, en vue FOU : 132 → 152
+    draw calls (+20) et 1 440 924 → 1 480 908 triangles (+2,8 %) ;
+  - en vue BL : 104 → 114 draw calls (+10) et +1,3 % de triangles ;
+  - les SRL eux-mêmes ne coûtent rien de plus : ce sont ceux du modèle ;
+  - construits pièce par pièce comme au boat landing, les deux ensembles
+    auraient fait 36 maillages : la fusion par matériau en garde 5.
+- **Tests** (suite privée, nouveau fichier) :
+  - un clamp par échelle, œil entre 1,0 et 1,2 m au-dessus du plancher, du
+    côté du grimpeur ;
+  - corde terminée sur le crochet relevé, sans bout libre sous le clamp ;
+  - mêmes pièces que le clamp du boat landing ;
+  - fusion en 5 maillages, à géométrie identique à la construction pièce par
+    pièce ;
+  - clamp du boat landing inchangé (18 pièces) ; rien sur le modèle de
+    secours ;
+  - sur le modèle chiffré : un SRL de même hauteur que celui du boat landing
+    au-dessus de chaque crochet, et une corde qui ne touche pas l'acier.
+- **Coffre** : identifiant, sel, itérations et contrôle inchangés ; seule
+  l'entrée `runtime` change. Les 13 ressources déchiffrées sont identiques
+  octet pour octet ; seul le code change.
+- **Suite privée, lint, build, archive** : SUITE
 
 ## Limites
 
