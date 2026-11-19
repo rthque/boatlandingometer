@@ -98,23 +98,42 @@ Le panneau d'information de la scène le dit, en français et en anglais.
   `?safe=1`, le téléphone tourne avec la mer « mobile » ; c'est la mesure
   ci-dessus.
 - **Budget** (moteur, médiane de 15 images) :
-  - les deux ensembles ajoutés comptent 5 maillages (pièces inox, élastomère,
-    œils de corde, interfaces de barreau, cordes) et 9 152 triangles ;
-  - par image affichée, ombres et reflets compris, en vue FOU : 132 → 152
-    draw calls (+20) et 1 440 924 → 1 480 908 triangles (+2,8 %) ;
-  - en vue BL : 104 → 114 draw calls (+10) et +1,3 % de triangles ;
+  - les deux ensembles ajoutés (clamps et tag lines des deux échelles) ne
+    forment qu'**un seul objet, avec un seul matériau** : 1 maillage et
+    9 152 triangles ;
+  - par image affichée, ombres et reflets compris : **+4 draw calls** en vue
+    FOU (132 → 136) et dans la vue d'ensemble, +2 en vue BL (104 → 106), sur
+    PC comme sur téléphone ;
+  - triangles : +2,8 % en vue FOU (1 440 924 → 1 480 908), +1,3 % en BL ;
   - les SRL eux-mêmes ne coûtent rien de plus : ce sont ceux du modèle ;
-  - construits pièce par pièce comme au boat landing, les deux ensembles
-    auraient fait 36 maillages : la fusion par matériau en garde 5.
+  - comment : les pièces des deux ensembles sont fusionnées en une seule
+    géométrie. Les quatre matériaux du clamp (inox, élastomère, rouge,
+    jaune) deviennent quatre texels de deux petites textures (couleur ;
+    rugosité et métal), avec exactement les mêmes valeurs. Chaque pièce lit
+    son texel par ses coordonnées de texture. L'élargissement des profils
+    fins à distance reste actif sur la corde seule ;
+  - sans perte visuelle : la version en un seul objet est identique au pixel
+    à une première version en 5 objets (un par matériau) dans 15 vues sur 16.
+    La 16ᵉ, la vue d'ensemble au téléphone, diffère d'un seul pixel. Une
+    construction pièce par pièce, comme au boat landing, aurait fait 36
+    objets ;
+  - conséquence : ces deux clamps ne servent pas de point d'accroche pour
+    l'outil de mesure (un seul objet, marqué comme non mesurable, comme les
+    pièces rouges et noires du clamp du boat landing).
 - **Tests** (suite privée, nouveau fichier) :
   - un clamp par échelle, œil entre 1,0 et 1,2 m au-dessus du plancher, du
     côté du grimpeur ;
   - corde terminée sur le crochet relevé, sans bout libre sous le clamp ;
   - mêmes pièces que le clamp du boat landing ;
-  - fusion en 5 maillages, à géométrie identique à la construction pièce par
-    pièce ;
+  - un seul maillage et un seul matériau, à géométrie identique à la
+    construction pièce par pièce, et chaque pièce lit exactement la couleur,
+    la rugosité et le métal de son matériau d'origine ;
   - clamp du boat landing inchangé (18 pièces) ; rien sur le modèle de
     secours ;
+  - un test existant mesurait la boîte englobante de tout le groupe du clamp
+    du boat landing, qui porte maintenant aussi les deux autres échelles. Il
+    est restreint aux pièces du boat landing, ce qui garde son intention
+    (clamp compact, moins de 25 cm) ;
   - sur le modèle chiffré : un SRL de même hauteur que celui du boat landing
     au-dessus de chaque crochet, et une corde qui ne touche pas l'acier.
 - **Coffre** : identifiant, sel, itérations et contrôle inchangés ; seule
