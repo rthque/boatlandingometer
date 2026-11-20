@@ -137,8 +137,10 @@ Le sondage du module au cap du moment donne le même pont que le sondage indépe
 
 ### Touchers (harnais)
 
-- Œil visé ou poutre touchée à 27 cm de l'œil : l'ancrage s'accroche à l'œil E1, en (−0,40 ;
-  2,54 ; −7,20) dans le repère de la nacelle.
+- Poutre touchée à 27 cm de l'œil : l'ancrage s'accroche à l'œil E1, en (−0,40 ; 2,54 ; −7,20)
+  dans le repère de la nacelle, aux deux passages.
+- Rayon visé pile sur l'œil : accroché à E1 au premier passage. Au second, il a frôlé le bas de
+  la poutre sans rien toucher : le banc tire un rayon unique, sans la tolérance d'un doigt.
 - Plancher : normale vers le haut, donc technicien debout.
 - Trappe ouverte vue de dessous : le toucher est reconnu sur la trappe.
 - Tour : le toucher est reconnu sur la tour.
@@ -153,6 +155,11 @@ Le sondage du module au cap du moment donne le même pont que le sondage indépe
 | Scénario plateforme, nouveau module | 62 · 1 476 256 | 42 · 163 248 |
 | Scénario complet nacelle (3 techniciens, déviateur sur la tour, trappe ouverte) | 62 · 1 478 256 | 50 · 168 452 |
 | Refermé | 56 · 1 473 584 | 38 · 162 384 |
+
+Ces chiffres viennent d'un même passage, ancien et nouveau module dans les mêmes conditions. Un
+autre passage compte plus de passes d'ombre : 80 appels module fermé vu de la plateforme, 62 vu de
+la nacelle. Les écarts restent les mêmes : ouvert vide égale fermé, et le scénario complet ajoute
+6 et 12 appels.
 
 - **Coût hors nacelle** : rien. L'intérieur de la nacelle n'est dessiné que lorsqu'une étape s'en
   sert ou que la coque est transparente. Le scénario de la plateforme coûte exactement ce qu'il
