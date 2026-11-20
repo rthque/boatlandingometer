@@ -169,7 +169,9 @@ Le sondage du module au cap du moment donne le même pont que le sondage indépe
 
 Rendu à instant figé, calques HTML masqués, sur PC et téléphone : `main` contre `main` (plancher
 de bruit), `main` contre ce lot module jamais ouvert, et `main` contre ce lot module ouvert puis
-refermé. Résultats ci-dessous.
+refermé. Résultat : 0 pixel différent dans les trois cas, sur PC comme sur téléphone, pour un
+plancher de bruit lui-même à 0. L'interface HUD est identique au pixel près. Le module n'est
+téléchargé qu'au clic : une ressource chiffrée de plus, aucune avant.
 
 ### Captures, mode allégé, contrôles habituels
 
