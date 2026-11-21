@@ -242,8 +242,8 @@ erreur console.
   - lent, la boule glissée en 14 s : `1→2`, `2→3`, `3→4`, `4→5`, `5→6`, `6→7`, dans l'ordre, la
     scène interpolée entre les étapes ;
   - rapide, en 0,7 s : les mêmes étapes, dans le même ordre, en accéléré.
-- **Duplication dans Cordes** : ART se ferme, Cordes s'ouvre sur « ART B · Évacuation de la fondation
-  vers le CTV », sept étapes.
+- **Duplication dans Cordes**, sur PC et sur téléphone : ART se ferme, Cordes s'ouvre sur « ART B ·
+  Évacuation de la fondation vers le CTV », sept étapes.
 - **Exemple Cordes** de la plateforme du boat landing, par la grue : six étapes. Pendant la descente,
   l'avertissement « Descente au MILAN sur une seule corde (appareil de sauvetage) : à confirmer par le
   plan de sauvetage » s'affiche. C'est voulu : la règle du lot 12 (deux cordes pour un brancard
@@ -264,15 +264,45 @@ erreur console.
 
 **Socle identique, fonction fermée** (instant figé, calques HTML masqués) :
 
-PLACEHOLDER-PX
+| Vue | Plancher `main` contre `main` | ART jamais ouvert | ART ouvert puis refermé | Cordes ouvert puis refermé |
+|---|---|---|---|---|
+| PC 1024 × 640 | 0 pixel | 0 pixel | 1 pixel (voir plus bas) | 0 pixel |
+| Téléphone 412 × 839 (allégé) | 0 pixel | 0 pixel | 0 pixel | 0 pixel |
+
+Avec les calques HTML, la seule différence est le bouton ART, ajouté dans la barre d'outils et dans
+les actions d'angle.
+
+**Le pixel d'ART ouvert puis refermé sur PC** : un seul pixel sur 655 360, d'une unité de couleur
+(207, 161, 12 contre 208, 162, 12). Il revient à l'identique d'un passage à l'autre.
+
+- Dans le banc moteur, ouvrir puis refermer le module **Levage de `main`** donne le même pixel, au
+  même endroit. L'écart existait donc avant ce lot.
+- Il vient du mécanisme de la grue : à la fermeture, la grue du modèle revient, et l'ombre statique de
+  la fondation est recalculée.
+- Cordes, qui construisait aussi la grue dès sa première demande d'exemple, donnait ce pixel. Il ne la
+  construit plus que pour l'exemple qui s'en sert, et revient à 0.
+- Le code de la page et du worker ne change que par le bouton ART, le passage d'un scénario d'ART à
+  Cordes et l'hôte du module.
 
 **Budget** (banc moteur, caméra fixe, mouvement réduit) :
 
-PLACEHOLDER-BUDGET
+| Vue | Fermé | A · étape 6 | A · étape 9 | A · étape 16 | B · étape 6 | Refermé |
+|---|---|---|---|---|---|---|
+| PC, appels de dessin | 124 | 134 | 136 | 148 | 148 | 124 |
+| Téléphone, appels de dessin | 120 | 130 | 132 | 144 | 144 | 120 |
+| Triangles du module | 0 | 10 114 | 10 934 | 14 882 | 14 966 | 0 |
+
+- Le module : un maillage par personnage (huit au plus), un pour le brancard, un pour tout le matériel
+  (cordes, MILAN, poulie, pivot bars, crochet), un pour le matériel posé sur le CTV. S'y ajoutent les
+  six maillages de la grue dessinée, déjà ceux de Levage.
+- Le détail fin des personnages n'est construit que de près, jamais en mode allégé.
+- Fermé puis refermé : mêmes appels et mêmes triangles qu'avant l'ouverture.
+- Tailles chiffrées : module ART 104 Ko, Cordes 181 Ko (159 Ko avant : la grue et ses calculs),
+  Levage 77 Ko. Les plafonds des tests sont respectés (300, 200 et 3 000 Ko).
 
 **Contrôles du dépôt** :
 
-- suite privée : PLACEHOLDER-TESTS ;
+- suite privée : 252/252, dont les 10 tests du lot 5 (`tests/lot5.test.mjs`) ;
 - lint public à 0 erreur, build OK, `dist/3D` identique à `public/3D` ;
 - coffre inchangé hors entrée `runtime`, aucun fichier en clair, mot de passe absent du dépôt ;
 - les 11 ressources lourdes sont inchangées ; seuls le runtime et les trois modules à la demande
