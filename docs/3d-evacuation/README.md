@@ -143,6 +143,10 @@ Preuves :
   des 6 kN ; ancrage A3 15 / 6,63 = marge × 2,3 sous × 2,5. Avec la victime réelle (100 kg) :
   brin du Y 1,19 kN, chute 8,3 kN, marge × 1,8. Ces alertes sont voulues : elles montrent le poids
   de l'accompagnateur sur la chaîne d'assurance.
+- Socle identique au pixel module fermé : app scellée à instant figé, couches HTML masquées, PC et
+  téléphone : plancher main contre main 0 pixel, lot module jamais ouvert 0 pixel, module ouvert puis
+  refermé 0 pixel ; HUD identique. Le code de la page et du worker est le même octet pour octet que
+  celui du lot 11.
 - Coffre : identifiant, sel, contrôle et itérations inchangés, seule l'entrée runtime change ; aucun
   fichier en clair ; mot de passe absent du dépôt. Lint public à 0 erreur, build OK, dist/3D
   identique à public/3D. Archive source-3d rafraîchie (même coffre, IV neuf) : 352 fichiers,
