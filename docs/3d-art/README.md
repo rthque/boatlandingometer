@@ -14,8 +14,6 @@ appui. Tant qu'il est fermé, le socle ne change pas.
 
 - Une carte en haut à gauche avec :
   - la liste des scénarios ;
-  - pour le scénario A, le choix de la fin : celle du drill, ou la variante recommandée par sa
-    conclusion ;
   - le texte de l'étape, en français (ou en anglais si l'app est en anglais) ;
   - les calculs et les alertes ;
   - l'encadré « Retours d'expérience » à la dernière étape ;
@@ -48,11 +46,30 @@ donne :
   l'échelle (31,2 m).
 
 Le lot 8 appelait « girder platform » le plancher de 24,61 m. Les deux lectures ne peuvent pas être
-justes ensemble : c'est la première question pour Quentin (section 8).
+justes ensemble : c'est la première question pour Quentin (section 10).
 
-## 3. Scénario A : malaise sur la girder platform (drill du 12/07)
+## 3. La descente vers le CTV : une seule méthode, par la grue
 
-Seize étapes, plus une variante de cinq étapes qui remplace les quatre dernières.
+Précision de Quentin, appliquée aux deux scénarios et à l'exemple « Évacuation d'un blessé » du module
+Cordes. C'est la méthode principale de la descente vers le CTV, pas une variante.
+
+- **Renvoi** : la corde du MILAN est renvoyée par l'œil de la pivot bar **jaune**.
+- **MILAN** : fixé au pied de la grue, comme dans les drills. Sa position exacte est à confirmer.
+- **Version HUB, à confirmer** : son volant hisse le brancard au-dessus du garde-corps. Le MILAN 2.0,
+  lui, ne lève pas.
+- **Rotation de la grue** : elle amène le brancard au-dessus du pont du CTV, entre ses butées, sans
+  traverser la zone morte face à la tour.
+- **Descente en mode passif** à 0,9 m/s, sans sauveteur qui accompagne la victime.
+- **Tag lines** : deux, orange et bleue, tenues par les deckhands depuis le CTV.
+- **Axe de la pivot bar** : elle n'est tirée que dans l'axe de sa charnière. Une traction hors de
+  ce plan déclenche une alerte (section 8).
+
+La première lecture du compte rendu du drill A (grue au treuil, ligne de secours passive à la base du
+treuil) n'est plus proposée : la précision la remplace.
+
+## 4. Scénario A : malaise sur la girder platform (drill du 12/07)
+
+Dix-sept étapes.
 
 1. **Malaise.** Sur la girder platform, par forte chaleur, un technicien fait un malaise. Il ne
    chute pas : il est longé et reste au sol.
@@ -76,64 +93,88 @@ Seize étapes, plus une variante de cinq étapes qui remplace les quatre derniè
 11. **Descente vers la MEP** à vitesse constante (0,9 m/s), récupérée d'en bas par la tag line
     orange.
 12. **Posé sur la MEP**, doucement.
-13. **Le MILAN sur la grue** : au pied de la grue, la corde passe dans une poulie à la pivot bar
-    rouge. Le brancard est amené sous la grue. Bandeau « montage sur la grue à confirmer ».
-14. **Par-dessus le garde-corps** : le volant de levage du MILAN HUB hisse le brancard, et la grue
-    tourne vers le CTV.
-15. **Descente vers le CTV**, tenue par la tag line.
-16. **Posée sur le CTV**, prise en charge par les deckhands.
+13. **Le MILAN sur la grue** : fixé au pied de la grue, sa corde renvoyée par l'œil de la pivot bar
+    jaune jusqu'au brancard, amené dessous. Les deckhands attendent sur le CTV.
+14. **Par-dessus le garde-corps** : le volant du MILAN HUB hisse le brancard, la grue tourne vers le
+    CTV, et les tag lines sont tenues depuis le CTV.
+15. **À éviter : traction latérale.** Une tag line tire le brancard en travers de la flèche. La
+    traction sort du plan de la charnière, et l'alerte rouge s'affiche. Cette mauvaise manœuvre est
+    montrée exprès, et signalée comme telle.
+16. **Descente passive vers le CTV** : la grue amène le brancard au-dessus du pont, sans sauveteur
+    qui l'accompagne, guidé par les deckhands.
+17. **Posée sur le CTV**, prise en charge par les deckhands.
 
-Les étapes 14 à 16 portent le bandeau « Non joué au drill : vent fort ».
-
-**Variante recommandée par la conclusion du drill** (bouton « Variante : treuil, pivot bar
-jaune ») :
-
-1. **Grue en mode treuil.** Le câble du treuil passe par l'œil de la pivot bar jaune jusqu'au
-   brancard. La ligne de secours, en mode passif, est fixée à la base du treuil.
-2. **Levage dans l'axe**, au-dessus du garde-corps.
-3. **À éviter : traction latérale.** La tag line tire le brancard en travers de la flèche. La
-   traction sort du plan de la charnière, et l'alerte rouge s'affiche. C'est une mauvaise manœuvre,
-   montrée exprès et signalée comme telle.
-4. **Descente au treuil, sans accompagnateur.** Aucun sauveteur ne descend avec la victime.
-5. **Posée sur le CTV.**
+Les étapes 14 à 17 portent le bandeau « Non joué au drill (vent fort) · méthode retenue ».
 
 Retours d'expérience affichés à la fin :
 
 - la fin vers le CTV n'a pas pu être jouée à cause du vent fort ;
-- conclusion du drill : préférer la grue en mode treuil, victime suspendue à la pivot bar jaune ;
+- la descente se fait par la grue : corde du MILAN renvoyée par l'œil de la pivot bar jaune, MILAN au
+  pied de la grue (position à confirmer) ;
+- la descente se fait en mode passif : aucun sauveteur n'accompagne la victime ;
+- les tag lines sont tenues depuis le CTV, et la grue tourne pour amener le brancard au-dessus de son
+  pont ;
 - ne jamais tirer la pivot bar latéralement, seulement dans l'axe de sa charnière ;
-- la ligne de secours, en mode passif, est fixée à la base du treuil ;
-- aucun sauveteur n'accompagne la victime pendant la descente ;
 - la forme du pont improvisé reste à confirmer.
 
-## 4. Scénario B : de la fondation au CTV (drill du 22/03, partie extérieure)
+## 5. Scénario B : de la fondation au CTV (drill du 22/03, partie extérieure)
 
 Sept étapes.
 
 1. **Posée à la porte.** La victime, sortie de la fondation dans le brancard, est posée au sol à la
    porte, sur la MEP.
-2. **Sous la grue** : elle y est portée à quatre, pendant que la grue tourne au-dessus de la zone de
-   travail.
+2. **Sous la grue** : elle y est portée à quatre, sous la pivot bar jaune, pendant que la grue
+   tourne au-dessus de la zone de travail.
 3. **Sangle de positionnement** : la victime est sécurisée avec la sangle prévue pour cela.
    L'attache au pied de la grue est une hypothèse, marquée « à confirmer ».
-4. **MILAN au pied de la grue.** Un sauveteur s'y place, installe le MILAN, puis passe la corde dans
-   la poulie aux pivot bars pour accrocher la victime. La pivot bar rouge est utilisée ici, à
-   confirmer.
-5. **Par-dessus le garde-corps** : la victime est hissée. Deux tag lines de couleurs différentes,
-   orange et bleue, la stabilisent.
-6. **Guidée vers le CTV**, en contact radio : chef de secours et deckhand ont la radio en main.
+4. **MILAN au pied de la grue.** Un sauveteur l'y fixe, puis renvoie sa corde par l'œil de la pivot
+   bar jaune pour accrocher la victime. Les deckhands attendent sur le CTV.
+5. **Par-dessus le garde-corps** : le volant du MILAN HUB hisse la victime. Deux tag lines de
+   couleurs différentes, tenues depuis le CTV, la stabilisent.
+6. **Guidée vers le CTV.** La grue l'amène au-dessus du pont, et elle descend en mode passif, sans
+   sauveteur. Le contact radio est maintenu avec l'équipage.
 7. **Posée et sécurisée sur le CTV** : les deckhands le confirment à la radio. La corde est molle :
    l'équipage a besoin de mou une fois la victime à bord.
 
-Retours d'expérience affichés à la fin :
+Retours d'expérience affichés à la fin : les deux leçons du drill, puis la méthode de descente
+(section 3).
 
 - l'équipage du CTV a besoin de mou dans la corde une fois la victime à bord ;
 - deux tag lines de couleurs différentes stabilisent la victime par vent.
 
-## 5. Matériel ajouté
+## 6. Module Cordes : la même méthode dans l'exemple du boat landing
 
-- **MILAN Skylotec, version HUB par défaut**, à confirmer : descendeur de sauvetage à frein
-  centrifuge.
+L'exemple « Évacuation d'un blessé » depuis la plateforme du boat landing (lot 12) ne descend plus au
+Jag 4:1 sur un poteau du garde-corps. Il descend maintenant par la grue, en six étapes.
+
+1. Le blessé est sur la plateforme, T1 à genoux près de lui.
+2. Le brancard est préparé, patte d'oie en place. T3 fixe le MILAN au pied de la grue, et la grue
+   tourne au-dessus de la plateforme d'entrée principale.
+3. Le brancard est porté sous la pivot bar jaune. La corde du MILAN est sa corde de levage : ancrage
+   au pied de la grue, renvoi par l'œil de la pivot bar.
+4. Le volant du MILAN HUB hisse le brancard au-dessus du garde-corps (à confirmer), et la grue tourne
+   vers le CTV. La ligne de guidage est tenue depuis le CTV.
+5. La grue amène le brancard au-dessus du pont du CTV, et il descend en mode passif, sans
+   accompagnateur.
+6. Le brancard est posé à plat sur le pont du CTV.
+
+Ce qu'il a fallu ajouter au module Cordes :
+
+- **La grue dans une étape.** Une étape peut porter un cap de grue ; entre deux étapes, la grue
+  tourne. La scène dessine la grue (la même construction que Levage et ART) tant qu'une étape
+  l'utilise, puis rend la grue du modèle.
+- **L'œil d'une pivot bar comme ancrage.** Sa position suit le cap de la grue, et il s'aligne sur le
+  brancard qui y pend. Sa résistance est celle de la pivot bar : 1 t, soit 9,81 kN.
+- **Une alerte** quand la traction sur cet œil sort du plan de la charnière.
+- **La duplication depuis ART** reprend tout cela : cap de grue, œil jaune en renvoi, et ligne de
+  guidage vers un ancrage sur le CTV quand ce sont les deckhands qui la tiennent.
+
+Les anciens scénarios enregistrés restent lisibles tels quels.
+
+## 7. Matériel ajouté
+
+- **MILAN Skylotec, version HUB par défaut**, à confirmer (le MILAN 2.0 ne lève pas ; la HUB lève au
+  volant) : descendeur de sauvetage à frein centrifuge.
   - Corde de 9 mm, descente constante à 0,9 m/s.
   - 141 kg pour une personne, 280 kg pour deux, hauteur maximale 500 m.
   - Le volant de levage de la version HUB sert à hisser le brancard.
@@ -143,7 +184,6 @@ Retours d'expérience affichés à la fin :
 - **Deux tag lines**, orange et bleue.
 - **Radios** : un poste DMR dans la main du chef d'équipe, du chef de secours et d'un deckhand,
   porté à la tête.
-- **Ligne de secours passive**, rouge, et **câble du treuil** de la grue.
 - **Pivot bars rouge et jaune**, qui pendent sous la flèche quand elles servent : elles s'alignent
   sur ce qu'elles portent. La barre repliée correspondante est alors masquée.
 - **Personnages** : cinq nouvelles postures (assis, allongé, à la radio, porte le brancard, tient
@@ -157,7 +197,7 @@ Retours d'expérience affichés à la fin :
 - Le module Cordes n'offre pas plus de postures qu'avant. Il sait seulement ouvrir un scénario
   qu'on lui confie, et un brancard vide.
 
-## 6. Calculs à la main
+## 8. Calculs à la main
 
 Masses : mannequin 40 kg, brancard CONREST 9,1 kg, victime réelle 100 kg. Aucun sauveteur ne descend
 avec la victime dans ces deux drills.
@@ -186,10 +226,10 @@ Exemple à la main : la charge est tirée de 1 m en travers de la flèche, 3 m s
 Durée de descente au MILAN : hauteur / 0,9 m/s. La carte l'affiche en direct pendant la descente
 vers le CTV.
 
-## 7. Preuves
+## 9. Preuves
 
 PLACEHOLDER-PROOFS
 
-## 8. Questions pour Quentin
+## 10. Questions pour Quentin
 
 PLACEHOLDER-Q
