@@ -43,7 +43,7 @@ qui maintient la tête, le dos et le bassin.
   bloqueurs orange vers la tête et le torse, une sangle noire vers le sac à pieds, réunis sur un
   anneau. À la verticale par la sangle en tête. Posé sans rien d'accroché, la patte d'oie repose sur
   le mannequin.
-- Encombrement : 1,9 m sur 0,5 m. À la verticale, l'empreinte (0,59 × 0,31 m) passe la trappe de
+- Encombrement : 1,9 m sur 0,5 m. À la verticale, l'empreinte (0,59 × 0,29 m) passe la trappe de
   0,80 × 1,00 m ; à l'horizontale non (alerte).
 - Un seul maillage (un appel de dessin en plus) : 1 444 triangles de loin, 3 532 de près.
 
@@ -101,9 +101,13 @@ de l'anneau ; selon l'angle, le rayon frôlait le dessous de la poutre (point à
 aimanté) ou passait dessous et touchait plus loin (pas d'aimantation).
 Correctif : les œils sont pris sur le rayon lui-même. Le plus proche à moins de 12 cm du rayon, devant
 la caméra et pas derrière ce que le rayon touche en premier, est retenu.
-Preuves : test privé, 10 positions de caméra par œil (dont 4 à hauteur du dessous de la poutre, le
-cas rasant), 40 touchers sur 40, aucune aimantation à 25 cm d'un œil ni sur le plancher ; au banc
-(harnais, même méthode que le lot 6c), voir plus bas.
+Preuves :
+- test privé, 10 positions de caméra par œil (dont 4 à hauteur du dessous de la poutre, le cas
+  rasant) : 40 touchers sur 40, aucune aimantation à 25 cm d'un œil ni sur le plancher ;
+- au banc, moteur réel (harnais), même méthode que le lot 6c (centre de l'œil projeté à l'écran,
+  rayon de la caméra par ce pixel, toucher de l'hôte), 10 passages par œil depuis la vue « Cadrer la
+  nacelle » légèrement déplacée à chaque passage : ce lot 40 sur 40 ; module du lot 11 28 sur 40
+  (œils E1 et E3 manqués 6 fois sur 10, E2 et E4 pris 10 fois sur 10).
 
 5. Budget et mode allégé
 ------------------------
@@ -117,3 +121,39 @@ cas rasant), 40 touchers sur 40, aucune aimantation à 25 cm d'un œil ni sur le
   retiré 2 m plus loin, jamais en mode léger.
 - Mode léger du module (téléphone, mode allégé, matériel faible) : moins de segments, aucun détail
   fin.
+
+6. Preuves
+----------
+
+- Suite privée : 242 tests sur 242 (dont tests/lot12.test.mjs : postures et pieds au sol, couleurs
+  des photos, détail fin, dimensions du brancard et passage de la trappe, charges à la main, alertes,
+  timeline, sauvegarde, touchers sur les œils). Lint privé : aucune erreur dans les fichiers du lot.
+- Captures (harnais, moteur réel ; PC au niveau PC, téléphone tel quel, donc en mode léger) à côté
+  des photos : technicien de dos et de face, les sept postures, brancard au sol, en patte d'oie, à la
+  verticale, et vue lointaine sans détail fin. Les photos restent hors dépôt. Triangles du module :
+  de 3 300 à 7 300 sur téléphone, de 9 600 (vue lointaine) à 27 300 (trois techniciens de près) sur
+  PC, pour une scène de 1,1 à 1,4 million de triangles ; appels de dessin : un par technicien et un
+  pour le brancard en plus du matériel.
+- App scellée, PC et téléphone : connexion par mot de passe, évacuation complète de la plateforme
+  en cinq étapes (cadrée sur le brancard, étiquettes, alertes, onglet Calculs), préréglage 100 kg,
+  évacuation par la trappe de la nacelle en cinq étapes, mode allégé (rendu safe-dom-dpr1) avec la
+  même évacuation et fermeture propre du module : aucune erreur console.
+- Ce que montrent les calculs de l'exemple de la plateforme avec l'accompagnateur (mannequin) :
+  brin du Y à 61° : 1,463 / (2 × cos 30,5°) = 0,85 kN ; chute sur la corde d'assurance 6,6 kN, au-delà
+  des 6 kN ; ancrage A3 15 / 6,63 = marge × 2,3 sous × 2,5. Avec la victime réelle (100 kg) :
+  brin du Y 1,19 kN, chute 8,3 kN, marge × 1,8. Ces alertes sont voulues : elles montrent le poids
+  de l'accompagnateur sur la chaîne d'assurance.
+- Coffre : identifiant, sel, contrôle et itérations inchangés, seule l'entrée runtime change ; aucun
+  fichier en clair ; mot de passe absent du dépôt. Lint public à 0 erreur, build OK, dist/3D
+  identique à public/3D. Archive source-3d rafraîchie (même coffre, IV neuf) : 352 fichiers,
+  restauration vérifiée à l'identique.
+
+7. Questions pour Quentin
+-------------------------
+
+- La charge maximale de 150 kg du brancard compte-t-elle sa propre masse (9,1 kg) ? L'alerte porte
+  sur la victime seule (au-delà de 150 kg).
+- L'accompagnateur est compté à la masse de calcul (100 kg, équipé) : à confirmer, ou une masse propre ?
+- Exemple de la plateforme : levage au Jag 4:1 sur un poteau du garde-corps (A3), faute d'ancrage
+  en hauteur connu à cet endroit ; y a-t-il un point haut (potence, bossoir) à utiliser ?
+- Longueur de la patte d'oie (environ 0,9 m par brin) et de la sangle en tête (0,32 m) : à confirmer.
