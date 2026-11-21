@@ -228,8 +228,71 @@ vers le CTV.
 
 ## 9. Preuves
 
-PLACEHOLDER-PROOFS
+Mesures faites sur l'app scellée de ce lot (`/3D/test/`, mot de passe, rendu logiciel sans GPU) et dans
+le banc moteur. Les captures ont été envoyées à Quentin, pas commitées.
+
+**Parcours complet dans l'app scellée, sur PC (1280 × 800) et sur téléphone (Pixel 7)** : aucune
+erreur console.
+
+- Le bouton ART ouvre la carte, puis le site est lu : grue et CTV.
+- **Scénario A** : étapes 1, 4, 5, 7, 9, 10, 12, 13, 14, 15, 16 et 17, chacune cadrée, avec son texte,
+  ses calculs et ses alertes ; retours d'expérience à la fin.
+- **Scénario B** : les sept étapes, puis les retours d'expérience.
+- **Défilement de la frise** dans le scénario B :
+  - lent, la boule glissée en 14 s : `1→2`, `2→3`, `3→4`, `4→5`, `5→6`, `6→7`, dans l'ordre, la
+    scène interpolée entre les étapes ;
+  - rapide, en 0,7 s : les mêmes étapes, dans le même ordre, en accéléré.
+- **Duplication dans Cordes** : ART se ferme, Cordes s'ouvre sur « ART B · Évacuation de la fondation
+  vers le CTV », sept étapes.
+- **Exemple Cordes** de la plateforme du boat landing, par la grue : six étapes. Pendant la descente,
+  l'avertissement « Descente au MILAN sur une seule corde (appareil de sauvetage) : à confirmer par le
+  plan de sauvetage » s'affiche. C'est voulu : la règle du lot 12 (deux cordes pour un brancard
+  suspendu) reste une alerte pour toute autre corde.
+- **Mode allégé** (`?safe=1`) : ouverture, étapes, fermeture propre.
+
+**Alerte de traction latérale sur la pivot bar jaune** (seuil 5°) :
+
+- étape « Par-dessus le garde-corps », dans l'axe : 0,0°, pas d'alerte ;
+- étape « À éviter : traction latérale » : 22,5° hors du plan, 0,522 kN de tension, 0,20 kN de
+  flexion, alerte rouge ;
+- curseur « Traction latérale » poussé à 1 m à l'étape précédente : 20,7°, 0,515 kN, 0,18 kN,
+  alerte rouge.
+
+**Charge sur la pivot bar jaune pendant la descente**, lue sur la carte : 0,482 kN avec le mannequin
+(marge × 20), 1,070 kN avec la victime réelle (marge × 9). Le MILAN affiche 49,1 puis 109,1 kg sur
+141 kg. Ce sont les valeurs calculées à la main en section 8.
+
+**Socle identique, fonction fermée** (instant figé, calques HTML masqués) :
+
+PLACEHOLDER-PX
+
+**Budget** (banc moteur, caméra fixe, mouvement réduit) :
+
+PLACEHOLDER-BUDGET
+
+**Contrôles du dépôt** :
+
+- suite privée : PLACEHOLDER-TESTS ;
+- lint public à 0 erreur, build OK, `dist/3D` identique à `public/3D` ;
+- coffre inchangé hors entrée `runtime`, aucun fichier en clair, mot de passe absent du dépôt ;
+- les 11 ressources lourdes sont inchangées ; seuls le runtime et les trois modules à la demande
+  (art 104 Ko, lift 77 Ko, ropes 181 Ko) sont rescellés ;
+- archive `source-3d` rafraîchie (même coffre, IV neuf) : 368 fichiers, restauration vérifiée à
+  l'identique.
 
 ## 10. Questions pour Quentin
 
-PLACEHOLDER-Q
+- **Les noms des plateformes.** Est-ce bien le pont au sommet du girder (28,3 m) qui s'appelle
+  « girder platform », et la plateforme de la grue (24,6 m) la MEP ? Le lot 8 avait nommé « girder
+  platform » le plancher de 24,6 m.
+- **La porte de la girder platform** est-elle le portillon en haut de l'échelle ?
+- **L'ancrage haut du renvoi** (drill A) : est-ce bien le bras du SRL, ou un autre point ?
+- **Le MILAN au pied de la grue** : où exactement, et sur quel point ?
+- **La version du MILAN** : HUB, avec volant de levage ? Le MILAN 2.0 ne lève pas.
+- **La charnière de la pivot bar jaune** est-elle bien en travers de la flèche, de sorte que la
+  traction doive rester dans le plan vertical de la flèche ? Les seuils de 2° et 5° sont-ils les
+  bons ?
+- **La forme du pont improvisé** du drill A.
+- **La sangle de positionnement** du drill B : où est-elle attachée ?
+- **La descente au MILAN sur une seule corde** : le plan de sauvetage prévoit-il une corde d'assurance
+  en plus ?
