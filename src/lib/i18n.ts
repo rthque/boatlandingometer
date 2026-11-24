@@ -54,6 +54,11 @@ const en = {
    */
   monthDropdown: null as ((d: Date) => string) | null,
   today: "Today",
+  // Touch gestures and sheets
+  swipeDay: (d: Date) => format(d, "EEE, MMM d", { locale: enUS }),
+  swipeCalendar: "Calendar",
+  swipeInfo: "Info",
+  calendarTitle: "Pick a day",
   tetherPreset: "2.2m tether clamp works",
   themeLabel: (night: boolean): string => (night ? "Switch to day view" : "Switch to night view"),
   themeTitle: (night: boolean): string => (night ? "Day view" : "Night view"),
@@ -207,6 +212,10 @@ const fr: Strings = {
   calendarLocale: frDayPicker,
   monthDropdown: (d) => d.toLocaleString("fr-FR", { month: "short" }),
   today: "Aujourd'hui",
+  swipeDay: (d) => format(d, "EEE d MMM", { locale: frDayPicker }),
+  swipeCalendar: "Calendrier",
+  swipeInfo: "Infos",
+  calendarTitle: "Choisir un jour",
   tetherPreset: "Travaux collier tether 2,2m",
   themeLabel: (night) => (night ? "Passer en vue de jour" : "Passer en vue de nuit"),
   themeTitle: (night) => (night ? "Vue de jour" : "Vue de nuit"),

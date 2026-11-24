@@ -10,6 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useLang, useT } from "@/hooks/use-lang";
+import { useTouchUI } from "@/hooks/use-touch-ui";
+import { Sheet } from "@/components/tide/Sheet";
 import incidentClip from "@/assets/splash-zone-incident.mp4";
 
 /**
@@ -24,13 +26,46 @@ import incidentClip from "@/assets/splash-zone-incident.mp4";
  * a <strong> stops being translatable as a sentence. Keep the two in step — a
  * claim changed in one and not the other is a panel that says two things.
  */
-export function AboutDialog() {
+export function AboutDialog({
+  open,
+  onOpenChange,
+  touchUI,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Phone: a sheet from the bottom edge — what the upward swipe pulls in. */
+  touchUI: boolean;
+}) {
   const contentRef = useRef<HTMLDivElement>(null);
   const { lang } = useLang();
   const t = useT();
+  const body = lang === "fr" ? <BodyFr /> : <BodyEn />;
+
+  if (touchUI) {
+    return (
+      <>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8 bg-background/90 backdrop-blur-sm"
+          aria-label={t.aboutLabel}
+          title={t.aboutLabel}
+          onClick={() => onOpenChange(true)}
+        >
+          <InfoIcon className="size-4" />
+        </Button>
+        {/* Scrolls inside the sheet. Dragging down closes it only once the
+            text is back at its top — vaul's rule — so reading never fights
+            dismissing. */}
+        <Sheet side="bottom" open={open} onOpenChange={onOpenChange}>
+          <div className="space-y-4 overflow-y-auto overscroll-contain px-5 pt-2 pb-6">{body}</div>
+        </Sheet>
+      </>
+    );
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -55,7 +90,7 @@ export function AboutDialog() {
         }}
         className="max-h-[85dvh] max-w-2xl overflow-y-auto"
       >
-        {lang === "fr" ? <BodyFr /> : <BodyEn />}
+        {body}
       </DialogContent>
     </Dialog>
   );
@@ -68,7 +103,9 @@ function IncidentClip() {
     // height cap is the only thing stopping a portrait clip from filling the
     // panel. playsInline matters — without it iOS hijacks the tap into its own
     // fullscreen player.
+    // data-vaul-no-drag: scrubbing the clip must not drag the sheet away.
     <video
+      data-vaul-no-drag
       src={incidentClip}
       controls
       playsInline
@@ -79,6 +116,7 @@ function IncidentClip() {
 }
 
 function BodyEn() {
+  const touch = useTouchUI();
   return (
     <>
       <DialogHeader>
@@ -109,6 +147,14 @@ function BodyEn() {
           and falling, or the days themselves with the water held at the height you set — so you can
           pick a level and watch which days give it to you, and when.
         </p>
+        {touch && (
+          <p className="text-muted-foreground">
+            On this phone, swipe across the chart: left or right for the next or previous day, down
+            for the calendar, up for this page. A label shows what letting go will do; slide back
+            before letting go to cancel. Each page goes away the way it came — drag it back, tap
+            outside it, or press Back.
+          </p>
+        )}
         <p className="text-muted-foreground">
           Over the forecast week the chart draws the forecast sea around the tide (the{" "}
           <em>Waves on chart</em> switch in the forecast panel turns it off): a band from half the
@@ -218,6 +264,7 @@ function BodyEn() {
  * splash zone, tether line, CTV — stay in English, as they do on site.
  */
 function BodyFr() {
+  const touch = useTouchUI();
   return (
     <>
       <DialogHeader>
@@ -253,6 +300,15 @@ function BodyFr() {
           eux-mêmes, l&rsquo;eau restant à la hauteur choisie — pour choisir un niveau et voir quels
           jours l&rsquo;offrent, et à quelle heure.
         </p>
+        {touch && (
+          <p className="text-muted-foreground">
+            Sur ce téléphone, faites glisser le doigt sur le graphique&nbsp;: vers la gauche ou la
+            droite pour le jour suivant ou précédent, vers le bas pour le calendrier, vers le haut
+            pour cette page. Une étiquette indique ce que fera le geste en relâchant&nbsp;; revenez
+            en arrière avant de relâcher pour annuler. Chaque page repart comme elle est
+            venue&nbsp;: faites-la glisser en sens inverse, touchez à côté, ou appuyez sur Retour.
+          </p>
+        )}
         <p className="text-muted-foreground">
           Sur la semaine couverte par la prévision, le graphique trace la mer prévue autour de la
           marée (l&rsquo;interrupteur <em>Afficher les vagues</em> du panneau de prévision la

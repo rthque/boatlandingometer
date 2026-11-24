@@ -15,6 +15,7 @@ import { AboutDialog } from "@/components/tide/AboutDialog";
 import { BuildTag } from "@/components/tide/BuildBadge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet } from "@/components/tide/Sheet";
 import { DATE_MIN, DATE_MAX, shiftDay } from "@/lib/tide-math";
 import type { CoefDayButtonComponent } from "@/components/tide/CoefDayButton";
 import { SPEED_POS_MAX, type AnimMode, type AnimState } from "@/hooks/use-time-lapse";
@@ -47,6 +48,10 @@ type Props = {
   secPerDay: number;
   theme: Theme;
   toggleTheme: () => void;
+  /** Phone: the calendar and the info open as sheets. */
+  touchUI: boolean;
+  aboutOpen: boolean;
+  setAboutOpen: (v: boolean) => void;
 };
 
 /** The two languages, each named in itself. Order is the order on screen. */
@@ -120,6 +125,9 @@ export function Controls({
   secPerDay,
   theme,
   toggleTheme,
+  touchUI,
+  aboutOpen,
+  setAboutOpen,
 }: Props) {
   const night = theme === "night";
   const t = useT();
@@ -128,6 +136,29 @@ export function Controls({
     { mode: "clock" as const, label: t.modeClock, hint: t.modeClockHint },
     { mode: "days" as const, label: t.modeDays, hint: t.modeDaysHint },
   ];
+  /** The calendar, shared by the desktop popover and the phone sheet. */
+  const calendar = (className?: string) => (
+    <Calendar
+      className={className}
+      mode="single"
+      selected={selectedDate}
+      onSelect={(date) => {
+        if (date) {
+          setSelectedDate(date);
+          setDatePickerOpen(false);
+        }
+      }}
+      month={calMonth}
+      onMonthChange={setCalMonth}
+      startMonth={DATE_MIN}
+      endMonth={DATE_MAX}
+      disabled={(date) => date < DATE_MIN || date > DATE_MAX}
+      captionLayout="dropdown"
+      locale={t.calendarLocale}
+      formatters={t.monthDropdown ? { formatMonthDropdown: t.monthDropdown } : undefined}
+      components={{ DayButton: coefDayButton }}
+    />
+  );
   const goToday = () => {
     const today = new Date();
     setSelectedDate(today < DATE_MIN ? DATE_MIN : today > DATE_MAX ? DATE_MAX : today);
@@ -154,45 +185,55 @@ export function Controls({
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <Popover
-            open={datePickerOpen}
-            onOpenChange={(open) => {
-              if (open) setCalMonth(selectedDate);
-              setDatePickerOpen(open);
-            }}
-          >
-            <PopoverTrigger asChild>
+          {touchUI ? (
+            // On a phone the calendar is a sheet from the top edge — the same
+            // one the downward swipe pulls in, so it is one calendar however
+            // it is opened — with day cells grown to a fingertip.
+            <>
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-1.5 bg-background/90 backdrop-blur-sm"
+                onClick={() => {
+                  setCalMonth(selectedDate);
+                  setDatePickerOpen(true);
+                }}
               >
                 <CalendarIcon className="size-3.5" />
                 {t.dateButton(selectedDate)}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                    setDatePickerOpen(false);
-                  }
-                }}
-                month={calMonth}
-                onMonthChange={setCalMonth}
-                startMonth={DATE_MIN}
-                endMonth={DATE_MAX}
-                disabled={(date) => date < DATE_MIN || date > DATE_MAX}
-                captionLayout="dropdown"
-                locale={t.calendarLocale}
-                formatters={t.monthDropdown ? { formatMonthDropdown: t.monthDropdown } : undefined}
-                components={{ DayButton: coefDayButton }}
-              />
-            </PopoverContent>
-          </Popover>
+              <Sheet
+                side="top"
+                open={datePickerOpen}
+                onOpenChange={setDatePickerOpen}
+                title={t.calendarTitle}
+              >
+                <div className="flex justify-center">{calendar("[--cell-size:2.75rem]")}</div>
+              </Sheet>
+            </>
+          ) : (
+            <Popover
+              open={datePickerOpen}
+              onOpenChange={(open) => {
+                if (open) setCalMonth(selectedDate);
+                setDatePickerOpen(open);
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 bg-background/90 backdrop-blur-sm"
+                >
+                  <CalendarIcon className="size-3.5" />
+                  {t.dateButton(selectedDate)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                {calendar()}
+              </PopoverContent>
+            </Popover>
+          )}
           <Button
             variant="outline"
             size="icon"
@@ -269,7 +310,10 @@ export function Controls({
             covered the coefficients. Measured, the widest content ("10.0
             days/s" beside Hours | Days) still fits with 4px to spare. */}
         {animActive && (
-          <div className="w-44 rounded-md border border-border bg-background/90 px-1.5 py-1 backdrop-blur-sm min-[380px]:w-48 min-[380px]:px-2.5">
+          <div
+            className="w-44 rounded-md border border-border bg-background/90 px-1.5 py-1 backdrop-blur-sm min-[380px]:w-48 min-[380px]:px-2.5"
+            data-no-swipe
+          >
             <div className="flex items-center justify-between gap-1 text-xs">
               {/* The mode replaces a static "Speed" label rather than taking a
                   row of its own: it is what the number beside it means, and the
@@ -361,7 +405,7 @@ export function Controls({
         >
           {night ? <SunIcon className="size-4" /> : <MoonStarIcon className="size-4" />}
         </Button>
-        <AboutDialog />
+        <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} touchUI={touchUI} />
       </div>
     </div>
   );

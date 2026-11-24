@@ -49,6 +49,7 @@ export function HeightLine({
         height={60}
         fill="transparent"
         style={{ cursor: "ns-resize", touchAction: "none" }}
+        data-no-swipe
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();

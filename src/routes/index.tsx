@@ -1,14 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as SunCalc from "suncalc";
 import type { PlotGeom } from "@/lib/geom";
-import { DATE_MAX, DATE_MIN, fracToHeight, heightToFrac, makeTideHeight } from "@/lib/tide-math";
+import {
+  DATE_MAX,
+  DATE_MIN,
+  fracToHeight,
+  heightToFrac,
+  makeTideHeight,
+  shiftDay,
+} from "@/lib/tide-math";
 import { DAY_SEA_IMG, DIEPPE, VIEWS, type ViewId } from "@/lib/views";
 import { useTideExtremes, useCoefByDay } from "@/hooks/use-tide-data";
 import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
 import { useTheme } from "@/hooks/use-theme";
 import { LangContext, useLangState } from "@/hooks/use-lang";
+import { useTouchUI } from "@/hooks/use-touch-ui";
+import { useSwipe } from "@/hooks/use-swipe";
+import { useBackCloses } from "@/hooks/use-back-closes";
+import { SwipeHints } from "@/components/tide/SwipeHints";
 import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
 import { SkyBodies, SkyTracks } from "@/components/tide/SkyTrack";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
@@ -59,6 +70,8 @@ function TideApp() {
   });
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(selectedDate);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const touchUI = useTouchUI();
 
   // Declared up here because the scene geometry below now depends on the
   // target height: in the photographic day view the sea surface IS the red
@@ -95,6 +108,27 @@ function TideApp() {
   const PAD_B = 0;
 
   const { containerRef, size } = usePlotSize();
+
+  // Touch only (see useTouchUI): swipes on the chart's empty ground turn the
+  // day over and pull in the calendar and the info, and the phone's Back
+  // closes whichever of the two is open. On a mouse none of this exists.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const prevDay = shiftDay(selectedDate, -1);
+  const nextDay = shiftDay(selectedDate, 1);
+  useSwipe(rootRef, containerRef, {
+    enabled: touchUI && !datePickerOpen && !aboutOpen,
+    canPrev: prevDay !== null,
+    canNext: nextDay !== null,
+    onPrev: () => prevDay && setSelectedDate(prevDay),
+    onNext: () => nextDay && setSelectedDate(nextDay),
+    onDown: () => {
+      setCalMonth(selectedDate);
+      setDatePickerOpen(true);
+    },
+    onUp: () => setAboutOpen(true),
+  });
+  useBackCloses(datePickerOpen, () => setDatePickerOpen(false), touchUI);
+  useBackCloses(aboutOpen, () => setAboutOpen(false), touchUI);
 
   const width = size.width;
   const totalHeight = size.height;
@@ -408,8 +442,9 @@ function TideApp() {
   }, [selectedDate]);
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-background text-foreground">
+    <div ref={rootRef} className="h-[100dvh] overflow-hidden bg-background text-foreground">
       <div className="w-full h-full flex flex-col">
+        {touchUI && <SwipeHints prev={prevDay} next={nextDay} />}
         {/* One column so the forecast always sits directly under the last
             extreme, whether the day has three or four of them. */}
         <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
@@ -453,6 +488,9 @@ function TideApp() {
           secPerDay={secPerDay}
           theme={theme}
           toggleTheme={toggleTheme}
+          touchUI={touchUI}
+          aboutOpen={aboutOpen}
+          setAboutOpen={setAboutOpen}
         />
         <div
           ref={containerRef}
