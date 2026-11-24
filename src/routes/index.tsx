@@ -1,17 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as SunCalc from "suncalc";
+import { format } from "date-fns";
 import type { PlotGeom } from "@/lib/geom";
-import {
-  DATE_MAX,
-  DATE_MIN,
-  fracToHeight,
-  heightToFrac,
-  makeTideHeight,
-  shiftDay,
-} from "@/lib/tide-math";
+import { DATE_MAX, DATE_MIN, fracToHeight, heightToFrac, shiftDay } from "@/lib/tide-math";
 import { DAY_SEA_IMG, DIEPPE, VIEWS, type ViewId } from "@/lib/views";
-import { useTideExtremes, useCoefByDay } from "@/hooks/use-tide-data";
+import { useCoefByDay } from "@/hooks/use-tide-data";
+import { useDayModel, type DayModel } from "@/hooks/use-day-model";
 import { useTimeLapse } from "@/hooks/use-time-lapse";
 import { usePlotSize } from "@/hooks/use-plot-size";
 import { useTheme } from "@/hooks/use-theme";
@@ -19,7 +13,8 @@ import { LangContext, useLangState } from "@/hooks/use-lang";
 import { useTouchUI } from "@/hooks/use-touch-ui";
 import { useSwipe } from "@/hooks/use-swipe";
 import { useBackCloses } from "@/hooks/use-back-closes";
-import { SwipeHints } from "@/components/tide/SwipeHints";
+import { DayHint, SwipeHints } from "@/components/tide/SwipeHints";
+import { DaySlide, DaySlideHtml, type DayPage } from "@/components/tide/DaySlide";
 import { SceneDefs, SkyLayer, WaterVeil } from "@/components/tide/SeaScene";
 import { SkyBodies, SkyTracks } from "@/components/tide/SkyTrack";
 import { makeCoefDayButton } from "@/components/tide/CoefDayButton";
@@ -27,14 +22,13 @@ import { ViewSwitcher } from "@/components/tide/ViewSwitcher";
 import { ExtremesList } from "@/components/tide/ExtremesList";
 import { ForecastPanel } from "@/components/tide/ForecastPanel";
 import { WaveBandFill, WaveCrest } from "@/components/tide/WaveBand";
-import { useForecast } from "@/hooks/use-forecast";
 import { crestAbove, hsAtHour, hsIsHigh, windIsHigh } from "@/lib/forecast";
 import { Controls } from "@/components/tide/Controls";
-import { BackgroundLayer } from "@/components/tide/BackgroundLayer";
+import { BackgroundLayer, NightBands } from "@/components/tide/BackgroundLayer";
 import { AxisGrid } from "@/components/tide/AxisGrid";
 import { TideCurve } from "@/components/tide/TideCurve";
 import { Wc59Overlay } from "@/components/tide/Wc59Overlay";
-import { HeightLine } from "@/components/tide/HeightLine";
+import { HeightLine, HeightMarks } from "@/components/tide/HeightLine";
 import { NowMarker } from "@/components/tide/NowMarker";
 import { HoverTooltip } from "@/components/tide/HoverTooltip";
 import { SunTimes } from "@/components/tide/SunTimes";
@@ -88,16 +82,8 @@ function TideApp() {
   const [showWaves, setShowWaves] = useState(true);
   const [draggingLine, setDraggingLine] = useState(false);
 
-  const { allExtremes } = useTideExtremes(selectedDate);
   const coefByDay = useCoefByDay(datePickerOpen, calMonth);
   const coefDayButton = useMemo(() => makeCoefDayButton(coefByDay), [coefByDay]);
-
-  const visibleExtremes = useMemo(
-    () => allExtremes.filter((p) => p.t >= 0 && p.t <= 24),
-    [allExtremes],
-  );
-
-  const tideHeight = useMemo(() => makeTideHeight(allExtremes), [allExtremes]);
 
   // Full-bleed: the schema fills 100% of the viewport. Axis graduations are
   // overlaid directly on the image (with a white halo for legibility) instead
@@ -108,27 +94,6 @@ function TideApp() {
   const PAD_B = 0;
 
   const { containerRef, size } = usePlotSize();
-
-  // Touch only (see useTouchUI): swipes on the chart's empty ground turn the
-  // day over and pull in the calendar and the info, and the phone's Back
-  // closes whichever of the two is open. On a mouse none of this exists.
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const prevDay = shiftDay(selectedDate, -1);
-  const nextDay = shiftDay(selectedDate, 1);
-  useSwipe(rootRef, containerRef, {
-    enabled: touchUI && !datePickerOpen && !aboutOpen,
-    canPrev: prevDay !== null,
-    canNext: nextDay !== null,
-    onPrev: () => prevDay && setSelectedDate(prevDay),
-    onNext: () => nextDay && setSelectedDate(nextDay),
-    onDown: () => {
-      setCalMonth(selectedDate);
-      setDatePickerOpen(true);
-    },
-    onUp: () => setAboutOpen(true),
-  });
-  useBackCloses(datePickerOpen, () => setDatePickerOpen(false), touchUI);
-  useBackCloses(aboutOpen, () => setAboutOpen(false), touchUI);
 
   const width = size.width;
   const totalHeight = size.height;
@@ -250,36 +215,12 @@ function TideApp() {
     pointerToPlot,
   };
 
-  const curvePath = useMemo(() => {
-    const steps = 960;
-    let d = "";
-    for (let i = 0; i <= steps; i++) {
-      const t = (i / steps) * 24;
-      const x = xOfT(t);
-      const y = yOfH(tideHeight(t));
-      d += i === 0 ? `M ${x.toFixed(2)} ${y.toFixed(2)}` : ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
-    }
-    return d;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, plotHeight, tideHeight, Y_MIN, Y_MAX]);
-
-  const seaPath = useMemo(() => {
-    const steps = 960;
-    // Close the fill on chart datum, not on the bottom of the plot. This band
-    // is the tide — the water that comes and goes — and below datum the scene's
-    // permanent sea already has it covered. Running the fill to the bottom
-    // painted a second, lighter water on top of the deep water and washed the
-    // immersed legs out.
-    const base = yOfH(0).toFixed(2);
-    let d = `M ${xOfT(0).toFixed(2)} ${base}`;
-    for (let i = 0; i <= steps; i++) {
-      const t = (i / steps) * 24;
-      d += ` L ${xOfT(t).toFixed(2)} ${yOfH(tideHeight(t)).toFixed(2)}`;
-    }
-    d += ` L ${xOfT(24).toFixed(2)} ${base} Z`;
-    return d;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, plotHeight, tideHeight, Y_MIN, Y_MAX]);
+  // Everything the chart draws that belongs to the day rather than to the
+  // structure, for the selected day — and on a phone, while a finger is on the
+  // chart, for the days either side, so a sideways swipe can slide them in.
+  const geo = { xOfT, yOfH, key: `${width}|${plotHeight}|${Y_MIN}|${Y_MAX}` };
+  const day = useDayModel(selectedDate, geo, targetHeight, showWaves) as DayModel;
+  const { allExtremes, visibleExtremes, tideHeight, forecastDay } = day;
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.pointerType === "touch") return; // no hover on touch
@@ -293,61 +234,18 @@ function TideApp() {
     setHover({ x: xOfT(t), t, h });
   };
 
-  const { day: forecastDay } = useForecast(selectedDate);
   /** A 🛑 on the panel: it is then ~35 px wider than on an ordinary day. */
   const flagged =
     !!forecastDay &&
     ((forecastDay.waveHsM !== null && hsIsHigh(forecastDay.waveHsM)) ||
       (forecastDay.windMs !== null && windIsHigh(forecastDay.windMs)));
-  const waveSeries = useMemo(() => {
-    const series = forecastDay?.waveHsByHour;
-    return series && series.some((v) => v !== null) ? series : null;
-  }, [forecastDay]);
-  const waveOn = showWaves && waveSeries !== null;
-  /** Highest estimated water at hour t with the waves on, or null without them. */
-  const crestAt = (t: number): number | null => {
-    if (!waveOn || !waveSeries) return null;
-    const hs = hsAtHour(waveSeries, t);
-    return hs === null ? null : tideHeight(t) + crestAbove(hs);
+  /** Highest estimated water at hour t on a day, with the waves on; else null. */
+  const crestOf = (m: DayModel, t: number): number | null => {
+    if (!m.waveOn || !m.waveSeries) return null;
+    const hs = hsAtHour(m.waveSeries, t);
+    return hs === null ? null : m.tideHeight(t) + crestAbove(hs);
   };
-
-  /**
-   * What the red line is read against: the tide, or with the waves on, the
-   * crest — so its crossing times and durations say when the biggest waves
-   * clear that height, not when the still water does. Those durations are
-   * shorter, and shorter is the true answer for wave-sensitive work.
-   *
-   * Only when the forecast covers every hour of the day. A level that is the
-   * crest in some hours and the bare tide in others jumps where the forecast
-   * stops, and the jump would read as a crossing nobody could meet. With a
-   * gap the line stays on the tide, and its chips lose the wave mark that
-   * says otherwise.
-   */
-  const waveAdjusted = waveOn && waveSeries !== null && waveSeries.every((v) => v !== null);
-  const levelAt = useMemo(() => {
-    if (!waveAdjusted || !waveSeries) return tideHeight;
-    return (t: number) => tideHeight(t) + crestAbove(hsAtHour(waveSeries, t) ?? 0);
-  }, [waveAdjusted, waveSeries, tideHeight]);
-
-  // Times where the red line's level (the tide, or the crest with the waves
-  // on) crosses targetHeight.
-  const crossings = useMemo(() => {
-    if (targetHeight === null) return [];
-    const steps = 2880; // 30s resolution
-    const xs: number[] = [];
-    let prev = levelAt(0) - targetHeight;
-    for (let i = 1; i <= steps; i++) {
-      const t = (i / steps) * 24;
-      const curr = levelAt(t) - targetHeight;
-      if (prev === 0 || prev < 0 !== curr < 0) {
-        const tPrev = ((i - 1) / steps) * 24;
-        const u = prev === curr ? 0 : prev / (prev - curr);
-        xs.push(tPrev + u * (24 / steps));
-      }
-      prev = curr;
-    }
-    return xs;
-  }, [targetHeight, levelAt]);
+  const crestAt = (t: number) => crestOf(day, t);
 
   const isToday = useMemo(() => {
     const now = new Date();
@@ -430,21 +328,87 @@ function TideApp() {
   }, [Y_MIN, Y_MAX, view]);
   const xTicks = Array.from({ length: 13 }, (_, i) => i * 2);
 
-  // Sunrise / sunset for the selected day (recomputed daily — SunCalc accounts
-  // for the date, so these shift across the seasons over the whole year).
-  const { sunriseH, sunsetH } = useMemo(() => {
-    const t = SunCalc.getTimes(selectedDate, DIEPPE.latitude, DIEPPE.longitude);
-    const toH = (d: Date | null | undefined) =>
-      d && !Number.isNaN(d.getTime())
-        ? d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600
-        : null;
-    return { sunriseH: toH(t.sunrise), sunsetH: toH(t.sunset) };
-  }, [selectedDate]);
+  // Touch only (see useTouchUI): swipes on the chart's empty ground turn the
+  // day over and pull in the calendar and the info, and the phone's Back
+  // closes whichever of the two is open. On a mouse none of this exists.
+  //
+  // The sideways swipe is a carousel: the day's layers slide with the finger
+  // and the next or previous day comes in behind them. Its pages exist only
+  // while a finger is on the chart (`peek`); the rest of the time the chart is
+  // the selected day alone, as on a mouse.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const prevDay = useMemo(() => shiftDay(selectedDate, -1), [selectedDate]);
+  const nextDay = useMemo(() => shiftDay(selectedDate, 1), [selectedDate]);
+  const [peek, setPeek] = useState(false);
+  const prevModel = useDayModel(touchUI && peek ? prevDay : null, geo, targetHeight, showWaves);
+  const nextModel = useDayModel(touchUI && peek ? nextDay : null, geo, targetHeight, showWaves);
+  const pages: DayPage<DayModel>[] | null = touchUI
+    ? [
+        ...(prevModel
+          ? [{ key: prevModel.key, dx: -plotWidth, role: "prev" as const, m: prevModel }]
+          : []),
+        { key: day.key, dx: 0, role: "cur" as const, m: day },
+        ...(nextModel
+          ? [{ key: nextModel.key, dx: plotWidth, role: "next" as const, m: nextModel }]
+          : []),
+      ]
+    : null;
+  useSwipe(rootRef, {
+    enabled: touchUI && !datePickerOpen && !aboutOpen,
+    pageWidth: plotWidth,
+    canPrev: prevDay !== null,
+    canNext: nextDay !== null,
+    onPeek: setPeek,
+    onPrev: () => prevDay && setSelectedDate(prevDay),
+    onNext: () => nextDay && setSelectedDate(nextDay),
+    onDown: () => {
+      setCalMonth(selectedDate);
+      setDatePickerOpen(true);
+    },
+    onUp: () => setAboutOpen(true),
+  });
+  useBackCloses(datePickerOpen, () => setDatePickerOpen(false), touchUI);
+  useBackCloses(aboutOpen, () => setAboutOpen(false), touchUI);
+
+  /**
+   * The "now" marker on a page. The selected day's is the time-lapse clock or
+   * the real time, as it always was. A neighbour shows the real time if it is
+   * today — swipe from yesterday and today comes in with its marker on — and
+   * nothing while the clock runs, which belongs to the selected day alone.
+   */
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  /**
+   * The incoming day's chip: above the sunrise / sunset row (which sits 28 px
+   * over the 10 m line, see SunTimes), but kept within the middle of the
+   * screen, clear of the panels in its upper corners and of the hour labels.
+   */
+  const dayHintTop = Math.round(
+    Math.min(Math.max(yOfH(10) - 28 - 12 - 38, totalHeight * 0.3), totalHeight * 0.6),
+  );
+  const markerFor = (m: DayModel, role: "prev" | "cur" | "next") => {
+    if (role === "cur") {
+      return (
+        showMarker &&
+        markerH !== null && (
+          <NowMarker geom={geom} markerT={markerT} markerH={markerH} crestH={crestAt(markerT)} />
+        )
+      );
+    }
+    if (clockDriven || m.key !== todayKey) return null;
+    return (
+      <NowMarker
+        geom={geom}
+        markerT={nowT}
+        markerH={m.tideHeight(nowT)}
+        crestH={crestOf(m, nowT)}
+      />
+    );
+  };
 
   return (
     <div ref={rootRef} className="h-[100dvh] overflow-hidden bg-background text-foreground">
       <div className="w-full h-full flex flex-col">
-        {touchUI && <SwipeHints prev={prevDay} next={nextDay} />}
+        {touchUI && <SwipeHints />}
         {/* One column so the forecast always sits directly under the last
             extreme, whether the day has three or four of them. */}
         <div className="absolute top-24 left-2 z-20 flex flex-col gap-1.5">
@@ -534,14 +498,19 @@ function TideApp() {
             {/* The tracks go behind the structure, the bodies in front of it —
                 see SkyTrack.tsx for why the two are layered differently. */}
             {showScene && showSky && (
-              <SkyTracks
-                geom={geom}
-                horizonY={horizonY}
-                date={selectedDate}
-                hour={skyHour}
-                lat={DIEPPE.latitude}
-                lon={DIEPPE.longitude}
-              />
+              <DaySlide pages={pages} cur={day}>
+                {(m, role) => (
+                  <SkyTracks
+                    geom={geom}
+                    horizonY={horizonY}
+                    date={m.date}
+                    hour={skyHour}
+                    lat={DIEPPE.latitude}
+                    lon={DIEPPE.longitude}
+                    idSuffix={role === "cur" ? undefined : `-${role}`}
+                  />
+                )}
+              </DaySlide>
             )}
 
             <BackgroundLayer
@@ -551,8 +520,11 @@ function TideApp() {
               imageTop={imageTop}
               imageDisplayWidth={imageDisplayWidth}
               imageDisplayHeight={imageDisplayHeight}
-              sunriseH={sunriseH}
-              sunsetH={sunsetH}
+              bands={
+                <DaySlide pages={pages} cur={day}>
+                  {(m) => <NightBands geom={geom} sunriseH={m.sunriseH} sunsetH={m.sunsetH} />}
+                </DaySlide>
+              }
               waterY={waterY}
               scene={showScene}
               theme={theme}
@@ -561,14 +533,18 @@ function TideApp() {
             />
 
             {showScene && showSky && (
-              <SkyBodies
-                geom={geom}
-                horizonY={horizonY}
-                date={selectedDate}
-                hour={skyHour}
-                lat={DIEPPE.latitude}
-                lon={DIEPPE.longitude}
-              />
+              <DaySlide pages={pages} cur={day}>
+                {(m) => (
+                  <SkyBodies
+                    geom={geom}
+                    horizonY={horizonY}
+                    date={m.date}
+                    hour={skyHour}
+                    lat={DIEPPE.latitude}
+                    lon={DIEPPE.longitude}
+                  />
+                )}
+              </DaySlide>
             )}
 
             {showScene && (
@@ -580,23 +556,32 @@ function TideApp() {
               />
             )}
 
-            <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} />
+            <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} part="y" />
+            <DaySlide pages={pages} cur={day}>
+              {() => <AxisGrid geom={geom} yTicks={yTicks} xTicks={xTicks} part="x" />}
+            </DaySlide>
 
-            {waveOn && waveSeries && (
-              <WaveBandFill geom={geom} tideHeight={tideHeight} series={waveSeries} />
-            )}
+            <DaySlide pages={pages} cur={day}>
+              {(m) => (
+                <>
+                  {m.waveOn && m.waveSeries && (
+                    <WaveBandFill geom={geom} tideHeight={m.tideHeight} series={m.waveSeries} />
+                  )}
 
-            <TideCurve
-              geom={geom}
-              seaPath={seaPath}
-              curvePath={curvePath}
-              visibleExtremes={visibleExtremes}
-              dayPhoto={dayPhotoScene}
-            />
+                  <TideCurve
+                    geom={geom}
+                    seaPath={m.seaPath}
+                    curvePath={m.curvePath}
+                    visibleExtremes={m.visibleExtremes}
+                    dayPhoto={dayPhotoScene}
+                  />
 
-            {waveOn && waveSeries && (
-              <WaveCrest geom={geom} tideHeight={tideHeight} series={waveSeries} />
-            )}
+                  {m.waveOn && m.waveSeries && (
+                    <WaveCrest geom={geom} tideHeight={m.tideHeight} series={m.waveSeries} />
+                  )}
+                </>
+              )}
+            </DaySlide>
 
             {showWC59 && targetHeight !== null && (
               <Wc59Overlay
@@ -617,26 +602,38 @@ function TideApp() {
                 setTargetHeight={setTargetHeight}
                 draggingLine={draggingLine}
                 setDraggingLine={setDraggingLine}
-                crossings={crossings}
-                levelAt={levelAt}
-                waveAdjusted={waveAdjusted}
-                sunriseH={sunriseH}
-                sunsetH={sunsetH}
+                marks={
+                  <DaySlide pages={pages} cur={day}>
+                    {(m) => (
+                      <HeightMarks
+                        geom={geom}
+                        targetHeight={targetHeight}
+                        crossings={m.crossings}
+                        levelAt={m.levelAt}
+                        waveAdjusted={m.waveAdjusted}
+                        sunriseH={m.sunriseH}
+                        sunsetH={m.sunsetH}
+                      />
+                    )}
+                  </DaySlide>
+                }
               />
             )}
 
-            {showMarker && markerH !== null && (
-              <NowMarker
-                geom={geom}
-                markerT={markerT}
-                markerH={markerH}
-                crestH={crestAt(markerT)}
-              />
-            )}
+            <DaySlide pages={pages} cur={day}>
+              {markerFor}
+            </DaySlide>
 
             {hover && <HoverTooltip geom={geom} hover={hover} crestH={crestAt(hover.t)} />}
           </svg>
-          <SunTimes geom={geom} sunriseH={sunriseH} sunsetH={sunsetH} />
+          <DaySlideHtml pages={pages} cur={day}>
+            {(m, role) => (
+              <>
+                <SunTimes geom={geom} sunriseH={m.sunriseH} sunsetH={m.sunsetH} />
+                {role !== "cur" && <DayHint role={role} date={m.date} top={dayHintTop} />}
+              </>
+            )}
+          </DaySlideHtml>
         </div>
       </div>
     </div>

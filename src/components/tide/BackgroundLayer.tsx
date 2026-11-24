@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PlotGeom } from "@/lib/geom";
 import type { Theme } from "@/hooks/use-theme";
 
@@ -8,8 +9,12 @@ type Props = {
   imageTop: number;
   imageDisplayWidth: number;
   imageDisplayHeight: number;
-  sunriseH: number | null;
-  sunsetH: number | null;
+  /**
+   * The night bands — drawn here, over the steel and inside this layer's clip,
+   * because that is where they always were. The day's own layer, passed in so
+   * that on a phone it can slide with the day (see DaySlide).
+   */
+  bands: ReactNode;
   /** Screen y of chart datum. Everything below it is underwater. */
   waterY: number;
   /**
@@ -33,15 +38,14 @@ export function BackgroundLayer({
   imageTop,
   imageDisplayWidth,
   imageDisplayHeight,
-  sunriseH,
-  sunsetH,
+  bands,
   waterY,
   scene,
   theme,
   dayPhoto,
   simplify,
 }: Props) {
-  const { PAD_L, PAD_T, plotWidth, plotHeight, xOfT, yOfH } = geom;
+  const { PAD_L, PAD_T, plotWidth, plotHeight } = geom;
   const night = theme === "night";
 
   const aboveGrade = night ? "url(#nightGrade)" : scene ? "url(#dayGrade)" : undefined;
@@ -138,8 +142,27 @@ export function BackgroundLayer({
         <image {...common} opacity={0.95} filter={aboveGrade} />
       )}
 
-      {/* Night bands: the hours before sunrise and after sunset are dimmed, so
-         the timeline shows at a glance when there is daylight to work in. */}
+      {bands}
+    </g>
+  );
+}
+
+/**
+ * Night bands: the hours before sunrise and after sunset are dimmed, so the
+ * timeline shows at a glance when there is daylight to work in.
+ */
+export function NightBands({
+  geom,
+  sunriseH,
+  sunsetH,
+}: {
+  geom: PlotGeom;
+  sunriseH: number | null;
+  sunsetH: number | null;
+}) {
+  const { PAD_L, plotWidth, xOfT, yOfH } = geom;
+  return (
+    <>
       {sunriseH !== null && sunriseH > 0 && (
         <rect
           x={PAD_L}
@@ -160,6 +183,6 @@ export function BackgroundLayer({
           pointerEvents="none"
         />
       )}
-    </g>
+    </>
   );
 }

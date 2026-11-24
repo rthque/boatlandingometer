@@ -754,7 +754,7 @@ On a phone — `useTouchUI()`: `(hover: none) and (pointer: coarse)`, so not a
 laptop with a touchscreen — a finger on the chart's empty ground does three
 things, and a mouse does none of them:
 
-- **left / right**: the next / previous day;
+- **left / right**: the next / previous day, as a carousel (below);
 - **down**: the calendar, as a sheet from the top edge;
 - **up**: the About panel, as a sheet from the bottom edge.
 
@@ -773,19 +773,20 @@ user did not mean:
 - **Nothing on touch-down.** A touch becomes a swipe only past 12 px, and only
   once one axis leads the other by 1.3× (a finger still diagonal at 36 px takes
   the larger). A mostly-vertical swipe never turns the day.
-- **A hint says what letting go will do**, before it happens: a chip slides in
-  from the edge the target lies behind — "Wed, Nov 25 ›" from the right,
-  "Calendar" from the top, "Info" from the bottom — and fills in once the swipe
-  has gone far enough (72 px across, 80 down or up). Slide back before letting
-  go and it empties again and nothing happens. A short Android vibration marks
-  the moment it fills; iOS has no vibration API, the chip is the signal there.
+- **A hint says what letting go will do**, before it happens. Sideways, the
+  incoming day carries its own name — "Wed, Nov 25 ›" on a chip just inside its
+  midnight edge; down and up, a chip slides in from the edge the sheet will
+  come from — "Calendar" from the top, "Info" from the bottom. Each fills in
+  once the swipe has gone far enough (72 px across, 80 down or up). Slide back
+  before letting go and it empties again and nothing happens. A short Android
+  vibration marks the moment it fills; iOS has no vibration API, the chip is
+  the signal there.
 - **A flick commits early**, as on every phone: fast at the end, or fast
   throughout a gesture under 250 ms, over at least 36 px. The second rule is
   there because a browser that coalesces a quick swipe into two or three events
   leaves too few samples for the velocity to settle.
-- **The chart follows the finger by at most 24 px** — it moves with you, it is
-  not a carousel. At 56 it bared a strip of page at the far edge. At the ends of
-  the date range it barely gives (14 px) and no chip appears: "no further".
+- **At the ends of the date range** there is no day to bring in: the chart
+  barely gives (14 px) and no chip appears — "no further".
 - **Never where a touch already does something**: buttons, the switches, the
   sliders, the EN|FR group, the video, any open dialog — and the red line's drag
   band and the speed panel, which carry `data-no-swipe`. The listeners are
@@ -793,10 +794,63 @@ user did not mean:
   `stopPropagation`; that is why the exclusions are explicit rather than relying
   on handlers to stop it. A second finger cancels: a pinch is never a swipe.
 
-It writes the chart's transform and the chips' style **directly**, not through
-React state, which would re-render the whole chart on every pixel the finger
-moves. Only a committed swipe reaches React. Measured: 60 fps through a slow
-3-second drag on the production build.
+It writes the transforms and the chips' style **directly**, not through React
+state, which would re-render the whole chart on every pixel the finger moves.
+React hears about a gesture twice: on touch-down, to draw the neighbouring days,
+and when it lands.
+
+### The day carousel
+
+Sideways, the day under the finger moves with it **one for one**, and the next
+(or previous) day is drawn beside it and comes in behind. Let go past the
+commit point and the slide finishes (140–300 ms, by distance) and lands on that
+day; short of it, it slides back. A first version only nudged the chart 24 px
+and snapped it back, and on a phone that read as "nothing happened" even
+though the date had turned — the day has to be seen arriving.
+
+**What slides is the day, not the picture.** The structure, the sky and sea,
+the metre grid, the red line with its grip and height chip, and WC59 stay put:
+they are the same every day. What slides is everything drawn against the hour
+— the night bands, the tide curve and its fill, the wave band, the extremes'
+dots, the crossing times and duration chips, the hour labels, the sunrise /
+sunset chips, the "now" marker, and with the sky on, the sun and moon. So the
+night band runs straight across midnight from one day into the next, and the
+curve joins at "24h | 0h" because the tide is continuous. A dashed line marks
+midnight.
+
+How, because the chart is layered and those things are not one group: the
+night bands sit on the steel under the water veil, the curve over the grid, the
+crossing chips inside the red line's group. Each of those layers is drawn
+through `DaySlide`, which on a phone wraps it in a `data-day-slide` group
+holding one page per day, offset by a plot width; `useSwipe` moves every such
+group together. On a mouse `DaySlide` draws the layer for the selected day with
+no wrapper at all, which is why the desktop markup is identical to before.
+
+`useDayModel` computes one day's curve, sun times, forecast slice and
+crossings. The selected day always has one; the neighbours get one only while a
+finger is on the chart (`peek`, set on touch-down so they are drawn before the
+finger has moved 12 px), and cost nothing otherwise. At rest the phone chart is
+the selected day alone.
+
+**Landing without a jump** is the part to keep. Pages are keyed by date, so
+the page that slid in is the same DOM element that stays. When the slide ends,
+`flushSync` commits the new date (and drops the neighbours), and only then are
+the transforms cleared — all in one task, so the browser paints once: the new
+day is current and at rest, in the same frame. Clearing the transform before
+React had committed showed the old day for a frame: the snap-back again.
+Measured frame by frame: the incoming page's left edge only ever moves left,
+from where the finger left it to the plot's edge, and the date turns in the
+frame it arrives, never before.
+
+A swipe that starts while the last one is still sliding lands that one first,
+so quick flicks chain day after day. The incoming day's chip sits above the
+sunrise / sunset row (it covered the sunrise chip at mid-height in FOU).
+Neighbour sky tracks get suffixed gradient ids — two pages with one id paint
+with the first one's gradient.
+
+Measured on the production build through SwiftShader, at 390x844, 375x667 and
+360x740, day and night, FOU / BL / IRL, waves and sky on: 60 fps dragging and
+landing, also with the time-lapse playing in Hours and in Days.
 
 `usePlotSize` puts `touch-action: none` on the body. That is what keeps the
 browser's own panning and Chrome's pull-to-refresh out of the way of the
