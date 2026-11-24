@@ -21,6 +21,12 @@ type Props = {
   hour: number;
   lat: number;
   lon: number;
+  /**
+   * Appended to the tracks' gradient ids. On a phone the days either side are
+   * drawn too while a finger is on the chart, and two pages sharing an id
+   * would both paint with the first one's gradient.
+   */
+  idSuffix?: string;
 };
 
 /**
@@ -103,7 +109,7 @@ function useBand(geom: PlotGeom, horizonY: number) {
  * opening and closing over a fortnight is spring and neap tides — the very
  * thing the coefficient chips on the extremes are already counting.
  */
-export function SkyTracks({ geom, horizonY, date, lat, lon }: Props) {
+export function SkyTracks({ geom, horizonY, date, lat, lon, idSuffix = "" }: Props) {
   const yOfAlt = useBand(geom, horizonY);
   const tracks = useMemo(
     () => ({
@@ -127,7 +133,7 @@ export function SkyTracks({ geom, horizonY, date, lat, lon }: Props) {
       .filter((run) => run.length > 1)
       .map((run, ri) => {
         const d = run.map((p, i) => `${i ? "L" : "M"}${xOfT(p.t)},${yOfAlt(p.alt)}`).join(" ");
-        const gid = `skyFade-${id}-${ri}`;
+        const gid = `skyFade-${id}-${ri}${idSuffix}`;
         return (
           <g key={gid}>
             <defs>

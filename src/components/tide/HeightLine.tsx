@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PlotGeom } from "@/lib/geom";
 import { fmtTime, fmtDuration } from "@/lib/tide-math";
 
@@ -7,13 +8,12 @@ type Props = {
   setTargetHeight: (h: number) => void;
   draggingLine: boolean;
   setDraggingLine: (v: boolean) => void;
-  crossings: number[];
-  /** The level the line is read against — the tide, or the wave crest. */
-  levelAt: (t: number) => number;
-  /** The crossings are against the wave crest: the duration chips say so. */
-  waveAdjusted: boolean;
-  sunriseH: number | null;
-  sunsetH: number | null;
+  /**
+   * The day's marks on the line — its crossing times and daytime durations
+   * (HeightMarks). Passed in so that on a phone they can slide with the day
+   * while the line, its grip and its height chip stay put (see DaySlide).
+   */
+  marks: ReactNode;
 };
 
 // The draggable reference-height line: a full-width horizontal line the user can
@@ -26,16 +26,10 @@ export function HeightLine({
   setTargetHeight,
   draggingLine,
   setDraggingLine,
-  crossings,
-  levelAt,
-  waveAdjusted,
-  sunriseH,
-  sunsetH,
+  marks,
 }: Props) {
-  const { PAD_L, PAD_T, plotWidth, plotHeight, Y_MIN, Y_MAX, xOfT, yOfH, pointerToPlot } = geom;
+  const { PAD_L, PAD_T, plotWidth, plotHeight, Y_MIN, Y_MAX, yOfH, pointerToPlot } = geom;
   const yLine = yOfH(targetHeight);
-  const labelW = 52;
-  const labelH = 18;
 
   return (
     <g>
@@ -49,6 +43,7 @@ export function HeightLine({
         height={60}
         fill="transparent"
         style={{ cursor: "ns-resize", touchAction: "none" }}
+        data-no-swipe
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -109,6 +104,63 @@ export function HeightLine({
         ))}
       </g>
 
+      {marks}
+
+      {/* Red height chip on the right */}
+      <g pointerEvents="none">
+        <rect
+          x={PAD_L + plotWidth - 48}
+          y={yLine - 9}
+          width={48}
+          height={18}
+          rx={2}
+          fill="oklch(0.6 0.22 25)"
+        />
+        <text
+          x={PAD_L + plotWidth - 24}
+          y={yLine + 4}
+          textAnchor="middle"
+          fontSize="11"
+          fontWeight={700}
+          fill="white"
+        >
+          {targetHeight.toFixed(2).replace(".", ",")}m
+        </text>
+      </g>
+    </g>
+  );
+}
+
+type MarksProps = {
+  geom: PlotGeom;
+  targetHeight: number;
+  crossings: number[];
+  /** The level the line is read against — the tide, or the wave crest. */
+  levelAt: (t: number) => number;
+  /** The crossings are against the wave crest: the duration chips say so. */
+  waveAdjusted: boolean;
+  sunriseH: number | null;
+  sunsetH: number | null;
+};
+
+// One day's marks on the red line: the times the level crosses it (yellow
+// chips) and, for each daytime stretch below it, how long it stays low (red
+// chips).
+export function HeightMarks({
+  geom,
+  targetHeight,
+  crossings,
+  levelAt,
+  waveAdjusted,
+  sunriseH,
+  sunsetH,
+}: MarksProps) {
+  const { xOfT, yOfH } = geom;
+  const yLine = yOfH(targetHeight);
+  const labelW = 52;
+  const labelH = 18;
+  return (
+    <>
       {/* Crossing time labels (yellow chips) — always above the line so they
          don't collide with the low-tide duration chip below. */}
       {crossings.map((tc, i) => {
@@ -215,28 +267,6 @@ export function HeightLine({
           );
         });
       })()}
-
-      {/* Red height chip on the right */}
-      <g pointerEvents="none">
-        <rect
-          x={PAD_L + plotWidth - 48}
-          y={yLine - 9}
-          width={48}
-          height={18}
-          rx={2}
-          fill="oklch(0.6 0.22 25)"
-        />
-        <text
-          x={PAD_L + plotWidth - 24}
-          y={yLine + 4}
-          textAnchor="middle"
-          fontSize="11"
-          fontWeight={700}
-          fill="white"
-        >
-          {targetHeight.toFixed(2).replace(".", ",")}m
-        </text>
-      </g>
-    </g>
+    </>
   );
 }
